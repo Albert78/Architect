@@ -1,0 +1,7 @@
+- Focus der Items setzen bei MouseOver im Objektbaum
+- Selektierte Anchors in 3D-Ansicht anzeigen
+- Objekte anzeigen/ausblenden durch spalte im Objektbaum
+- VisibleOverride für Reprensentations - true-> zeigt immer an, false-> blendet immer aus, null-> standard visible zählt
+  --> wird angeschaltet wenn element selektiert ist
+- Abspeichern der Fensterposition und Spalten im Objekt- und Eigenschaftenbaum
+- Knopf oben zum "in die Szene springen"; mCamera.setTranslateZ(-20)  

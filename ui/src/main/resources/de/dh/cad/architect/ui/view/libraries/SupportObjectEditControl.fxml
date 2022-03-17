@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+
+<fx:root prefHeight="750.0" prefWidth="800.0" type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+   <center>
+      <GridPane hgap="5.0" vgap="5.0" BorderPane.alignment="CENTER">
+        <columnConstraints>
+          <ColumnConstraints hgrow="NEVER" minWidth="10.0" prefWidth="100.0" />
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="100.0" />
+        </columnConstraints>
+        <rowConstraints>
+          <RowConstraints vgrow="NEVER" />
+          <RowConstraints vgrow="NEVER" />
+          <RowConstraints vgrow="NEVER" />
+          <RowConstraints vgrow="NEVER" />
+          <RowConstraints vgrow="NEVER" />
+          <RowConstraints vgrow="NEVER" />
+          <RowConstraints vgrow="NEVER" />
+          <RowConstraints vgrow="NEVER" />
+          <RowConstraints vgrow="NEVER" />
+          <RowConstraints vgrow="NEVER" />
+        </rowConstraints>
+         <children>
+            <Label text="Basis" />
+            <TextField fx:id="mAssetCollectionNameTextField" editable="false" styleClass="copyable-label" text="-" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" />
+            <Label text="Id" GridPane.rowIndex="1" />
+            <TextField fx:id="mIdTextField" editable="false" styleClass="copyable-label" text="-" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" />
+            <Label text="Asset-Ref-Path" GridPane.rowIndex="2" />
+            <TextField fx:id="mAssetRefPathTextField" editable="false" styleClass="copyable-label" text="-" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2" />
+            <Label text="Name" GridPane.rowIndex="3" />
+            <TextField fx:id="mNameTextField" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+            <Label text="Kategorie/Raum" GridPane.rowIndex="4" />
+            <ComboBox fx:id="mCategoryComboBox" editable="true" prefWidth="250.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+            <Label text="Typ/Art" GridPane.rowIndex="5" />
+            <ComboBox fx:id="mTypeComboBox" editable="true" prefWidth="250.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+            <Label text="Beschreibung" GridPane.rowIndex="6" />
+            <TextArea fx:id="mDescriptionTextArea" prefHeight="166.0" prefWidth="275.0" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+            <Label text="Icon" GridPane.rowIndex="7" />
+            <HBox alignment="CENTER_LEFT" spacing="5.0" BorderPane.alignment="CENTER" GridPane.columnIndex="1" GridPane.rowIndex="7">
+               <children>
+                  <ImageView fx:id="mIconImageView" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" />
+                  <Button fx:id="mChooseIconImageButton" mnemonicParsing="false">
+                     <graphic>
+                        <ImageView fitHeight="16" fitWidth="16">
+                           <image>
+                              <Image url="@edit.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Button>
+               </children>
+            </HBox>
+            <Label text="Bild im Grundriss-Plan" wrapText="true" GridPane.rowIndex="8" />
+            <HBox alignment="CENTER_LEFT" spacing="5.0" BorderPane.alignment="CENTER" GridPane.columnIndex="1" GridPane.rowIndex="8">
+               <children>
+                  <ImageView fx:id="mPlanViewImageView" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" />
+                  <Button fx:id="mChoosePlanViewImageButton" mnemonicParsing="false">
+                     <graphic>
+                        <ImageView fitHeight="16" fitWidth="16">
+                           <image>
+                              <Image url="@edit.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Button>
+               </children>
+            </HBox>
+            <Label text="3D-Objekt" wrapText="true" GridPane.rowIndex="9" />
+            <BorderPane fx:id="mThreeDResourcePane" BorderPane.alignment="CENTER" GridPane.columnIndex="1" GridPane.rowIndex="9">
+               <right>
+                  <HBox BorderPane.alignment="CENTER_LEFT">
+                     <children>
+                        <VBox alignment="CENTER" spacing="5.0">
+                           <children>
+                              <Button fx:id="mChooseThreeDObjectButton" mnemonicParsing="false">
+                                 <graphic>
+                                    <ImageView fitHeight="16" fitWidth="16">
+                                       <image>
+                                          <Image url="@edit.png" />
+                                       </image>
+                                    </ImageView>
+                                 </graphic>
+                              </Button>
+                              <Button fx:id="mTakeSnapshotButton" mnemonicParsing="false">
+                                 <graphic>
+                                    <ImageView fitHeight="16" fitWidth="16">
+                                       <image>
+                                          <Image url="@snapshot.png" />
+                                       </image>
+                                    </ImageView>
+                                 </graphic>
+                              </Button>
+                           </children>
+                           <HBox.margin>
+                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                           </HBox.margin>
+                        </VBox>
+                        <VBox fx:id="mSizeControlsVBox" alignment="CENTER_LEFT" />
+                     </children>
+                  </HBox>
+               </right>
+            </BorderPane>
+         </children>
+         <BorderPane.margin>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </BorderPane.margin>
+      </GridPane>
+   </center>
+</fx:root>

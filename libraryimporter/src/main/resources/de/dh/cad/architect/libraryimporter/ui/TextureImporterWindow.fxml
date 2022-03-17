@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TreeTableColumn?>
+<?import javafx.scene.control.TreeTableView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane fx:id="mRoot" prefHeight="755.0" prefWidth="948.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+	<bottom>
+		<Label fx:id="mUserHintLabel">
+			<padding>
+				<Insets left="5.0" right="5.0" />
+			</padding>
+		</Label>
+	</bottom>
+	<center>
+		<SplitPane dividerPositions="0.5" BorderPane.alignment="CENTER">
+			<items>
+				<BorderPane fx:id="mTreeParentPane" prefHeight="200.0" prefWidth="200.0">
+					<bottom>
+					</bottom>
+					<top>
+                  <HBox>
+                     <children>
+      						<VBox>
+      							<children>
+      								<Label text="Einlesen" />
+      								<Button mnemonicParsing="false" onAction="#onReadSH3DTextureLibrary" text="SH3D Texturbibliothek" />
+      							</children>
+                           <padding>
+                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                           </padding>
+      						</VBox>
+                        <BorderPane>
+                           <center>
+                              <Label fx:id="mCurrentLibraryLabel" text="-">
+                                 <padding>
+                                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                 </padding>
+                              </Label>
+                           </center>
+                           <left>
+                              <Label text="Aktuelle Bibliothek:" BorderPane.alignment="CENTER" />
+                           </left>
+                        </BorderPane>
+                     </children>
+                  </HBox>
+					</top>
+					<center>
+						<TreeTableView fx:id="mAssetsTreeTableView" editable="true" showRoot="false" BorderPane.alignment="CENTER">
+							<columns>
+                        <TreeTableColumn fx:id="mImportColumn" prefWidth="50.0" text="Import" />
+								<TreeTableColumn fx:id="mNameColumn" prefWidth="180.0" text="Name" />
+								<TreeTableColumn fx:id="mCategoryColumn" prefWidth="120.0" text="Kategorie" />
+								<TreeTableColumn fx:id="mIdColumn" prefWidth="200.0" text="Id" />
+							</columns>
+						</TreeTableView>
+					</center>
+               <bottom>
+                  <FlowPane BorderPane.alignment="CENTER">
+                     <children>
+                        <Label text="Importieren in">
+                           <FlowPane.margin>
+                              <Insets right="5.0" />
+                           </FlowPane.margin>
+                        </Label>
+                        <ComboBox fx:id="mImportAssetLibrariesComboBox" prefWidth="200.0">
+                           <FlowPane.margin>
+                              <Insets right="5.0" />
+                           </FlowPane.margin>
+                        </ComboBox>
+                        <Button fx:id="mImportButton" mnemonicParsing="false" text="Import" />
+                     </children>
+                  </FlowPane>
+               </bottom>
+				</BorderPane>
+				<BorderPane fx:id="mContentPane" prefHeight="200.0" prefWidth="200.0">
+					<padding>
+						<Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+					</padding>
+				</BorderPane>
+			</items>
+		</SplitPane>
+	</center>
+</BorderPane>

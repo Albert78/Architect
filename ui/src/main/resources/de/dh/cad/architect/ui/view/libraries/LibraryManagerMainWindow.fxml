@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+
+<SplitPane fx:id="mRoot" dividerPositions="0.2" prefHeight="800.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+   <items>
+      <BorderPane maxWidth="500.0" minWidth="100.0" prefWidth="200.0" SplitPane.resizableWithParent="false">
+         <center>
+            <StackPane fx:id="mLibraryListParent" />
+         </center>
+         <top>
+            <Label text="Bibliotheken" BorderPane.alignment="CENTER" />
+         </top>
+         <bottom>
+            <HBox spacing="5.0" BorderPane.alignment="CENTER">
+                <children>
+                  <Button fx:id="mNewLibraryButton" mnemonicParsing="false">
+                     <graphic>
+                        <ImageView fitHeight="16" fitWidth="16">
+                           <image>
+                              <Image url="@plus.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Button>
+                  <Button fx:id="mOpenLibraryButton" mnemonicParsing="false">
+                     <graphic>
+                        <ImageView fitHeight="16" fitWidth="16">
+                           <image>
+                              <Image url="@folder.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Button>
+                  <Button fx:id="mEditLibraryButton" mnemonicParsing="false">
+                     <graphic>
+                        <ImageView fitHeight="16" fitWidth="16">
+                           <image>
+                              <Image url="@edit.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Button>
+                  <Button fx:id="mRemoveLibraryButton" mnemonicParsing="false">
+                     <graphic>
+                        <ImageView fitHeight="16" fitWidth="16">
+                           <image>
+                              <Image url="@minus.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Button>
+                  <Button fx:id="mDeleteLibraryButton" mnemonicParsing="false">
+                     <graphic>
+                        <ImageView fitHeight="16" fitWidth="16">
+                           <image>
+                              <Image url="@trash.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Button>
+               </children>
+               <padding>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </padding>
+            </HBox>
+         </bottom>
+      </BorderPane>
+      <TabPane side="BOTTOM" tabClosingPolicy="UNAVAILABLE">
+        <tabs>
+          <Tab fx:id="mMaterialSetsTab" text="Material-Kollektionen">
+               <content>
+                  <BorderPane fx:id="mMaterialSetsParentPane">
+                     <bottom>
+                        <HBox spacing="5.0" BorderPane.alignment="CENTER">
+                            <children>
+                               <Button fx:id="mNewMaterialSetButton" mnemonicParsing="false">
+                                 <graphic>
+                                    <ImageView fitHeight="16" fitWidth="16">
+                                       <image>
+                                          <Image url="@plus.png" />
+                                       </image>
+                                    </ImageView>
+                                 </graphic>
+                              </Button>
+                               <Button fx:id="mEditMaterialSetButton" mnemonicParsing="false">
+                                 <graphic>
+                                    <ImageView fitHeight="16" fitWidth="16">
+                                       <image>
+                                          <Image url="@edit.png" />
+                                       </image>
+                                    </ImageView>
+                                 </graphic>
+                              </Button>
+                               <Button fx:id="mDeleteMaterialSetsButton" mnemonicParsing="false">
+                                 <graphic>
+                                    <ImageView fitHeight="16" fitWidth="16">
+                                       <image>
+                                          <Image url="@trash.png" />
+                                       </image>
+                                    </ImageView>
+                                 </graphic>
+                              </Button>
+                           </children>
+                           <padding>
+                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                           </padding>
+                        </HBox>
+                     </bottom>
+                  </BorderPane>
+               </content>
+            </Tab>
+            <Tab fx:id="mSupportObjectsTab" text="Möbel/Hilfsobjekte">
+               <content>
+                  <BorderPane fx:id="mSupportObjectsParentPane">
+                     <bottom>
+                        <HBox spacing="5.0" BorderPane.alignment="CENTER">
+                           <children>
+                               <Button fx:id="mNewSupportObjectButton" mnemonicParsing="false">
+                                 <graphic>
+                                    <ImageView fitHeight="16" fitWidth="16">
+                                       <image>
+                                          <Image url="@plus.png" />
+                                       </image>
+                                    </ImageView>
+                                 </graphic>
+                              </Button>
+                               <Button fx:id="mEditSupportObjectButton" mnemonicParsing="false">
+                                 <graphic>
+                                    <ImageView fitHeight="16" fitWidth="16">
+                                       <image>
+                                          <Image url="@edit.png" />
+                                       </image>
+                                    </ImageView>
+                                 </graphic>
+                              </Button>
+                               <Button fx:id="mDeleteSupportObjectsButton" mnemonicParsing="false">
+                                 <graphic>
+                                    <ImageView fitHeight="16" fitWidth="16">
+                                       <image>
+                                          <Image url="@trash.png" />
+                                       </image>
+                                    </ImageView>
+                                 </graphic>
+                              </Button>
+                           </children>
+                           <padding>
+                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                           </padding>
+                        </HBox>
+                     </bottom>
+                  </BorderPane>
+               </content>
+            </Tab>
+        </tabs>
+      </TabPane>
+   </items>
+</SplitPane>

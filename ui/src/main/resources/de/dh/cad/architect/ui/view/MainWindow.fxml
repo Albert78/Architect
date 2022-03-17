@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane fx:id="mRoot" prefHeight="713.0" prefWidth="867.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+	<top>
+		<VBox fx:id="mMenuArea" BorderPane.alignment="CENTER">
+			<children>
+				<MenuBar fx:id="mMenuBar">
+					<menus>
+						<Menu text="_Datei">
+							<items>
+								<MenuItem fx:id="mFileNewMenuItem" text="_Neu" />
+								<MenuItem fx:id="mFileOpenMenuItem" text="_Öffnen..." />
+								<Menu fx:id="mFileRecentMenu" text="_Letzte Dateien" />
+								<MenuItem fx:id="mFileSaveMenuItem" text="_Speichern" />
+								<MenuItem fx:id="mFileSaveAsMenuItem" text="Speichern _unter..." />
+								<MenuItem fx:id="mFileQuitMenuItem" text="Be_enden" />
+							</items>
+						</Menu>
+						<Menu text="_Assets">
+							<items>
+								<MenuItem fx:id="mOpenLibraryManagerMenuItem" text="_Library Manager" />
+							</items>
+						</Menu>
+						<Menu fx:id="mInsertionPointMenu" text="Invisible Insertion Point" visible="false" />
+						<Menu text="_Hilfe">
+							<items>
+								<MenuItem text="_Info" />
+							</items>
+						</Menu>
+					</menus>
+				</MenuBar>
+				<ToolBar fx:id="mToolBar">
+					<items>
+						<HBox fx:id="mDefaultToolButtons" spacing="5.0" />
+						<HBox fx:id="mViewToolButtons" spacing="5.0" />
+					</items>
+				</ToolBar>
+			</children>
+		</VBox>
+	</top>
+	<bottom>
+				<Label fx:id="mUserHintLabel">
+					<padding>
+						<Insets left="5.0" right="5.0" />
+					</padding>
+				</Label>
+	</bottom>
+	<center>
+		<SplitPane fx:id="mMainSplitPane" dividerPositions="0.5" BorderPane.alignment="CENTER">
+			<items>
+				<SplitPane dividerPositions="0.5" orientation="VERTICAL" SplitPane.resizableWithParent="false">
+					<items>
+						<TabPane fx:id="mPropertiesInteractionsTabPane" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
+							<tabs>
+								<Tab fx:id="mPropertiesTab" text="Eigenschaften">
+									<content>
+										<BorderPane fx:id="mPropertiesPane" />
+									</content>
+								</Tab>
+							</tabs>
+						</TabPane>
+						<BorderPane fx:id="mObjectsTreePane" prefHeight="200.0" prefWidth="200.0" />
+					</items>
+				</SplitPane>
+				<TabPane fx:id="mPlansTabPane" prefHeight="200.0" prefWidth="200.0" side="BOTTOM" tabClosingPolicy="ALL_TABS" />
+			</items>
+		</SplitPane>
+	</center>
+</BorderPane>

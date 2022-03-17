@@ -1,0 +1,182 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>de.dh.cad.architect</groupId>
+    <artifactId>application</artifactId>
+    <name>Architect Application</name>
+    <packaging>pom</packaging>
+    <version>0.0.1-SNAPSHOT</version>
+
+    <properties>
+        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <maven-source-plugin-version>3.2.0</maven-source-plugin-version>
+        <maven-compiler-plugin-version>3.8.1</maven-compiler-plugin-version>
+
+        <mainclass>de.dh.cad.architect.ArchitectApplication</mainclass>
+        <architect-modules-version>0.0.1-SNAPSHOT</architect-modules-version>
+        <javafx-version>17.0.1</javafx-version>
+        <log4j-version>2.17.1</log4j-version>
+        <slf4j-version>1.8.0-beta4</slf4j-version>
+        <jaxb-version>2.3.2</jaxb-version>
+        <apache-commons-io-version>2.11.0</apache-commons-io-version>
+        <apache-commons-lang-version>3.12.0</apache-commons-lang-version>
+        <apache-commons-collections-version>4.4</apache-commons-collections-version>
+        <javafx.maven.plugin.version>0.0.8</javafx.maven.plugin.version>
+    </properties>                               
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven-compiler-plugin-version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>${maven-source-plugin-version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.openjfx</groupId>
+                    <artifactId>javafx-maven-plugin</artifactId>
+                    <version>${javafx.maven.plugin.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>de.dh.cad.architect</groupId>
+                <artifactId>model</artifactId>
+                <version>${architect-modules-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>de.dh.cad.architect</groupId>
+                <artifactId>ui</artifactId>
+                <version>${architect-modules-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>de.dh.cad.architect</groupId>
+                <artifactId>utilities</artifactId>
+                <version>${architect-modules-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>de.dh.cad.architect</groupId>
+                <artifactId>fxutils</artifactId>
+                <version>${architect-modules-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>de.dh.cad.architect</groupId>
+                <artifactId>codeeditors</artifactId>
+                <version>${architect-modules-version}</version>
+            </dependency>
+
+            <!-- JavaFX -->
+            <dependency>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-controls</artifactId>
+                <version>${javafx-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-fxml</artifactId>
+                <version>${javafx-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-web</artifactId>
+                <version>${javafx-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-swing</artifactId>
+                <version>${javafx-version}</version>
+            </dependency>
+
+            <!-- 3rd party JavaFX controls -->
+            <dependency>
+                <groupId>org.controlsfx</groupId>
+                <artifactId>controlsfx</artifactId>
+                <version>11.1.0</version>
+            </dependency>
+
+            <!-- JAXB -->
+            <dependency>
+                <groupId>jakarta.xml.bind</groupId>
+                <artifactId>jakarta.xml.bind-api</artifactId>
+                <version>${jaxb-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.glassfish.jaxb</groupId>
+                <artifactId>jaxb-runtime</artifactId>
+                <version>${jaxb-version}</version>
+            </dependency>
+
+            <!-- SLF4J -->
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-slf4j18-impl</artifactId>
+                <version>${log4j-version}</version>
+            </dependency>
+
+            <!-- Apache commons -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-collections4</artifactId>
+                <version>${apache-commons-collections-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${apache-commons-lang-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${apache-commons-io-version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <modules>
+        <module>utilities</module>
+        <module>model</module>
+        <module>fxutils</module>
+        <module>ui</module>
+        <module>main</module>
+        <module>libraryimporter</module>
+        <module>codeeditors</module>
+    </modules>
+</project>

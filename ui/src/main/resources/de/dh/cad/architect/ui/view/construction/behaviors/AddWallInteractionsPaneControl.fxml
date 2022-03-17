@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<fx:root type="javafx.scene.layout.VBox" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <TitledPane animated="false" collapsible="false" text="Eigenschaften der neuen Wand">
+         <content>
+            <VBox spacing="10.0">
+               <children>
+                  <HBox spacing="10.0">
+                     <children>
+                        <VBox fx:id="mThicknessVBox" prefWidth="150.0">
+                           <children>
+                              <Label text="Dicke der Wand" />
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+                  <HBox spacing="10.0">
+                     <children>
+                        <TitledPane animated="false" collapsible="false" text="Wandanfang">
+                           <content>
+                              <VBox prefWidth="200.0" spacing="10.0">
+                                 <children>
+                                    <VBox fx:id="mHeightStartVBox" prefWidth="150.0">
+                                       <children>
+                                          <Label text="Wandhöhe" />
+                                       </children>
+                                    </VBox>
+                                    <VBox fx:id="mWallBevelStartVBox">
+                                       <children>
+                                          <Label text="Wandübergang" />
+                                       </children>
+                                    </VBox>
+                                    <TitledPane fx:id="mStartWallsTitledPane" animated="false" collapsible="false" text="Anzeige der Wandfortsätze">
+                                       <content>
+                                          <VBox fx:id="mStartWallsVBox" prefWidth="200.0">
+                                             <children>
+                                                <CheckBox fx:id="mDrawStartWallCwCheckBox" mnemonicParsing="false" text="90° im Uhrzeigersinn" />
+                                                <CheckBox fx:id="mDrawStartWallCcwCheckBox" mnemonicParsing="false" text="90° gegen Uhrzeigersinn" />
+                                                <HBox>
+                                                   <VBox.margin>
+                                                      <Insets bottom="5.0" top="10.0" />
+                                                   </VBox.margin>
+                                                   <children>
+                                                      <Label text="Wanddicke" />
+                                                      <CheckBox fx:id="mStartWallThicknessLikeMainWallCheckBox" mnemonicParsing="false" selected="true" text="Wie oben">
+                                                         <HBox.margin>
+                                                            <Insets left="10.0" />
+                                                         </HBox.margin>
+                                                      </CheckBox>
+                                                   </children>
+                                                </HBox>
+                                             </children>
+                                          </VBox>
+                                       </content>
+                                    </TitledPane>
+                                 </children>
+                              </VBox>
+                           </content>
+                        </TitledPane>
+                        <TitledPane animated="false" collapsible="false" text="Wandende">
+                           <content>
+                              <VBox prefWidth="200.0" spacing="10.0">
+                                 <children>
+                                    <VBox fx:id="mHeightEndVBox" prefWidth="150.0">
+                                       <children>
+                                          <Label text="Wandhöhe" />
+                                       </children>
+                                    </VBox>
+                                    <VBox fx:id="mWallBevelEndVBox">
+                                       <children>
+                                          <Label text="Wandübergang" />
+                                       </children>
+                                    </VBox>
+                                    <TitledPane animated="false" collapsible="false" text="Anzeige der Wandfortsätze">
+                                       <content>
+                                          <VBox fx:id="mEndWallsVBox" prefWidth="200.0">
+                                             <children>
+                                                <CheckBox fx:id="mDrawEndWallCwCheckBox" mnemonicParsing="false" text="90° im Uhrzeigersinn" />
+                                                <CheckBox fx:id="mDrawEndWallCcwCheckBox" mnemonicParsing="false" text="90° gegen Uhrzeigersinn" />
+                                                <HBox>
+                                                   <VBox.margin>
+                                                      <Insets bottom="5.0" top="10.0" />
+                                                   </VBox.margin>
+                                                   <children>
+                                                      <Label text="Wanddicke" />
+                                                      <CheckBox fx:id="mEndWallThicknessLikeMainWallCheckBox" mnemonicParsing="false" selected="true" text="Wie oben">
+                                                         <HBox.margin>
+                                                            <Insets left="10.0" />
+                                                         </HBox.margin>
+                                                      </CheckBox>
+                                                   </children>
+                                                </HBox>
+                                             </children>
+                                          </VBox>
+                                       </content>
+                                    </TitledPane>
+                                 </children>
+                              </VBox>
+                           </content>
+                        </TitledPane>
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+         </content>
+      </TitledPane>
+   </children>
+</fx:root>

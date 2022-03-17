@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+
+
+<GridPane prefHeight="325.0" prefWidth="448.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+   <columnConstraints>
+      <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" prefWidth="100.0" />
+      <ColumnConstraints hgrow="NEVER" prefWidth="5.0" />
+      <ColumnConstraints hgrow="NEVER" maxWidth="100.0" minWidth="100.0" prefWidth="100.0" />
+   </columnConstraints>
+   <rowConstraints>
+      <RowConstraints minHeight="10.0" prefHeight="30.0" />
+      <RowConstraints minHeight="10.0" prefHeight="30.0" />
+      <RowConstraints minHeight="10.0" prefHeight="30.0" />
+      <RowConstraints minHeight="10.0" prefHeight="30.0" />
+      <RowConstraints minHeight="10.0" prefHeight="30.0" />
+      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="ALWAYS" />
+   </rowConstraints>
+   <children>
+      <BorderPane prefHeight="200.0" prefWidth="200.0">
+         <left>
+            <Label text="Wurzelverzeichnis" BorderPane.alignment="CENTER" />
+         </left>
+         <center>
+            <TextField fx:id="mPathEditTextField" promptText="C:\...\LibrariesRoot" BorderPane.alignment="CENTER">
+               <BorderPane.margin>
+                  <Insets left="5.0" />
+               </BorderPane.margin>
+            </TextField>
+         </center>
+      </BorderPane>
+      <Button fx:id="mRootPathChooserButton" maxWidth="200.0" mnemonicParsing="false" text="Auswählen ..." GridPane.columnIndex="2" />
+      <Label text="Gefundene Bibliotheken:" GridPane.rowIndex="1" />
+      <ListView fx:id="mLibrariesListView" prefHeight="200.0" prefWidth="200.0" GridPane.rowIndex="2" GridPane.rowSpan="4" />
+      <Button fx:id="mSelectAllButton" maxWidth="200.0" mnemonicParsing="false" text="Alle auswählen" GridPane.columnIndex="2" GridPane.rowIndex="2" />
+      <Button fx:id="mSelectNoneButton" maxWidth="200.0" mnemonicParsing="false" text="Alle abwählen" GridPane.columnIndex="2" GridPane.rowIndex="3" />
+      <Button fx:id="mRefreshButton" maxWidth="200.0" mnemonicParsing="false" text="Neu einlesen" GridPane.columnIndex="2" GridPane.rowIndex="4" />
+   </children>
+</GridPane>

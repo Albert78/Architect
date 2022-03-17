@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+
+<fx:root fx:id="mThreeDObjectViewParent" prefHeight="546.0" prefWidth="915.0" type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+   <bottom>
+      <VBox BorderPane.alignment="CENTER">
+         <children>
+            <GridPane hgap="5.0" vgap="5.0">
+              <columnConstraints>
+                <ColumnConstraints hgrow="SOMETIMES" maxWidth="100.0" minWidth="100.0" />
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="200.0" />
+                  <ColumnConstraints hgrow="NEVER" prefWidth="50.0" />
+                  <ColumnConstraints hgrow="NEVER" maxWidth="100.0" minWidth="100.0" />
+                  <ColumnConstraints hgrow="SOMETIMES" minWidth="150.0" />
+              </columnConstraints>
+              <rowConstraints>
+                <RowConstraints prefHeight="25.0" vgrow="NEVER" />
+                <RowConstraints prefHeight="25.0" vgrow="NEVER" />
+                <RowConstraints prefHeight="25.0" vgrow="NEVER" />
+                <RowConstraints prefHeight="25.0" vgrow="NEVER" />
+                <RowConstraints vgrow="NEVER" />
+                <RowConstraints vgrow="NEVER" />
+              </rowConstraints>
+               <children>
+                  <Label text="Ausrichtung" />
+                  <HBox prefHeight="100.0" prefWidth="200.0" spacing="5.0" GridPane.columnIndex="1">
+                     <children>
+                        <Button fx:id="mDirectionZButton" mnemonicParsing="false" text="Vorne" />
+                        <Button fx:id="mDirectionXButton" mnemonicParsing="false" text="Seite" />
+                        <Button fx:id="mDirectionYButton" mnemonicParsing="false" text="Oben" />
+                     </children>
+                  </HBox>
+                  <Label text="Darstellung" GridPane.rowIndex="1" />
+                  <ChoiceBox fx:id="mCameraChoiceBox" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                  <Label text="Positionslicht" GridPane.rowIndex="2" />
+                  <HBox alignment="CENTER_LEFT" spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                     <children>
+                        <CheckBox fx:id="mPointLightCheckBox" mnemonicParsing="false" />
+                        <Label text="Intensität:">
+                           <HBox.margin>
+                              <Insets left="10.0" />
+                           </HBox.margin>
+                        </Label>
+                        <Slider fx:id="mPointLightIntensitySlider" blockIncrement="0.1" max="1.0" />
+                        <Label fx:id="mPointLightIntensityValueLabel" text="-" />
+                     </children>
+                  </HBox>
+                  <Label text="Umgebungslicht" GridPane.rowIndex="3" />
+                  <HBox alignment="CENTER_LEFT" spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="3">
+                     <children>
+                        <CheckBox fx:id="mAmbientLightCheckBox" mnemonicParsing="false" />
+                        <Label text="Intensität:">
+                           <HBox.margin>
+                              <Insets left="10.0" />
+                           </HBox.margin>
+                        </Label>
+                        <Slider fx:id="mAmbientLightIntensitySlider" blockIncrement="1.1" max="1.0" />
+                        <Label fx:id="mAmbientLightIntensityValueLabel" text="-" />
+                     </children>
+                  </HBox>
+                  <Label text="Bildgröße ca." GridPane.columnIndex="3" />
+                  <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="5" GridPane.columnIndex="4">
+                     <children>
+                        <Spinner fx:id="mImageWidthSpinner" editable="true" prefWidth="80.0" />
+                        <Label text="x" />
+                        <Spinner fx:id="mImageHeightSpinner" editable="true" prefWidth="80.0" />
+                        <Label text="Pixel" />
+                     </children>
+                  </HBox>
+               </children>
+               <VBox.margin>
+                  <Insets top="5.0" />
+               </VBox.margin>
+            </GridPane>
+            <BorderPane>
+               <center>
+                  <HBox alignment="CENTER_LEFT" spacing="5.0">
+                     <children>
+                        <Button fx:id="mDefaultIconValuesButton" mnemonicParsing="false" text="Standards für Icon" />
+                        <Button fx:id="mDefaultPlanViewValuesButton" mnemonicParsing="false" text="Standards für Plan-Ansicht" />
+                     </children>
+                  </HBox>
+               </center>
+            </BorderPane>
+         </children>
+      </VBox>
+   </bottom>
+   <padding>
+      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+   </padding>
+</fx:root>

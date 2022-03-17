@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+
+<fx:root prefHeight="200.0" prefWidth="550.0" type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+   <center>
+      <GridPane hgap="5.0" vgap="5.0" BorderPane.alignment="CENTER">
+        <columnConstraints>
+          <ColumnConstraints hgrow="SOMETIMES" prefWidth="150.0" />
+          <ColumnConstraints hgrow="ALWAYS" prefWidth="100.0" />
+        </columnConstraints>
+        <rowConstraints>
+          <RowConstraints vgrow="NEVER" />
+          <RowConstraints vgrow="NEVER" />
+          <RowConstraints vgrow="NEVER" />
+          <RowConstraints prefHeight="50.0" vgrow="NEVER" />
+        </rowConstraints>
+         <children>
+            <CheckBox fx:id="mCategoryCheckBox" mnemonicParsing="false" text="Kategorie/Raum" />
+            <ComboBox fx:id="mCategoryComboBox" editable="true" prefWidth="250.0" GridPane.columnIndex="1" />
+            <CheckBox fx:id="mTypeCheckBox" mnemonicParsing="false" text="Typ/Art" GridPane.rowIndex="1" />
+            <ComboBox fx:id="mTypeComboBox" editable="true" prefWidth="250.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+            <CheckBox fx:id="mAuthorCheckBox" mnemonicParsing="false" text="Autor" GridPane.rowIndex="2" />
+            <TextField fx:id="mAuthorTextField" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+            <CheckBox fx:id="mDescriptionCheckBox" mnemonicParsing="false" text="Beschreibung" GridPane.rowIndex="3" />
+            <TextArea fx:id="mDescriptionTextArea" prefHeight="166.0" prefWidth="275.0" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+         </children>
+      </GridPane>
+   </center>
+</fx:root>

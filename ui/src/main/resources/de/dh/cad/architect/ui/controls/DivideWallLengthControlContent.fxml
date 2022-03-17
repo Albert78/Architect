@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<fx:root type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+   <left>
+      <VBox alignment="CENTER">
+         <children>
+            <Label text="Wandende" />
+            <Label text="A" />
+         </children>
+      </VBox>
+   </left>
+   <right>
+      <VBox alignment="CENTER">
+         <children>
+            <Label text="Wandende" />
+            <Label text="B" />
+         </children>
+      </VBox>
+   </right>
+   <center>
+      <VBox prefWidth="400.0">
+         <children>
+            <Slider fx:id="mWallDividerSlider" blockIncrement="100.0" max="1000.0" value="500.0">
+               <padding>
+                  <Insets left="5.0" right="5.0" />
+               </padding>
+            </Slider>
+            <BorderPane>
+               <right>
+                  <Label fx:id="mWallEndBDistanceLabel" text="y m" BorderPane.alignment="CENTER" />
+               </right>
+               <left>
+                  <Label fx:id="mWallEndADistanceLabel" text="x m" BorderPane.alignment="CENTER" />
+               </left>
+               <VBox.margin>
+                  <Insets left="30.0" right="30.0" />
+               </VBox.margin>
+            </BorderPane>
+         </children>
+      </VBox>
+   </center>
+   <top>
+      <VBox alignment="CENTER" fillWidth="false">
+         <children>
+            <HBox>
+               <children>
+                  <Label text="Gesamte Wandlänge: ">
+                     <HBox.margin>
+                        <Insets />
+                     </HBox.margin></Label>
+                  <Label fx:id="mWallLengthLabel" text="n m" />
+               </children>
+            </HBox>
+         </children>
+         <BorderPane.margin>
+            <Insets bottom="10.0" />
+         </BorderPane.margin>
+      </VBox>
+   </top>
+</fx:root>

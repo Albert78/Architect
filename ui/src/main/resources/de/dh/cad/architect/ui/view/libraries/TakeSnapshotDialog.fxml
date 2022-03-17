@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.VBox?>
+
+<fx:root type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+   <center>
+      <BorderPane BorderPane.alignment="CENTER">
+         <top>
+            <VBox alignment="CENTER" fillWidth="false" spacing="5.0" BorderPane.alignment="CENTER">
+               <children>
+                  <Button fx:id="mTakeSnapshotButton" mnemonicParsing="false" text="Bild aufnehmen">
+                     <graphic>
+                        <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@snapshot.png" />
+                           </image>
+                        </ImageView>
+                     </graphic></Button>
+                  <BorderPane style="-fx-background-color: black;">
+                     <center>
+                        <BorderPane style="-fx-background-color: white;">
+                           <center>
+                              <ImageView fx:id="mImageView" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@no-photo.png" />
+                                 </image>
+                              </ImageView>
+                           </center>
+                        </BorderPane>
+                     </center>
+                     <padding>
+                        <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
+                     </padding>
+                  </BorderPane>
+                  <Label fx:id="mImageSizeLabel" text="-" />
+                  <Button fx:id="mUseAsIconImageButton" disable="true" mnemonicParsing="false" text="Bild als Icon verwenden" VBox.vgrow="NEVER" />
+                  <Button fx:id="mUseAsPlanViewImageButton" disable="true" mnemonicParsing="false" text="Bild für Grundriss-Plan verwenden" />
+               </children>
+               <BorderPane.margin>
+                  <Insets top="20.0" />
+               </BorderPane.margin>
+            </VBox>
+         </top>
+      </BorderPane>
+   </center>
+   <bottom>
+      <Label fx:id="mHintLabel" BorderPane.alignment="CENTER" />
+   </bottom> 
+</fx:root>

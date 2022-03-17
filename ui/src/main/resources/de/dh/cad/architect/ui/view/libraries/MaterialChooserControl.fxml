@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.layout.BorderPane?>
+
+<fx:root type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+	<center>
+		<SplitPane dividerPositions="0.7" BorderPane.alignment="CENTER">
+			<items>
+				<BorderPane fx:id="mTreeParentPane">
+					<bottom>
+					</bottom>
+				</BorderPane>
+				<BorderPane fx:id="mContentPane" minWidth="300.0" prefWidth="350.0" SplitPane.resizableWithParent="false">
+					<padding>
+						<Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+					</padding>
+				</BorderPane>
+			</items>
+		</SplitPane>
+	</center>
+</fx:root>

@@ -1,0 +1,1 @@
+- Fensteröffnung wird nicht weit genug aus Wand ausgeschnitten, wenn Bevel von Nachbarwand in Fensterbereich reinragt

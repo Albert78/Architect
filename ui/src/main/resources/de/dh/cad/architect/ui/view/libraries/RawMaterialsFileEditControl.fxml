@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+
+<fx:root minHeight="600.0" minWidth="800.0" type="BorderPane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+   <center>
+      <SplitPane dividerPositions="0.6">
+         <items>
+            <BorderPane fx:id="mSourceCodeParent">
+               <top>
+                  <BorderPane BorderPane.alignment="TOP_LEFT">
+                     <BorderPane.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </BorderPane.margin>
+                     <right>
+                        <HBox spacing="10.0" BorderPane.alignment="CENTER">
+                           <children>
+                              <StackPane>
+                                 <children>
+                                    <Label text="Ressourcen" />
+                                 </children>
+                              </StackPane>
+                              <Button fx:id="mOpenDirectoryButton" mnemonicParsing="false" text="..." />
+                           </children>
+                        </HBox>
+                     </right>
+                     <left>
+                        <Label text="Quelltext" BorderPane.alignment="CENTER" />
+                     </left>
+                  </BorderPane>
+               </top>
+            </BorderPane>
+            <SplitPane dividerPositions="0.7" orientation="VERTICAL" SplitPane.resizableWithParent="false">
+               <items>
+                  <BorderPane fx:id="mThreeDViewParentPane">
+                     <top>
+                        <Label text="Materialvorschau">
+                           <BorderPane.margin>
+                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                           </BorderPane.margin>
+                        </Label>
+                     </top>
+                  </BorderPane>
+                  <BorderPane>
+                     <center>
+                        <TextArea fx:id="mPreviewLogTextArea" />
+                     </center>
+                     <top>
+                        <Label text="Meldungen des Ladevorgangs" BorderPane.alignment="TOP_LEFT" />
+                     </top>
+                  </BorderPane>
+               </items>
+            </SplitPane>
+         </items>
+      </SplitPane>
+   </center>
+</fx:root>

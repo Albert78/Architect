@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+
+
+<fx:root type="BorderPane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+   <center>
+      <TextField fx:id="mDirectoryPathTextField" prefHeight="26.0" prefWidth="454.0" promptText="C:\..." BorderPane.alignment="CENTER" />
+   </center>
+   <right>
+      <Button fx:id="mPathExplorerButton" mnemonicParsing="false" text="..." BorderPane.alignment="CENTER" />
+   </right>
+</fx:root>

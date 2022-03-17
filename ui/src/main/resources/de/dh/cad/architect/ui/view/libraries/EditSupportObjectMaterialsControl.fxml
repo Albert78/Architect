@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+
+<fx:root prefHeight="800.0" prefWidth="1200.0" type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+   <center>
+      <TableView fx:id="mMeshesTableView" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+        <columns>
+          <TableColumn editable="false" prefWidth="200.0" sortable="false" text="Hilfsobjekt">
+               <columns>
+                  <TableColumn fx:id="mSupportObjectIdColumn" editable="false" prefWidth="100.0" text="ID" />
+                  <TableColumn fx:id="mSupportObjectNameColumn" prefWidth="200.0" text="Name" />
+               </columns>
+            </TableColumn>
+            <TableColumn editable="false" prefWidth="75.0" sortable="false" text="Mesh">
+               <columns>
+                <TableColumn fx:id="mMeshIdColumn" editable="false" prefWidth="100.0" text="ID" />
+                  <TableColumn fx:id="mMeshNameColumn" editable="false" prefWidth="200.0" text="Name" />
+               </columns>
+            </TableColumn>
+            <TableColumn fx:id="mMaterialColumn" editable="false" prefWidth="200.0" text="Material" />
+        </columns>
+      </TableView>
+   </center>
+   <right>
+      <GridPane BorderPane.alignment="CENTER">
+        <columnConstraints>
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="80.0" />
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="200.0" />
+        </columnConstraints>
+        <rowConstraints>
+          <RowConstraints fillHeight="false" minHeight="10.0" prefHeight="30.0" vgrow="NEVER" />
+          <RowConstraints fillHeight="false" minHeight="10.0" prefHeight="30.0" vgrow="NEVER" />
+          <RowConstraints fillHeight="false" minHeight="10.0" prefHeight="30.0" vgrow="NEVER" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+        </rowConstraints>
+         <children>
+            <Label text="Ausgewählt" />
+            <Label fx:id="mNMeshesChoosenLabel" text="- Meshes" GridPane.columnIndex="1" />
+            <Label text="MaterialSet" GridPane.rowIndex="1" />
+            <Label fx:id="mMaterialSetLabel" text="-" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+            <Label text="Material" GridPane.rowIndex="2" />
+            <Label fx:id="mMaterialNameLabel" text="-" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+         </children>
+      </GridPane>
+   </right>
+</fx:root>
