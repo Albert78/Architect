@@ -31,6 +31,8 @@ Außerdem:
 	- Bibliotheksimporter für Möbel- und Oberflächenbibliotheken aus SweetHome3D
 
 ## Was kommt noch?
+- Erweiterung des Plan-Modells, so dass in einer Datei / einem Workspace mehrere Pläne enthalten sind, die relativ zueinander platziert sind. Also z.B. pro Etage oder sogar pro Zimmer einen eigenen Plan, die in der 3D-Ansicht zusammen dargstellt werden.
+Aktuell ist das noch etwas hakelig mit dem Dateihandling, da Architect das Verzeichnis einer Plan-Datei als Workspace ansieht, man aber die Plan-XML-Datei explizit anklicken muss zum Öffnen.
 - Bessere Konfigurationsmöglichkeiten für Oberflächen auf Objekten, z.B. Lage, Skalierung und Drehung (z.B. für Dachziegeln, Tapeten- und Bodentexturen etc.)
 - Türen und Fenster in Wandöffnungen, Modellierung von verschiedenen Etagen und Übergänge/Treppen
 - Lampen, die auch leuchten :-)
