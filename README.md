@@ -12,7 +12,7 @@ Als Anwendungsentwickler ist mir neben guter Usability vor allem die Codearchite
 Das Programm wird immer mal wieder erweitert und verbessert, ich nehme auch gerne sinnvolle Featurewünsche oder andere Vorschläge entgegen.
 
 ## Was ist Architect nicht?
-Erwartet bitte (noch) kein komplett rundes, installierbares Programm.
+Erwartet bitte (noch) kein komplett rundes, installierbares Programm. Es kann im aktuellen Zustand nur über Maven oder Eclipse gestartet werden. Wer einen Installer beisteuern will, nur her damit!
 Das Programm ist aktuell ausschließlich in deutsch lokalisiert, andere Sprachen können programmatisch leicht ergänzt werden.
 
 Außerdem:
@@ -31,13 +31,19 @@ Außerdem:
 	- Bibliotheksimporter für Möbel- und Oberflächenbibliotheken aus SweetHome3D
 
 ## Was kommt noch?
-- Bessere Konfigurationsmöglichkeiten für Oberflächen auf Objekten, z.B. Lage, Skalierung und Drehung
-- Türen und Fenster in Wandöffnungen
+- Bessere Konfigurationsmöglichkeiten für Oberflächen auf Objekten, z.B. Lage, Skalierung und Drehung (z.B. für Dachziegeln, Tapeten- und Bodentexturen etc.)
+- Türen und Fenster in Wandöffnungen, Modellierung von verschiedenen Etagen und Übergänge/Treppen
 - Lampen, die auch leuchten :-)
 - Weitere Arten von Hilfsobjekten, z.B. Balken, Treppen etc.
 - ...
 
-## Quick-Start mit Maven
+## Programmiersprache, Ausführung, Installation
+#### Programmiersprache und Build-System
+- Das Programm ist in Java geschrieben, die grafische Oberfläche verwendet JavaFX, das alles in Java 17 (Stand 2022)
+- Das System besteht aus einer Handvoll Modulen, die mithilfe von Maven als Multi-Module-Project gebaut werden
+- Das Programm, die Möbel- und Oberflächenbibliotheksverwaltung und der SweetHome3D-Bibliotheksimporter können aktuell nur nur aus Maven bzw. aus einer IDE (Eclipse) gestartet werden, gibt es noch keine Installation
+
+### Quick-Start mit Maven
 #### Benötigt:
 - Apache Maven 3.x
 
@@ -47,7 +53,7 @@ Außerdem:
 - `cd main`
 - `mvn javafx:run`
 
-## Quick-Start mit Eclipse
+### Quick-Start mit Eclipse
 #### Benötigt:
 - Eclipse Standard, neuere Version
 - JDK Version >=17, in Eclipse unter Preferences/Java/Installed JREs registriert
@@ -57,18 +63,7 @@ Außerdem:
 - Importieren der enthaltenen Projekte in Eclipse (Import/General/Existing Projects into Workspace)
 - Ausführen von `de.dh.cad.architect.ArchitectApplication` im Projekt `main`
 
-## Programmiersprache, Ausführung, Installation
-#### Programmiersprache und Build-System
-- Das Programm ist in Java geschrieben, die grafische Oberfläche verwendet JavaFX, das alles in Java 17 (Stand 2022)
-- Das System besteht aus einer Handvoll Modulen, die mithilfe von Maven als Multi-Module-Project gebaut werden
-- Das Programm, die Bibliotheksverwaltung und der SweetHome3D-Bibliotheksimporter können aktuell nur nur aus Maven bzw. aus einer IDE (Eclipse) gestartet werden, gibt es noch keine Installation
-
-Als Java-Entwickler mit Maven- und Eclipse-Erfahrung solltet ihr Architect leicht zum Laufen bringen. Benötigt wird:
-- eine aktuelle Maven-Installation
-- ein Java SDK >= 17
-- ein Eclipse in der Standard-Java-Paketierung
-
-#### Verwendung des Programms
+### Verwendung des Programms
 Zu Beginn solltet ihr euch mit der Architect Hauptanwendung vertraut machen, sie läuft ohne weitere Vorbereitung. Macht euch mit der Mausbedienung vertraut, erstellt Wände, Böden, Decken, schaut euch das Resultat in 3D an und macht euch mit dem Konzept der Verbindungsanker vertraut.
 
 Zur Gestaltung von Objektoberflächen (Wand-Texturen, Möbelfarben, ...) und zur Möblierung braucht ihr mindestens eine *Asset-Bibliothek*, die ihr mit dem Bibliotheksmanager anlegt. Dieser wird über das Architect-Menü oder als eigenständige Anwendung gestartet. Darin könnt ihr die einzelnen Oberflächen und Möbelstücke von Hand anlegen oder über den SweetHome3D-Importer aus dessen Bibliotheken bedienen. Ihr braucht die entpackten Bibliotheken, die dort im git im Projekt "3DModels" eingecheckt sind (Siehe https://svn.code.sf.net/p/sweethome3d/code/trunk).
@@ -82,4 +77,5 @@ Importiert die Java-Projekte in Eclipse und führt die Main-Klassen aus:
 Das Programm ist aus zwei Bedürfnissen entstanden:
 1. Ich wollte eine kostenlose Visualisierungssoftware für meine neue Wohnung, mit der ich Änderungen (Wände einreißen, streichen, ... Möblierung, ...) planen kann ohne die Einschränkungen und Unzulänglichkeiten der am Markt verfügbaren Software
 2. Ich brauchte eine nicht-triviale Java-Anwendung, mit der ich meinen Studenten die Kunst des Programmierens beibringen kann, ohne komplizierte Abhängigkeiten, technische Krücken oder "historisch gewachsenen" Code
+
 Nach ein paar Gehversuchen mit der exzellenten JavaFX-Bibliothek wuchs bei mir schnell der Wunsch, auf dieser Basis eine größere Software zu bauen. So begann ich vor ein paar Jahren mit der Entwicklung von Architect. Seitdem entwickle ich das Programm immer mal wieder weiter.
