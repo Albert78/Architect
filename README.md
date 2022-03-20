@@ -78,6 +78,6 @@ Importiert die Java-Projekte in Eclipse und führt die Main-Klassen aus:
 ## Motivation hinter Architect
 Das Programm ist aus zwei Bedürfnissen entstanden:
 1. Ich wollte eine kostenlose Visualisierungssoftware für meine neue Wohnung, mit der ich Änderungen (Wände einreißen, streichen, ... Möblierung, ...) planen kann ohne die Einschränkungen und Unzulänglichkeiten der am Markt verfügbaren Software
-2. Ich brauchte eine nicht-triviale Java-Anwendung, mit der ich meinen Studenten die Kunst des Programmierens beibringen kann, ohne komplizierte Abhängigkeiten, technische Krücken oder "historisch gewachsenen" Code
+2. Ich brauchte eine nicht-triviale Java-Anwendung, mit der ich meinen Studenten die Kunst des Programmierens beibringen kann, klein genug, um sie vollständig überblicken zu können und groß genug, um daran Verfahren der Softwareentwicklung zu üben und Probleme zu diskutieren
 
 Nach ein paar Gehversuchen mit der exzellenten JavaFX-Bibliothek wuchs bei mir schnell der Wunsch, auf dieser Basis eine größere Software zu bauen. So begann ich vor ein paar Jahren mit der Entwicklung von Architect. Seitdem entwickle ich das Programm immer mal wieder weiter.
