@@ -60,9 +60,9 @@ public class AssetManagerConfiguration {
     }
 
     public Collection<Path> getOpenAssetLibraries() {
-        int numOpenTextureLibraries = mPrefs.getInt(KEY_NUM_OPEN_ASSET_LIBRARIES, 0);
+        int numOpenAssetLibraries = mPrefs.getInt(KEY_NUM_OPEN_ASSET_LIBRARIES, 0);
         Collection<Path> result = new ArrayList<>();
-        for (int i = 0; i < numOpenTextureLibraries; i++) {
+        for (int i = 0; i < numOpenAssetLibraries; i++) {
             String path = mPrefs.get(KEY_ASSET_LIBRARY_PREFIX + i, null);
             if (!StringUtils.isEmpty(path)) {
                 result.add(Paths.get(path));

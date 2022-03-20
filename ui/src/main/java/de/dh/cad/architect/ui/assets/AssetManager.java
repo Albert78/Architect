@@ -544,17 +544,18 @@ public class AssetManager {
     }
 
     protected void saveOpenAssetLibraries() {
-        Collection<Path> openTextureLibraries = new ArrayList<>();
+        Collection<Path> openAssetLibraries = new ArrayList<>();
         for (LibraryData libraryData : mAssetLibraries.values()) {
             IDirectoryLocator rootDirectory = libraryData.getRootDirectory();
             if (!(rootDirectory instanceof PlainFileSystemDirectoryLocator)) {
                 // Actually, this restriction is not necessary, the only reason is because the configuration API doesn't support the VFS API yet
                 log.warn("Currently, we can only save asset libraries which are accessed via the plain file system VFS API");
+                continue;
             }
             PlainFileSystemDirectoryLocator dl = (PlainFileSystemDirectoryLocator) rootDirectory;
-            openTextureLibraries.add(dl.getPath());
+            openAssetLibraries.add(dl.getPath());
         }
-        mConfiguration.setOpenAssetLibraries(openTextureLibraries);
+        mConfiguration.setOpenAssetLibraries(openAssetLibraries);
     }
 
     public static boolean isAssetLibraryDirectory(IDirectoryLocator libraryRootDirectory) {

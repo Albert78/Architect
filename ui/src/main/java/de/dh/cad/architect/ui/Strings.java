@@ -122,7 +122,7 @@ public class Strings {
 
     public static final String PERMANENT_DOCK_ANCHOR_ACTION_TITLE = "Anker andocken";
     public static final String ACTION_CANCEL_PERMANENT_DOCK = "Abbrechen: Andocken";
-    public static final String UNDOCK_ANCHOR_ACTION_TITLE = "Anchor abdocken";
+    public static final String UNDOCK_ANCHOR_ACTION_TITLE = "Anker abdocken";
     public static final String ACTION_CANCEL_UNDOCK = "Abbrechen: Abdocken";
     public static final String ACTION_PERMANENT_DOCK_TO_SELECTED_ANCHOR_TITLE = "An selektierten Anker ''{0}'' andocken";
     public static final String SOFT_DOCK_ANCHOR_ACTION_TITLE = "Ankerposition angleichen";
