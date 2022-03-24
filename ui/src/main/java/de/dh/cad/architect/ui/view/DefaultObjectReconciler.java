@@ -21,9 +21,12 @@ import de.dh.cad.architect.model.ChangeSet;
 import de.dh.cad.architect.model.objects.BaseAnchoredObject;
 import de.dh.cad.architect.model.objects.ReconcileResult;
 
+/**
+ * Reconciler which just delegates to the changed object.
+ */
 public class DefaultObjectReconciler implements IObjectReconciler {
     @Override
-    public ReconcileResult reconcileObjectChange(BaseAnchoredObject ownerObject, ChangeSet changeSet) {
-        return ownerObject.reconcileAfterHandleChange(changeSet);
+    public ReconcileResult reconcileObjectChange(BaseAnchoredObject changedObject, ChangeSet changeSet) {
+        return changedObject.reconcileAfterHandleChange(changeSet);
     }
 }

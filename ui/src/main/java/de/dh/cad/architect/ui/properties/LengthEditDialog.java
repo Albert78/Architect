@@ -35,8 +35,8 @@ import javafx.util.Callback;
 public class LengthEditDialog extends Dialog<Length> {
     protected LengthControl mLengthControl;
 
-    public LengthEditDialog(NumberFormat numberFormat) {
-        setTitle("Abstand bearbeiten");
+    public LengthEditDialog(String title, NumberFormat numberFormat) {
+        setTitle(title);
         // TODO: Nice graphic
         ObservableList<ButtonType> buttonTypes = getDialogPane().getButtonTypes();
         buttonTypes.addAll(ButtonType.OK, ButtonType.CANCEL);

@@ -23,6 +23,7 @@ import java.util.Optional;
 
 import de.dh.cad.architect.model.coords.Dimensions2D;
 import de.dh.cad.architect.model.coords.Length;
+import de.dh.cad.architect.ui.Strings;
 import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -48,7 +49,7 @@ public class PropertyDimensions2DControlProvider implements IPropertyControlProv
             @Override
             public void run() {
                 Dimensions2D value = (Dimensions2D) cell.getItem();
-                Dimensions2DEditDialog dialog = new Dimensions2DEditDialog(mNumberFormat);
+                Dimensions2DEditDialog dialog = new Dimensions2DEditDialog(Strings.PROPERTIES_DIMENSIONS_DIALOG_TITLE, mNumberFormat);
                 dialog.setWidthLabel(mWidthLabel);
                 dialog.setHeightLabel(mHeightLabel);
                 dialog.setDimensions(value);

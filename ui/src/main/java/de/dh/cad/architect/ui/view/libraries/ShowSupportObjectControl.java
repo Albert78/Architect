@@ -19,6 +19,7 @@ package de.dh.cad.architect.ui.view.libraries;
 
 import java.io.IOException;
 import java.net.URL;
+import java.text.MessageFormat;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
@@ -126,10 +127,10 @@ public class ShowSupportObjectControl extends BorderPane implements Initializabl
         mThreeDObjectView.setCoordinateSystemVisible(true);
         mThreeDResourceParent.getChildren().add(mThreeDObjectView);
 
-        mWidthLabel.setText("Breite (X): " + lengthOrError(mAssetDescriptor.getWidth()));
-        mHeightLabel.setText("Höhe (Y): " + lengthOrError(mAssetDescriptor.getHeight()));
-        mDepthLabel.setText("Tiefe (Z): " + lengthOrError(mAssetDescriptor.getDepth()));
-        mElevationLabel.setText("Vertikaler Versatz (Y): " + lengthOrError(mAssetDescriptor.getElevation()));
+        mWidthLabel.setText(MessageFormat.format(Strings.SUPPORT_OBJECT_CONTROL_WIDTH_X_0, lengthOrError(mAssetDescriptor.getWidth())));
+        mHeightLabel.setText(MessageFormat.format(Strings.SUPPORT_OBJECT_CONTROL_HEIGHT_Y_0, lengthOrError(mAssetDescriptor.getHeight())));
+        mDepthLabel.setText(MessageFormat.format(Strings.SUPPORT_OBJECT_CONTROL_DEPTH_Z_0, lengthOrError(mAssetDescriptor.getDepth())));
+        mElevationLabel.setText(MessageFormat.format(Strings.SUPPORT_OBJECT_CONTROL_ELEVATION_Y_0, lengthOrError(mAssetDescriptor.getElevation())));
 
         update3DObjectView();
     }

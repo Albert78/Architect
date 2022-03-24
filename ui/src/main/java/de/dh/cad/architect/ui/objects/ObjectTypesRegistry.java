@@ -37,15 +37,15 @@ public class ObjectTypesRegistry {
 
     static {
         UI_REPRESENTATIONS.put(Anchor.class, new AnchorUIRepresentation());
-        UI_REPRESENTATIONS.put(Dimensioning.class, new DimensioningUIProperties());
-        UI_REPRESENTATIONS.put(Floor.class, new FloorUIProperties());
-        UI_REPRESENTATIONS.put(Wall.class, new WallUIProperties());
-        UI_REPRESENTATIONS.put(WallHole.class, new WallHoleUIProperties());
-        UI_REPRESENTATIONS.put(Ceiling.class, new CeilingUIProperties());
-        UI_REPRESENTATIONS.put(Covering.class, new CoveringUIProperties());
-        UI_REPRESENTATIONS.put(SupportObject.class, new SupportObjectUIProperties());
-        UI_REPRESENTATIONS.put(GuideLine.class, new GuideLineUIProperties());
-        UI_REPRESENTATIONS.put(ObjectsGroup.class, new ObjectsGroupUIProperties());
+        UI_REPRESENTATIONS.put(Dimensioning.class, new DimensioningUIRepresentation());
+        UI_REPRESENTATIONS.put(Floor.class, new FloorUIRepresentation());
+        UI_REPRESENTATIONS.put(Wall.class, new WallUIRepresentation());
+        UI_REPRESENTATIONS.put(WallHole.class, new WallHoleUIRepresentation());
+        UI_REPRESENTATIONS.put(Ceiling.class, new CeilingUIRepresentation());
+        UI_REPRESENTATIONS.put(Covering.class, new CoveringUIRepresentation());
+        UI_REPRESENTATIONS.put(SupportObject.class, new SupportObjectUIRepresentation());
+        UI_REPRESENTATIONS.put(GuideLine.class, new GuideLineUIRepresentation());
+        UI_REPRESENTATIONS.put(ObjectsGroup.class, new ObjectsGroupUIRepresentation());
     }
 
     public static <T extends BaseObject> AbstractObjectUIRepresentation getUIRepresentation(Class<T> modelObjectClass) {

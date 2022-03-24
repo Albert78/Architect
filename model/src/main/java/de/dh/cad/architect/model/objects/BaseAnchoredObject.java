@@ -108,6 +108,27 @@ public abstract class BaseAnchoredObject extends BaseObject implements IDeserial
 
     /**
      * Calculates and sets the new positions for dependent anchors after the handle anchors have been moved to new positions.
+     *
+     * The idea of the reconcile process is like this:
+     *
+     * Object handle anchors can be moved by the user or automatically follow the dock master anchor, if docked.
+     * For example a wall end is moved by the user or a docked ceiling handle anchor is moved as a result of a wall movement.
+     * After such a handle movement was executed, the object whose anchor was moved (called handle owner) is potentially in an
+     * inconsistent state.
+     * For example, the wall's corner anchors do not match the new wall end position any more after the wall end handle was repositioned.
+     *
+     * The reconcile step will correct the positions of dependent anchors, for example will update the wall corners to the new wall
+     * end handle position.
+     * That update can lead to more anchor movements if handle anchors of other objects are docked to the anchors which just have
+     * been updated.
+     * So the system will first loop through all objects whose handle anchors are directly or indirectly moved. During that process,
+     * each reconcile call produces a {@link ReconcileResult} which collects objects which might have become invalid, for example
+     * if a wall end handle anchor was moved, that wall's apex positions become invalid as well as the apex positions of connected
+     * walls. All potentially affected objects are added to the reconcile result.
+     *
+     * After the reconcile step, all objects which have become invalid ("objects to heal") must be healed by calling
+     * {@link #healObject(Collection, ChangeSet)}.
+     *
      * @return Collection of changed dependent, non-handle anchors and objects to be healed after the operation.
      * @throws IllegalStateException If the intended anchor moves are not possible for this object.
      */
@@ -117,7 +138,7 @@ public abstract class BaseAnchoredObject extends BaseObject implements IDeserial
     }
 
     /**
-     * Adapts the object to a new situation, for example updates the wall bevel points to new anchor positions.
+     * Adapts the object to a new situation, for example updates the wall apex points to new anchor positions.
      * @param healReasons Set of non-formalized healing reasons, can be used to transport hints about the defect
      * to limit the healing process to the defect parts.
      */

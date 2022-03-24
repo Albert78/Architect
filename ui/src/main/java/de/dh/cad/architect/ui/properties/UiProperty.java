@@ -49,8 +49,8 @@ public abstract class UiProperty<T> {
         Double(() -> new PropertyTextControlProvider<>((StringConverter<?>) new DoubleStringConverter())),
         Length(() -> new PropertyLengthControlProvider(Constants.LOCALIZED_NUMBER_FORMAT)),
         IPosition(() -> new PropertyIPositionControlProvider(Constants.LOCALIZED_NUMBER_FORMAT)),
-        Dimensions2DXY(() -> new PropertyDimensions2DControlProvider(Constants.LOCALIZED_NUMBER_FORMAT, "Breite", "Tiefe")),
-        Dimensions2DXZ(() -> new PropertyDimensions2DControlProvider(Constants.LOCALIZED_NUMBER_FORMAT, "Breite", "Höhe")),
+        Dimensions2DXY(() -> new PropertyDimensions2DControlProvider(Constants.LOCALIZED_NUMBER_FORMAT, Strings.PROPERTY_DIMENSIONS_WIDTH, Strings.PROPERTY_DIMENSIONS_DEPTH)),
+        Dimensions2DXZ(() -> new PropertyDimensions2DControlProvider(Constants.LOCALIZED_NUMBER_FORMAT, Strings.PROPERTY_DIMENSIONS_WIDTH, Strings.PROPERTY_DIMENSIONS_HEIGHT)),
         Dimensions3D(() -> new PropertyDimensions3DControlProvider(Constants.LOCALIZED_NUMBER_FORMAT)),
         WallBevelType(() -> new PropertyEnumControlProvider<>(de.dh.cad.architect.model.wallmodel.WallBevelType.values(), Strings.WALL_BEVEL_TYPE_TITLE_PROVIDER)),
         WallDockEnd(() -> new PropertyEnumControlProvider<>(de.dh.cad.architect.model.wallmodel.WallDockEnd.values()));

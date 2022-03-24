@@ -21,6 +21,7 @@ import java.text.NumberFormat;
 import java.util.Optional;
 
 import de.dh.cad.architect.model.coords.Length;
+import de.dh.cad.architect.ui.Strings;
 import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -41,7 +42,7 @@ public class PropertyLengthControlProvider implements IPropertyControlProvider<L
             @Override
             public void run() {
                 Length value = (Length) cell.getItem();
-                LengthEditDialog dialog = new LengthEditDialog(mNumberFormat);
+                LengthEditDialog dialog = new LengthEditDialog(Strings.PROPERTIES_LENGTH_DIALOG_TITLE, mNumberFormat);
                 dialog.setLength(value);
                 Optional<Length> result = dialog.showAndWait();
                 if (result.isPresent()) {

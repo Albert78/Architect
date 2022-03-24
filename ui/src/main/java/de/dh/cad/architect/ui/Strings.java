@@ -39,6 +39,10 @@ public class Strings {
 
     public  static final String NO_ENTRY_CHOOSEN = "Kein Eintrag ausgewählt";
 
+    public static final String PROPERTY_DIMENSIONS_WIDTH = "Breite";
+    public static final String PROPERTY_DIMENSIONS_DEPTH = "Tiefe";
+    public static final String PROPERTY_DIMENSIONS_HEIGHT = "Höhe";
+
     // Dialogs
     public static final String DIVIDE_WALL_LENGTH_DIALOG_TITLE = "Wand teilen";
     public static final String DIVIDE_WALL_LENGTH_DIALOG_HEADER = "Teilt die Wand in zwei verbundene Wandteile.\nWähle die Position, an der die Wand geteilt werden soll!";
@@ -278,6 +282,9 @@ public class Strings {
     public static final String SOFT_DOCK_BEHAVIOR_USER_HINT = "Wähle einen Objektanker, dessen Position für Anker {0} übernommen werden soll";
     public static final String DOCK_OPERATION_SOFT_DOCK_TO_TARGET_ANCHOR = "Anker-Position übernehmen";
 
+    // Support Object Default Behavior
+    public static final String SUPPORT_OBJECTS_DEFAULT_BEHAVIOR_CHOOSE_SUPPORT_OBJECT_TO_ADD = "Hilfsobjekt auswählen";
+
     // Edit Support Object Behavior
     public static final String INTERACTIONS_TAB_SELECTED_SUPPORT_OBJECT_TITLE = "Hilfsobjekt(e) bearbeiten";
     public static final String SUPPORT_OBJECTS_EDIT_BEHAVIOR_USER_HINT = "Ordne die Hilfsobjekte an oder verändere sie";
@@ -309,6 +316,7 @@ public class Strings {
     public static final String PAINTER_MODE_ACTION_TOOLTIP = "Oberflächen bearbeiten";
     public static final String THREE_D_PAINTER_BEHAVIOR_TITLE = "Objektoberflächen-Bearbeitungsmodus";
     public static final String THREE_D_PAINTER_BEHAVIOR_USER_HINT = "Trage das gewählte Material durch Klicken auf eine Objektoberfläche auf. Halte <Strg> zum Kopieren des angeklickten Materials.";
+    public static final String THREE_D_PAINTER_BEHAVIOR_MATERIAL_TAB = "Material";
     public static final String THREE_D_PAINTER_BEHAVIOR_MATERIAL_CONTROL_TITLE = "Aufzutragendes Material";
     public static final String THREE_D_PAINTER_BEHAVIOR_NO_MATERIAL_CHOOSEN = "- Keine Material gewählt -";
     public static final String THREE_D_PAINTER_BEHAVIOR_CHOOSE_MATERIAL_DIALOG_TITLE = "Material auswählen";
@@ -409,4 +417,63 @@ public class Strings {
     public static final String LIBRARY_MANAGER_EDIT_SUPPORT_OBJECT_TAKE_SNAPSHOT_DIALOG_TITLE = "Bilder für Bibliothek aufnehmen";
     public static final String LIBRARY_MANAGER_EDIT_SUPPORT_OBJECT_TAKE_SNAPSHOT_ICON_IMAGE_SAVED = "Icon gespeichert";
     public static final String LIBRARY_MANAGER_EDIT_SUPPORT_OBJECT_TAKE_SNAPSHOT_PLAN_VIEW_IMAGE_SAVED = "Grundriss-Bild gespeichert";
+
+    public static final String ANCHOR_PROPERTIES_POSITION = "Position";
+    public static final String ANCHOR_PROPERTIES_DOCKED = "Angedockt";
+    public static final String ANCHOR_PROPERTIES_IS_HANDLE = "Handle";
+    public static final String ANCHOR_PROPERTIES_OWNER = "Besitzer";
+    public static final String ANCHOR_PROPERTIES_ANCHOR_TYPE = "Anker-Typ";
+
+    public static final String CEILING_PROPERTIES_NUM_CORNERS = "Eckpunkte";
+    public static final String CEILING_PROPERTIES_HEIGHT = "Höhe";
+
+    public static final String DIMENSIONING_PROPERTIES_LENGTH = "Länge";
+
+    public static final String FLOOR_PROPERTIES_LEVEL = "Etage";
+    public static final String FLOOR_PROPERTIES_HEIGHT = "Höhe";
+    public static final String FLOOR_PROPERTIES_SET_HEIGHT_OPERATION_NAME = "Fußbodenhöhe setzen";
+    public static final String FLOOR_PROPERTIES_THICKNESS = "Dicke";
+    public static final String FLOOR_PROPERTIES_SET_THICKNESS_OPERATION_NAME = "Fußbodendicke setzen";
+    public static final String FLOOR_PROPERTIES_AREA = "Fläche";
+
+    public static final String GUIDELINE_PROPERTIES_POSITION = "Position";
+
+    public static final String OBJECTS_GROUP_PROPERTIES_NUM_OBJECTS = "# Objekte";
+
+    public static final String SUPPORT_OBJECT_PROPERTIES_DESCRIPTOR = "Deskriptor";
+    public static final String SUPPORT_OBJECT_PROPERTIES_POSITION = "Position";
+    public static final String SUPPORT_OBJECT_PROPERTIES_SIZE = "Größe X/Y";
+    public static final String SUPPORT_OBJECT_PROPERTIES_ROTATION_DEGREES = "Drehung (Grad)";
+    public static final String SUPPORT_OBJECT_PROPERTIES_HEIGHT = "Höhe";
+    public static final String SUPPORT_OBJECT_PROPERTIES_ELEVATION = "Vertikaler Versatz";
+
+    public static final String WALL_HOLE_PROPERTIES_DIMENSIONS = "Maße";
+    public static final String WALL_HOLE_PROPERTIES_PARAPET_HEIGHT = "Brüstungshöhe";
+    public static final String WALL_HOLE_PROPERTIES_DISTANCE_FROM_WALL_END = "Abstand von Wandende";
+    public static final String WALL_HOLE_PROPERTIES_DOCK_END = "Bezugs-Wandende";
+
+    public static final String WALL_PROPERTIES_THICKNESS = "Wanddicke";
+    public static final String WALL_PROPERTIES_BEVEL_TYPE_A = "Wandverbinder Ende A";
+    public static final String WALL_PROPERTIES_BEVEL_TYPE_B = "Wandverbinder Ende A";
+    public static final String WALL_PROPERTIES_HEIGHT_A = "Höhe am Ende A";
+    public static final String WALL_PROPERTIES_HEIGHT_B = "Höhe am Ende B";
+    public static final String WALL_PROPERTIES_OPERATION_HAME_SET_HEIGHT_A = "Anpassung von Wandankern an Höhenänderung Ende A";
+    public static final String WALL_PROPERTIES_OPERATION_HAME_SET_HEIGHT_B = "Anpassung von Wandankern an Höhenänderung Ende B";
+    public static final String WALL_PROPERTIES_BASE_LENGTH = "Basis-Wandlänge";
+    public static final String WALL_PROPERTIES_LENGTH_SIDE_1 = "Wandlänge Seite 1";
+    public static final String WALL_PROPERTIES_LENGTH_SIDE_2 = "Wandlänge Seite 2";
+
+    public static final String SUPPORT_OBJECT_CONTROL_WIDTH_X_0 = "Breite (X): {0}";
+    public static final String SUPPORT_OBJECT_CONTROL_HEIGHT_Y_0 = "Höhe (Y): {0}";
+    public static final String SUPPORT_OBJECT_CONTROL_DEPTH_Z_0 = "Tiefe (Z): {0}";
+    public static final String SUPPORT_OBJECT_CONTROL_ELEVATION_Y_0 = "Vertikaler Versatz (Y): {0}";
+
+    public static final String SUPPORT_OBJECT_CONTROL_DEFAULT_SIZE_TITLE = "Standardgröße:";
+    public static final String SUPPORT_OBJECT_CONTROL_WIDTH_X_LABEL = "Breite (X)";
+    public static final String SUPPORT_OBJECT_CONTROL_HEIGHT_Y_LABEL = "Höhe (Y)";
+    public static final String SUPPORT_OBJECT_CONTROL_DEPTH_Z_LABEL = "Tiefe (Z)";
+    public static final String SUPPORT_OBJECT_CONTROL_ELEVATION_Y_LABEL = "Vertikaler Versatz (Y)";
+
+    public static final String PROPERTIES_DIMENSIONS_DIALOG_TITLE = "Ausmaße bearbeiten";
+    public static final String PROPERTIES_LENGTH_DIALOG_TITLE = "Länge bearbeiten";
 }

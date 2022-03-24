@@ -22,37 +22,47 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
+import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.objects.BaseObject;
-import de.dh.cad.architect.model.objects.ObjectsGroup;
+import de.dh.cad.architect.model.objects.GuideLine;
 import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.controller.UiController;
-import de.dh.cad.architect.ui.properties.ConstantUiProperty;
 import de.dh.cad.architect.ui.properties.UiProperty;
 import de.dh.cad.architect.ui.properties.UiProperty.PropertyType;
 import de.dh.cad.architect.ui.view.DefaultObjectReconciler;
 import de.dh.cad.architect.ui.view.construction.Abstract2DView;
 import de.dh.cad.architect.ui.view.threed.Abstract3DView;
 
-public class ObjectsGroupUIProperties extends BaseObjectUIRepresentation {
-    public static final String KEY_PROPERTY_NUM_OBJECTS = "num-objects";
+public class GuideLineUIRepresentation extends BaseObjectUIRepresentation {
+    public static final String KEY_PROPERTY_POSITION = "position";
 
-    public ObjectsGroupUIProperties() {
+    public GuideLineUIRepresentation() {
         super(new DefaultObjectReconciler());
     }
 
     @Override
     public String getTypeName(Cardinality cardinality) {
-        return cardinality == Cardinality.Singular ? Strings.OBJECT_TYPE_NAME_OBJECTS_GROUP_S : Strings.OBJECT_TYPE_NAME_OBJECTS_GROUP_P;
+        return cardinality == Cardinality.Singular ? Strings.OBJECT_TYPE_NAME_GUIDE_LINE_S : Strings.OBJECT_TYPE_NAME_GUIDE_LINE_P;
     }
 
     @Override
     protected void addProperties(Map<String, Collection<UiProperty<?>>> result, BaseObject bo, UiController uiController) {
         super.addProperties(result, bo, uiController);
-        ObjectsGroup group = (ObjectsGroup) bo;
-        Collection<UiProperty<?>> properties = result.computeIfAbsent("Allgemein", cat -> new ArrayList<>());
+        GuideLine guideLine = (GuideLine) bo;
+        Collection<UiProperty<?>> properties = result.computeIfAbsent(getTypeName(Cardinality.Singular), cat -> new ArrayList<>());
         properties.addAll(Arrays.<UiProperty<?>>asList(
-                new ConstantUiProperty<>(group, KEY_PROPERTY_NUM_OBJECTS, "# Objekte", PropertyType.Integer, group.getGroupedObjectIds().size())
-            ));
+                new UiProperty<Length>(bo, KEY_PROPERTY_POSITION, Strings.GUIDELINE_PROPERTIES_POSITION, PropertyType.Length, true) {
+                    @Override
+                    public Length getValue() {
+                        return guideLine.getPosition();
+                    }
+
+                    @Override
+                    public void setValue(Object value) {
+                        uiController.setGuideLinePosition(guideLine, (Length) value);
+                    }
+                }
+        ));
     }
 
     @Override

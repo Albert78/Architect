@@ -17,73 +17,81 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.objects;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
-import de.dh.cad.architect.model.coords.IPosition;
+import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.objects.Anchor;
 import de.dh.cad.architect.model.objects.BaseObject;
+import de.dh.cad.architect.model.objects.Ceiling;
 import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.controller.UiController;
 import de.dh.cad.architect.ui.properties.ConstantUiProperty;
 import de.dh.cad.architect.ui.properties.UiProperty;
 import de.dh.cad.architect.ui.properties.UiProperty.PropertyType;
-import de.dh.cad.architect.ui.view.DefaultObjectReconciler;
 import de.dh.cad.architect.ui.view.construction.Abstract2DView;
 import de.dh.cad.architect.ui.view.threed.Abstract3DView;
 
-public class AnchorUIRepresentation extends BaseObjectUIRepresentation {
-    public static final String KEY_PROPERTY_POSITION = "position";
-    public static final String KEY_PROPERTY_DOCKED = "is-docked";
-    public static final String KEY_PROPERTY_IS_HANDLE = "is-handle";
-    public static final String KEY_PROPERTY_OWNER = "owner";
-    public static final String KEY_PROPERTY_ANCHOR_TYPE = "anchor-type";
-    public static final String KEY_PROPERTY_FREE_COORDINATES = "open-coordinates";
-    public static final String KEY_PROPERTY_SIGNIFICANT_COORDINATES = "significant-coordinates";
+public class CeilingUIRepresentation extends BaseObjectUIRepresentation {
+    public static final String KEY_PROPERTY_NUM_CORNERS = "num-corners";
+    public static final String KEY_PROPERTY_HEIGHT = "height";
 
-    public AnchorUIRepresentation() {
-        super(new DefaultObjectReconciler());
+    public CeilingUIRepresentation() {
+        super(new CeilingReconciler());
     }
 
     @Override
     public String getTypeName(Cardinality cardinality) {
-        return cardinality == Cardinality.Singular ? Strings.OBJECT_TYPE_NAME_ANCHOR_S : Strings.OBJECT_TYPE_NAME_ANCHOR_P;
+        return cardinality == Cardinality.Singular ? Strings.OBJECT_TYPE_NAME_CEILING_S : Strings.OBJECT_TYPE_NAME_CEILING_P;
     }
 
     @Override
     protected void addProperties(Map<String, Collection<UiProperty<?>>> result, BaseObject bo, UiController uiController) {
         super.addProperties(result, bo, uiController);
-        Anchor anchor = (Anchor) bo;
+        Ceiling ceiling = (Ceiling) bo;
         Collection<UiProperty<?>> properties = result.computeIfAbsent(getTypeName(Cardinality.Singular), cat -> new ArrayList<>());
         properties.addAll(Arrays.<UiProperty<?>>asList(
-            new UiProperty<IPosition>(anchor, KEY_PROPERTY_POSITION, Strings.ANCHOR_PROPERTIES_POSITION, PropertyType.IPosition, anchor.isHandle() && anchor.getODockMaster().isEmpty()) {
-                @Override
-                public IPosition getValue() {
-                    return anchor.getPosition();
-                }
-
-                @Override
-                public void setValue(Object value) {
-                    uiController.setHandleAnchorPosition(anchor, (IPosition) value);
-                }
-            },
-            new ConstantUiProperty<>(anchor, KEY_PROPERTY_DOCKED, Strings.ANCHOR_PROPERTIES_DOCKED, PropertyType.YesNo, anchor.getODockMaster().isPresent()),
-            new ConstantUiProperty<>(anchor, KEY_PROPERTY_IS_HANDLE, Strings.ANCHOR_PROPERTIES_IS_HANDLE, PropertyType.YesNo, anchor.isHandle()),
-            new ConstantUiProperty<>(anchor, KEY_PROPERTY_OWNER, Strings.ANCHOR_PROPERTIES_OWNER, PropertyType.String, getObjName(anchor.getAnchorOwner())),
-            new ConstantUiProperty<>(anchor, KEY_PROPERTY_ANCHOR_TYPE, Strings.ANCHOR_PROPERTIES_ANCHOR_TYPE, PropertyType.String, anchor.getAnchorType())
+            new ConstantUiProperty<>(ceiling, KEY_PROPERTY_NUM_CORNERS, Strings.CEILING_PROPERTIES_NUM_CORNERS, PropertyType.Integer, ceiling.getEdgeHandleAnchors().size()),
+            new ConstantUiProperty<>(ceiling, KEY_PROPERTY_HEIGHT, Strings.CEILING_PROPERTIES_HEIGHT, PropertyType.String, calculateHeightStr(ceiling))
         ));
+    }
+
+    protected String calculateHeightStr(Ceiling ceiling) {
+        Length minZ = null;
+        Length maxZ = null;
+        for (Anchor anchor : ceiling.getEdgePositionAnchors()) {
+            Length currentZ = anchor.requirePosition3D().getZ();
+            if (minZ == null) {
+                minZ = currentZ;
+            } else if (minZ.gt(currentZ)) {
+                minZ = currentZ;
+            }
+            if (maxZ == null) {
+                maxZ = currentZ;
+            } else if (maxZ.lt(currentZ)) {
+                maxZ = currentZ;
+            }
+        }
+        if (minZ == null || maxZ == null) {
+            return "-";
+        }
+        String minZStr = minZ.toHumanReadableString(minZ.getBestUnitForDisplay(), 2, true);
+        if (minZ.eq(maxZ)) {
+            return minZStr;
+        }
+        return MessageFormat.format(Strings.CEILING_HEIGHT_FROM_TO, minZStr, maxZ.toHumanReadableString(maxZ.getBestUnitForDisplay(), 2, true));
     }
 
     @Override
     public Abstract2DRepresentation create2DRepresentation(BaseObject modelObject, Abstract2DView parentView) {
-        Anchor anchor = (Anchor) modelObject;
-        return new AnchorConstructionRepresentation(anchor, parentView);
+        return new CeilingConstructionRepresentation((Ceiling) modelObject, parentView);
     }
 
     @Override
     public Abstract3DRepresentation create3DRepresentation(BaseObject modelObject, Abstract3DView parentView) {
-        return null;
+        return new Ceiling3DRepresentation((Ceiling) modelObject, parentView);
     }
 }

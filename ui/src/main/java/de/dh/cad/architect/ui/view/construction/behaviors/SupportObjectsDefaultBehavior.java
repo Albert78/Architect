@@ -117,7 +117,7 @@ public class SupportObjectsDefaultBehavior extends AbstractConstructionBehavior 
             @Override
             public void execute() {
                 AssetChooserDialog<SupportObjectDescriptor> dialog = AssetChooserDialog.createWithProgressIndicator(
-                    getUiController().getAssetManager().buildAssetLoader(), "Hilfsobjekt auswählen", AssetType.SupportObject);
+                    getUiController().getAssetManager().buildAssetLoader(), Strings.SUPPORT_OBJECTS_DEFAULT_BEHAVIOR_CHOOSE_SUPPORT_OBJECT_TO_ADD, AssetType.SupportObject);
 
                 Optional<SupportObjectDescriptor> soResult = dialog.showAndWait();
 

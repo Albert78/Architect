@@ -154,10 +154,13 @@ public class ObjectReconcileOperation {
     }
 
     public void reconcileObjects(ChangeSet changeSet) {
-        // Each scheduled object will be propagated to the reconciler of its owner object.
+        // Each scheduled object will be propagated to its UI reconciler.
         // This can generate more anchor moves, which means the set of anchors to be moved in the reconcile operation structure
-        // will continue to grow during the operation.
-        // When all objects are processed, we are finished and return the collection of ready-to-be-executed anchor moves.
+        // will grow during the operation. Furthermore, more object properties might become invalid during that process
+        // (think of a wall whose wall end handle anchor was moved. After that, the wall's apex points must be repositioned to
+        // match the new wall's position and the positions of the connected walls).
+        // So, the first loop will process all direct and transitive anchor moves.
+        // After that, we go through all objects which were invalidated by the first run ("objects to heal") and heal them.
         try {
             // Step 1: Reconcile object by object
             while (!mUnprocessedObjects.isEmpty()) {

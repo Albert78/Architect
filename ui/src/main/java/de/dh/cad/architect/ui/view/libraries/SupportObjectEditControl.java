@@ -164,10 +164,10 @@ public class SupportObjectEditControl extends AbstractAssetEditControl implement
         mThreeDObjectView.setCoordinateSystemVisible(true);
         mThreeDResourcePane.setCenter(mThreeDObjectView);
         ObservableList<Node> boxChildren = mSizeControlsVBox.getChildren();
-        boxChildren.add(new Label("Standardgröße:"));
+        boxChildren.add(new Label(Strings.SUPPORT_OBJECT_CONTROL_DEFAULT_SIZE_TITLE));
         final int CONTROL_WIDTH = 150;
         final Insets margin = new Insets(5, 0, 0, 0);
-        Label l = new Label("Breite (X)");
+        Label l = new Label(Strings.SUPPORT_OBJECT_CONTROL_WIDTH_X_LABEL);
         boxChildren.add(l);
         VBox.setMargin(l, margin);
         mWidthControl = new LengthControl(Constants.LOCALIZED_NUMBER_FORMAT);
@@ -175,7 +175,7 @@ public class SupportObjectEditControl extends AbstractAssetEditControl implement
         mWidthControl.setMinWidth(CONTROL_WIDTH);
         mWidthControl.setMaxWidth(CONTROL_WIDTH);
         boxChildren.add(mWidthControl);
-        l = new Label("Höhe (Y)");
+        l = new Label(Strings.SUPPORT_OBJECT_CONTROL_HEIGHT_Y_LABEL);
         boxChildren.add(l);
         VBox.setMargin(l, margin);
         mHeightControl = new LengthControl(Constants.LOCALIZED_NUMBER_FORMAT);
@@ -183,7 +183,7 @@ public class SupportObjectEditControl extends AbstractAssetEditControl implement
         mHeightControl.setMinWidth(CONTROL_WIDTH);
         mHeightControl.setMaxWidth(CONTROL_WIDTH);
         boxChildren.add(mHeightControl);
-        l = new Label("Tiefe (Z)");
+        l = new Label(Strings.SUPPORT_OBJECT_CONTROL_DEPTH_Z_LABEL);
         boxChildren.add(l);
         VBox.setMargin(l, margin);
         mDepthControl = new LengthControl(Constants.LOCALIZED_NUMBER_FORMAT);
@@ -191,7 +191,7 @@ public class SupportObjectEditControl extends AbstractAssetEditControl implement
         mDepthControl.setMinWidth(CONTROL_WIDTH);
         mDepthControl.setMaxWidth(CONTROL_WIDTH);
         boxChildren.add(mDepthControl);
-        l = new Label("Vertikaler Versatz (Y)");
+        l = new Label(Strings.SUPPORT_OBJECT_CONTROL_ELEVATION_Y_LABEL);
         boxChildren.add(l);
         VBox.setMargin(l, margin);
         mElevationControl = new LengthControl(Constants.LOCALIZED_NUMBER_FORMAT);

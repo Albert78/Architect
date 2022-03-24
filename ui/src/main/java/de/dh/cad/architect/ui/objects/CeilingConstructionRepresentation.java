@@ -34,9 +34,12 @@ import de.dh.cad.architect.ui.view.construction.Abstract2DView;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Line;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Shape;
 import javafx.scene.shape.StrokeType;
@@ -66,16 +69,73 @@ public class CeilingConstructionRepresentation extends AbstractAnchoredObjectCon
         public abstract boolean canDragAnchor(Anchor anchor);
     }
 
+    protected class HookFeedback {
+        protected final ImageView mHookSymbol;
+        protected final Scale mHookScaleCorrection;
+        protected final Group mCross;
+
+        public HookFeedback() {
+            mHookSymbol = buildHookSymbol();
+            mHookScaleCorrection = addUnscaled(mHookSymbol);
+            mCross = buildCross();
+            addUnscaled(mCross);
+        }
+
+        protected ImageView buildHookSymbol() {
+            Image image = new Image(getClass().getResourceAsStream(HOOK_RESOURCE));
+            ImageView result = new ImageView(image);
+            result.setFitWidth(HOOK_SIZE);
+            result.setFitHeight(HOOK_SIZE);
+            return result;
+        }
+
+        protected Group buildCross() {
+            Group result = new Group();
+            List<Node> children = result.getChildren();
+            Line line1 = new Line(-10, -10, 10, 10);
+            line1.setStroke(Color.BLUE);
+            line1.setStrokeWidth(2);
+            Line line2 = new Line(-10, 10, 10, -10);
+            line2.setStroke(Color.BLUE);
+            line2.setStrokeWidth(2);
+            children.add(line1);
+            children.add(line2);
+            return result;
+        }
+
+        public void setPosition(Position3D position) {
+            positionHook(position);
+            mCross.setTranslateX(CoordinateUtils.lengthToCoords(position.getX()));
+            mCross.setTranslateY(CoordinateUtils.lengthToCoords(position.getY()));
+        }
+
+        protected void positionHook(Position3D position) {
+            double x = CoordinateUtils.lengthToCoords(position.getX());
+            double y = CoordinateUtils.lengthToCoords(position.getY());
+
+            double scaleCompensation = getScaleCompensation();
+
+            double centerDelta = 8 * Math.sqrt(scaleCompensation) // ... 8 pixels further but compensate anchor stroke thickness a bit, looks good
+                            + HOOK_SIZE * 0.8 * scaleCompensation; // ... + fixed length for image
+            mHookSymbol.setX(x - centerDelta);
+            mHookSymbol.setY(y - centerDelta);
+            mHookScaleCorrection.setPivotX(x - centerDelta);
+            mHookScaleCorrection.setPivotY(y - centerDelta);
+        }
+
+        public void setVisible(boolean value) {
+            mHookSymbol.setVisible(value);
+            mCross.setVisible(value);
+        }
+    }
+
     protected static final String HOOK_RESOURCE = "/de/dh/cad/architect/ui/objects/ceiling-hook.png";
     protected static final int HOOK_SIZE = Constants.TWO_D_INFO_SYMBOLS_SIZE;
 
     protected final Polygon mShape;
-    protected final ImageView mHook1;
-    protected final Scale mHookScaleCorrection1;
-    protected final ImageView mHook2;
-    protected final Scale mHookScaleCorrection2;
-    protected final ImageView mHook3;
-    protected final Scale mHookScaleCorrection3;
+    protected final HookFeedback mHook1;
+    protected final HookFeedback mHook2;
+    protected final HookFeedback mHook3;
     protected List<IntermediatePoint> mIntermediatePoints = null;
     protected AnchorDragMode mAnchorDragMode = AnchorDragMode.None;
 
@@ -85,12 +145,9 @@ public class CeilingConstructionRepresentation extends AbstractAnchoredObjectCon
         setViewOrder(Constants.VIEW_ORDER_CEILING);
         addScaled(mShape);
 
-        mHook1 = buildHook();
-        mHook2 = buildHook();
-        mHook3 = buildHook();
-        mHookScaleCorrection1 = addUnscaled(mHook1);
-        mHookScaleCorrection2 = addUnscaled(mHook2);
-        mHookScaleCorrection3 = addUnscaled(mHook3);
+        mHook1 = new HookFeedback();
+        mHook2 = new HookFeedback();
+        mHook3 = new HookFeedback();
 
         ChangeListener<Boolean> propertiesUpdaterListener = new ChangeListener<>() {
             @Override
@@ -102,14 +159,6 @@ public class CeilingConstructionRepresentation extends AbstractAnchoredObjectCon
         objectSpottedProperty().addListener(propertiesUpdaterListener);
         objectFocusedProperty().addListener(propertiesUpdaterListener);
         objectEmphasizedProperty().addListener(propertiesUpdaterListener);
-    }
-
-    protected ImageView buildHook() {
-        Image image = new Image(getClass().getResourceAsStream(HOOK_RESOURCE));
-        ImageView result = new ImageView(image);
-        result.setFitWidth(HOOK_SIZE);
-        result.setFitHeight(HOOK_SIZE);
-        return result;
     }
 
     public Ceiling getCeiling() {
@@ -157,25 +206,10 @@ public class CeilingConstructionRepresentation extends AbstractAnchoredObjectCon
         Position3D posA = ceiling.getAnchorA().requirePosition3D();
         Position3D posB = ceiling.getAnchorB().requirePosition3D();
         Position3D posC = ceiling.getAnchorC().requirePosition3D();
-        positionHook(mHook1, mHookScaleCorrection1, posA);
-        positionHook(mHook2, mHookScaleCorrection2, posB);
-        positionHook(mHook3, mHookScaleCorrection3, posC);
+        mHook1.setPosition(posA);
+        mHook2.setPosition(posB);
+        mHook3.setPosition(posC);
     }
-
-    protected void positionHook(ImageView hook, Scale hookScaleCorrection, Position3D ceilingAnchorPos) {
-        double x = CoordinateUtils.lengthToCoords(ceilingAnchorPos.getX());
-        double y = CoordinateUtils.lengthToCoords(ceilingAnchorPos.getY());
-
-        double scaleCompensation = getScaleCompensation();
-
-        double centerDelta = 8 * Math.sqrt(scaleCompensation) // ... 8 pixels further but compensate anchor stroke thickness a bit, looks good
-                        + HOOK_SIZE * 0.8 * scaleCompensation; // ... + fixed length for image
-        hook.setX(x - centerDelta);
-        hook.setY(y - centerDelta);
-        hookScaleCorrection.setPivotX(x - centerDelta);
-        hookScaleCorrection.setPivotY(y - centerDelta);
-    }
-
 
     protected IntermediatePoint createIntermediatePoint() {
         IntermediatePoint result = new IntermediatePoint(getParentView(), new IntermediatePointCallback() {

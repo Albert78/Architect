@@ -362,7 +362,7 @@ public class PainterBehavior extends Abstract3DViewBehavior {
     }
 
     protected void createInteractionsTab() {
-        Tab tab = new Tab("Material");
+        Tab tab = new Tab(Strings.THREE_D_PAINTER_BEHAVIOR_MATERIAL_TAB);
         mChoosePainterMaterialControl = new ChoosePainterMaterialControl(getUiController());
         tab.setContent(mChoosePainterMaterialControl);
         InteractionsTab interactionsTab = new InteractionsTab(tab, true);

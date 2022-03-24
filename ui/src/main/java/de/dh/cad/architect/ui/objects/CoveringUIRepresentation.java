@@ -24,8 +24,8 @@ import de.dh.cad.architect.ui.view.DefaultObjectReconciler;
 import de.dh.cad.architect.ui.view.construction.Abstract2DView;
 import de.dh.cad.architect.ui.view.threed.Abstract3DView;
 
-public class CoveringUIProperties extends BaseObjectUIRepresentation {
-    public CoveringUIProperties() {
+public class CoveringUIRepresentation extends BaseObjectUIRepresentation {
+    public CoveringUIRepresentation() {
         super(new DefaultObjectReconciler());
     }
 

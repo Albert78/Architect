@@ -39,7 +39,7 @@ import de.dh.cad.architect.ui.view.construction.Abstract2DView;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
 import de.dh.cad.architect.ui.view.threed.Abstract3DView;
 
-public class WallUIProperties extends BaseObjectUIRepresentation {
+public class WallUIRepresentation extends BaseObjectUIRepresentation {
     public static final String KEY_PROPERTY_THICKNESS = "thickness";
     public static final String KEY_PROPERTY_BEVEL_TYPE_A = "beveltype-A";
     public static final String KEY_PROPERTY_BEVEL_TYPE_B = "beveltype-B";
@@ -49,7 +49,7 @@ public class WallUIProperties extends BaseObjectUIRepresentation {
     public static final String KEY_PROPERTY_WALL_LENGTH_SIDE_1 = "wall-length-side-1";
     public static final String KEY_PROPERTY_WALL_LENGTH_SIDE_2 = "wall-length-side-2";
 
-    public WallUIProperties() {
+    public WallUIRepresentation() {
         super(new WallReconciler());
     }
 
@@ -62,9 +62,9 @@ public class WallUIProperties extends BaseObjectUIRepresentation {
     protected void addProperties(Map<String, Collection<UiProperty<?>>> result, BaseObject bo, UiController uiController) {
         super.addProperties(result, bo, uiController);
         Wall wall = (Wall) bo;
-        Collection<UiProperty<?>> properties = result.computeIfAbsent("Wand", cat -> new ArrayList<>());
+        Collection<UiProperty<?>> properties = result.computeIfAbsent(getTypeName(Cardinality.Singular), cat -> new ArrayList<>());
         properties.addAll(Arrays.<UiProperty<?>>asList(
-                new UiProperty<Length>(wall, KEY_PROPERTY_THICKNESS, "Wanddicke", PropertyType.Length, true) {
+                new UiProperty<Length>(wall, KEY_PROPERTY_THICKNESS, Strings.WALL_PROPERTIES_THICKNESS, PropertyType.Length, true) {
                     @Override
                     public Length getValue() {
                         return wall.getThickness();
@@ -80,7 +80,7 @@ public class WallUIProperties extends BaseObjectUIRepresentation {
                         uiController.notifyChanges(changeSet);
                     }
                 },
-                new UiProperty<WallBevelType>(wall, KEY_PROPERTY_BEVEL_TYPE_A, "Wandverbinder A", PropertyType.WallBevelType, true) {
+                new UiProperty<WallBevelType>(wall, KEY_PROPERTY_BEVEL_TYPE_A, Strings.WALL_PROPERTIES_BEVEL_TYPE_A, PropertyType.WallBevelType, true) {
                     @Override
                     public WallBevelType getValue() {
                         return WallAnchorPositions.getWallBevelTypeOfAnchorDock(new AdaptedModelAnchor(wall.getAnchorWallHandleB())).orElse(null);
@@ -92,7 +92,7 @@ public class WallUIProperties extends BaseObjectUIRepresentation {
                         uiController.setWallBevelTypeOfAnchorDock(wall.getAnchorWallHandleA(), bevelType);
                     }
                 },
-                new UiProperty<WallBevelType>(wall, KEY_PROPERTY_BEVEL_TYPE_B, "Wandverbinder B", PropertyType.WallBevelType, true) {
+                new UiProperty<WallBevelType>(wall, KEY_PROPERTY_BEVEL_TYPE_B, Strings.WALL_PROPERTIES_BEVEL_TYPE_B, PropertyType.WallBevelType, true) {
                     @Override
                     public WallBevelType getValue() {
                         return WallAnchorPositions.getWallBevelTypeOfAnchorDock(new AdaptedModelAnchor(wall.getAnchorWallHandleB())).orElse(null);
@@ -104,7 +104,7 @@ public class WallUIProperties extends BaseObjectUIRepresentation {
                         uiController.setWallBevelTypeOfAnchorDock(wall.getAnchorWallHandleB(), bevelType);
                     }
                 },
-                new UiProperty<Length>(wall, KEY_PROPERTY_WALL_HEIGHT_A, "Höhe Seite A", PropertyType.Length, true) {
+                new UiProperty<Length>(wall, KEY_PROPERTY_WALL_HEIGHT_A, Strings.WALL_PROPERTIES_HEIGHT_A, PropertyType.Length, true) {
                     @Override
                     public Length getValue() {
                         return wall.getHeightA();
@@ -116,13 +116,13 @@ public class WallUIProperties extends BaseObjectUIRepresentation {
                         wall.setHeightA(height);
                         ChangeSet changeSet = new ChangeSet();
                         changeSet.changed(wall);
-                        ObjectReconcileOperation omo = new ObjectReconcileOperation("Anpassung von Wandankern an Höhenänderung Seite A");
+                        ObjectReconcileOperation omo = new ObjectReconcileOperation(Strings.WALL_PROPERTIES_OPERATION_HAME_SET_HEIGHT_A);
                         omo.tryAddObjectToProcess(wall);
                         uiController.doReconcileObjects(omo, changeSet);
                         uiController.notifyChanges(changeSet);
                     }
                 },
-                new UiProperty<Length>(wall, KEY_PROPERTY_WALL_HEIGHT_B, "Höhe Seite B", PropertyType.Length, true) {
+                new UiProperty<Length>(wall, KEY_PROPERTY_WALL_HEIGHT_B, Strings.WALL_PROPERTIES_HEIGHT_B, PropertyType.Length, true) {
                     @Override
                     public Length getValue() {
                         return wall.getHeightB();
@@ -134,15 +134,15 @@ public class WallUIProperties extends BaseObjectUIRepresentation {
                         wall.setHeightB(height);
                         ChangeSet changeSet = new ChangeSet();
                         changeSet.changed(wall);
-                        ObjectReconcileOperation omo = new ObjectReconcileOperation("Anpassung von Wandankern an Höhenänderung Seite B");
+                        ObjectReconcileOperation omo = new ObjectReconcileOperation(Strings.WALL_PROPERTIES_OPERATION_HAME_SET_HEIGHT_B);
                         omo.tryAddObjectToProcess(wall);
                         uiController.doReconcileObjects(omo, changeSet);
                         uiController.notifyChanges(changeSet);
                     }
                 },
-                new ConstantUiProperty<>(wall, KEY_PROPERTY_WALL_LENGTH_BASE, "Basis-Wandlänge", PropertyType.Length, wall.calculateBaseLength()),
-                new ConstantUiProperty<>(wall, KEY_PROPERTY_WALL_LENGTH_SIDE_1, "Wandlänge Seite 1", PropertyType.Length, wall.calculateLengthSide1()),
-                new ConstantUiProperty<>(wall, KEY_PROPERTY_WALL_LENGTH_SIDE_2, "Wandlänge Seite 2", PropertyType.Length, wall.calculateLengthSide2())
+                new ConstantUiProperty<>(wall, KEY_PROPERTY_WALL_LENGTH_BASE, Strings.WALL_PROPERTIES_BASE_LENGTH, PropertyType.Length, wall.calculateBaseLength()),
+                new ConstantUiProperty<>(wall, KEY_PROPERTY_WALL_LENGTH_SIDE_1, Strings.WALL_PROPERTIES_LENGTH_SIDE_1, PropertyType.Length, wall.calculateLengthSide1()),
+                new ConstantUiProperty<>(wall, KEY_PROPERTY_WALL_LENGTH_SIDE_2, Strings.WALL_PROPERTIES_LENGTH_SIDE_2, PropertyType.Length, wall.calculateLengthSide2())
                 ));
     }
 

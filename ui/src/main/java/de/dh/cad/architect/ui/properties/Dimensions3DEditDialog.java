@@ -41,8 +41,8 @@ public class Dimensions3DEditDialog extends Dialog<Dimensions3D> {
     protected LengthControl mHeight;
     protected LengthControl mDepth;
 
-    public Dimensions3DEditDialog(NumberFormat numberFormat) {
-        setTitle("Ausmaße bearbeiten");
+    public Dimensions3DEditDialog(String title, NumberFormat numberFormat) {
+        setTitle(title);
         // TODO: Nice graphic
         ObservableList<ButtonType> buttonTypes = getDialogPane().getButtonTypes();
         buttonTypes.addAll(ButtonType.OK, ButtonType.CANCEL);

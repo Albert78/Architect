@@ -48,8 +48,8 @@ public class Dimensions2DEditDialog extends Dialog<Dimensions2D> {
     protected LengthControl mWidth;
     protected LengthControl mHeight;
 
-    public Dimensions2DEditDialog(NumberFormat numberFormat) {
-        setTitle("Ausmaße bearbeiten");
+    public Dimensions2DEditDialog(String title, NumberFormat numberFormat) {
+        setTitle(title);
         // TODO: Nice graphic
         ObservableList<ButtonType> buttonTypes = getDialogPane().getButtonTypes();
         buttonTypes.addAll(ButtonType.OK, ButtonType.CANCEL);

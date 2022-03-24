@@ -35,13 +35,13 @@ import de.dh.cad.architect.ui.view.ObjectReconcileOperation;
 import de.dh.cad.architect.ui.view.construction.Abstract2DView;
 import de.dh.cad.architect.ui.view.threed.Abstract3DView;
 
-public class FloorUIProperties extends BaseObjectUIRepresentation {
+public class FloorUIRepresentation extends BaseObjectUIRepresentation {
     public static final String KEY_PROPERTY_LEVEL = "level";
     public static final String KEY_PROPERTY_HEIGHT = "height";
     public static final String KEY_PROPERTY_THICKNESS = "thickness";
     public static final String KEY_PROPERTY_AREA = "area";
 
-    public FloorUIProperties() {
+    public FloorUIRepresentation() {
         super(new FloorReconciler());
     }
 
@@ -54,9 +54,9 @@ public class FloorUIProperties extends BaseObjectUIRepresentation {
     protected void addProperties(Map<String, Collection<UiProperty<?>>> result, BaseObject bo, UiController uiController) {
         super.addProperties(result, bo, uiController);
         Floor floor = (Floor) bo;
-        Collection<UiProperty<?>> properties = result.computeIfAbsent("Ebene", cat -> new ArrayList<>());
+        Collection<UiProperty<?>> properties = result.computeIfAbsent(getTypeName(Cardinality.Singular), cat -> new ArrayList<>());
         properties.addAll(Arrays.<UiProperty<?>>asList(
-                new UiProperty<Integer>(floor, KEY_PROPERTY_LEVEL, "Etage", PropertyType.Integer, true) {
+                new UiProperty<Integer>(floor, KEY_PROPERTY_LEVEL, Strings.FLOOR_PROPERTIES_LEVEL, PropertyType.Integer, true) {
                     @Override
                     public Integer getValue() {
                         return floor.getLevel();
@@ -69,7 +69,7 @@ public class FloorUIProperties extends BaseObjectUIRepresentation {
                     }
 
                 },
-                new UiProperty<Length>(floor, KEY_PROPERTY_HEIGHT, "Höhe", PropertyType.Length, true) {
+                new UiProperty<Length>(floor, KEY_PROPERTY_HEIGHT, Strings.FLOOR_PROPERTIES_HEIGHT, PropertyType.Length, true) {
                     @Override
                     public Length getValue() {
                         return floor.getHeight();
@@ -80,13 +80,13 @@ public class FloorUIProperties extends BaseObjectUIRepresentation {
                         ChangeSet changeSet = new ChangeSet();
                         floor.setHeight((Length) value);
                         changeSet.changed(floor);
-                        ObjectReconcileOperation omo = new ObjectReconcileOperation("Fußbodenhöhe setzen");
+                        ObjectReconcileOperation omo = new ObjectReconcileOperation(Strings.FLOOR_PROPERTIES_SET_HEIGHT_OPERATION_NAME);
                         omo.tryAddObjectToProcess(floor);
                         uiController.doReconcileObjects(omo, changeSet);
                         uiController.notifyChanges(changeSet);
                     }
                 },
-                new UiProperty<Length>(floor, KEY_PROPERTY_THICKNESS, "Dicke", PropertyType.Length, true) {
+                new UiProperty<Length>(floor, KEY_PROPERTY_THICKNESS, Strings.FLOOR_PROPERTIES_THICKNESS, PropertyType.Length, true) {
                     @Override
                     public Length getValue() {
                         return floor.getThickness();
@@ -97,13 +97,13 @@ public class FloorUIProperties extends BaseObjectUIRepresentation {
                         ChangeSet changeSet = new ChangeSet();
                         floor.setThickness((Length) value);
                         changeSet.changed(floor);
-                        ObjectReconcileOperation omo = new ObjectReconcileOperation("Fußbodendicke setzen");
+                        ObjectReconcileOperation omo = new ObjectReconcileOperation(Strings.FLOOR_PROPERTIES_SET_THICKNESS_OPERATION_NAME);
                         omo.tryAddObjectToProcess(floor);
                         uiController.doReconcileObjects(omo, changeSet);
                         uiController.notifyChanges(changeSet);
                     }
                 },
-                new ConstantUiProperty<>(floor, KEY_PROPERTY_AREA, "Fläche", PropertyType.String, floor.getAreaString())
+                new ConstantUiProperty<>(floor, KEY_PROPERTY_AREA, Strings.FLOOR_PROPERTIES_AREA, PropertyType.String, floor.getAreaString())
         ));
     }
 

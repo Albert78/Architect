@@ -36,7 +36,7 @@ import de.dh.cad.architect.ui.view.DefaultObjectReconciler;
 import de.dh.cad.architect.ui.view.construction.Abstract2DView;
 import de.dh.cad.architect.ui.view.threed.Abstract3DView;
 
-public class SupportObjectUIProperties extends BaseObjectUIRepresentation {
+public class SupportObjectUIRepresentation extends BaseObjectUIRepresentation {
     public static final String KEY_PROPERTY_DESCRIPTOR = "descriptor";
     public static final String KEY_PROPERTY_POSITION = "position";
     public static final String KEY_PROPERTY_SIZE = "size";
@@ -44,7 +44,7 @@ public class SupportObjectUIProperties extends BaseObjectUIRepresentation {
     public static final String KEY_PROPERTY_HEIGHT = "height";
     public static final String KEY_PROPERTY_ELEVATION = "elevation";
 
-    public SupportObjectUIProperties() {
+    public SupportObjectUIRepresentation() {
         super(new DefaultObjectReconciler());
     }
 
@@ -58,10 +58,10 @@ public class SupportObjectUIProperties extends BaseObjectUIRepresentation {
     protected void addProperties(Map<String, Collection<UiProperty<?>>> result, BaseObject bo, UiController uiController) {
         super.addProperties(result, bo, uiController);
         SupportObject supportObject = (SupportObject) bo;
-        Collection<UiProperty<?>> properties = result.computeIfAbsent("Hilfsobjekt", cat -> new ArrayList<>());
+        Collection<UiProperty<?>> properties = result.computeIfAbsent(getTypeName(Cardinality.Singular), cat -> new ArrayList<>());
         properties.addAll(Arrays.<UiProperty<?>>asList(
-            new ConstantUiProperty<>(bo, KEY_PROPERTY_DESCRIPTOR, "Deskriptor", PropertyType.String, supportObject.getSupportObjectDescriptorRef()),
-            new UiProperty<IPosition>(bo, KEY_PROPERTY_POSITION, "Position", PropertyType.IPosition, true) {
+            new ConstantUiProperty<>(bo, KEY_PROPERTY_DESCRIPTOR, Strings.SUPPORT_OBJECT_PROPERTIES_DESCRIPTOR, PropertyType.String, supportObject.getSupportObjectDescriptorRef()),
+            new UiProperty<IPosition>(bo, KEY_PROPERTY_POSITION, Strings.SUPPORT_OBJECT_PROPERTIES_POSITION, PropertyType.IPosition, true) {
                 @Override
                 public IPosition getValue() {
                     return supportObject.getHandleAnchor().getPosition();
@@ -73,7 +73,7 @@ public class SupportObjectUIProperties extends BaseObjectUIRepresentation {
                     uiController.setHandleAnchorPosition(supportObject.getHandleAnchor(), position.projectionXY());
                 }
             },
-            new UiProperty<Dimensions2D>(bo, KEY_PROPERTY_SIZE, "Größe X/Y", PropertyType.Dimensions2DXY, true) {
+            new UiProperty<Dimensions2D>(bo, KEY_PROPERTY_SIZE, Strings.SUPPORT_OBJECT_PROPERTIES_SIZE, PropertyType.Dimensions2DXY, true) {
                 @Override
                 public Dimensions2D getValue() {
                     return supportObject.getSize();
@@ -86,7 +86,7 @@ public class SupportObjectUIProperties extends BaseObjectUIRepresentation {
                     uiController.notifyObjectsChanged(supportObject);
                 }
             },
-            new UiProperty<Integer>(bo, KEY_PROPERTY_ROTATION, "Drehung (Grad)", PropertyType.Integer, true) {
+            new UiProperty<Integer>(bo, KEY_PROPERTY_ROTATION, Strings.SUPPORT_OBJECT_PROPERTIES_ROTATION_DEGREES, PropertyType.Integer, true) {
                 @Override
                 public Integer getValue() {
                     return Float.valueOf(supportObject.getRotationDeg()).intValue();
@@ -99,7 +99,7 @@ public class SupportObjectUIProperties extends BaseObjectUIRepresentation {
                     uiController.notifyObjectsChanged(supportObject);
                 }
             },
-            new UiProperty<Length>(bo, KEY_PROPERTY_HEIGHT, "Höhe", PropertyType.Length, true) {
+            new UiProperty<Length>(bo, KEY_PROPERTY_HEIGHT, Strings.SUPPORT_OBJECT_PROPERTIES_HEIGHT, PropertyType.Length, true) {
                 @Override
                 public Length getValue() {
                     return supportObject.getHeight();
@@ -112,7 +112,7 @@ public class SupportObjectUIProperties extends BaseObjectUIRepresentation {
                     uiController.notifyObjectsChanged(supportObject);
                 }
             },
-            new UiProperty<Length>(bo, KEY_PROPERTY_ELEVATION, "Vertikaler Versatz", PropertyType.Length, true) {
+            new UiProperty<Length>(bo, KEY_PROPERTY_ELEVATION, Strings.SUPPORT_OBJECT_PROPERTIES_ELEVATION, PropertyType.Length, true) {
                 @Override
                 public Length getValue() {
                     return supportObject.getElevation();

@@ -23,6 +23,7 @@ import java.util.Optional;
 
 import de.dh.cad.architect.model.coords.Dimensions3D;
 import de.dh.cad.architect.model.coords.Length;
+import de.dh.cad.architect.ui.Strings;
 import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -43,7 +44,7 @@ public class PropertyDimensions3DControlProvider implements IPropertyControlProv
             @Override
             public void run() {
                 Dimensions3D value = (Dimensions3D) cell.getItem();
-                Dimensions3DEditDialog dialog = new Dimensions3DEditDialog(mNumberFormat);
+                Dimensions3DEditDialog dialog = new Dimensions3DEditDialog(Strings.PROPERTIES_DIMENSIONS_DIALOG_TITLE, mNumberFormat);
                 dialog.setDimensions(value);
                 Optional<Dimensions3D> result = dialog.showAndWait();
                 if (result.isPresent()) {

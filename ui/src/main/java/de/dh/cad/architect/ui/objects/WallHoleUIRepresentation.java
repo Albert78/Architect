@@ -34,13 +34,13 @@ import de.dh.cad.architect.ui.properties.UiProperty.PropertyType;
 import de.dh.cad.architect.ui.view.construction.Abstract2DView;
 import de.dh.cad.architect.ui.view.threed.Abstract3DView;
 
-public class WallHoleUIProperties extends BaseObjectUIRepresentation {
+public class WallHoleUIRepresentation extends BaseObjectUIRepresentation {
     public static final String KEY_PROPERTY_DIMENSIONS = "dimensions";
-    public static final String KEY_PROPERTY_BOTTOM_HEIGHT = "bottom-height";
+    public static final String KEY_PROPERTY_PARAPET_HEIGHT = "parapet-height";
     public static final String KEY_PROPERTY_DISTANCE_FROM_WALL_END = "distance-from-wall-end";
     public static final String KEY_PROPERTY_WALL_DOCK_END = "wall-dock-end";
 
-    public WallHoleUIProperties() {
+    public WallHoleUIRepresentation() {
         super(new WallHoleReconciler());
     }
 
@@ -53,9 +53,9 @@ public class WallHoleUIProperties extends BaseObjectUIRepresentation {
     protected void addProperties(Map<String, Collection<UiProperty<?>>> result, BaseObject bo, UiController uiController) {
         super.addProperties(result, bo, uiController);
         WallHole wallHole = (WallHole) bo;
-        Collection<UiProperty<?>> properties = result.computeIfAbsent("Wandausschnitt", cat -> new ArrayList<>());
+        Collection<UiProperty<?>> properties = result.computeIfAbsent(getTypeName(Cardinality.Singular), cat -> new ArrayList<>());
         properties.addAll(Arrays.<UiProperty<?>>asList(
-            new UiProperty<Dimensions2D>(bo, KEY_PROPERTY_DIMENSIONS, "Maße", PropertyType.Dimensions2DXZ, true) {
+            new UiProperty<Dimensions2D>(bo, KEY_PROPERTY_DIMENSIONS, Strings.WALL_HOLE_PROPERTIES_DIMENSIONS, PropertyType.Dimensions2DXZ, true) {
                 @Override
                 public Dimensions2D getValue() {
                     return wallHole.getDimensions();
@@ -69,7 +69,7 @@ public class WallHoleUIProperties extends BaseObjectUIRepresentation {
                     WallHoleReconciler.updateWallHoleAnchors(wallHole, uiController);
                 }
             },
-            new UiProperty<Length>(bo, KEY_PROPERTY_BOTTOM_HEIGHT, "Brüstungshöhe", PropertyType.Length, true) {
+            new UiProperty<Length>(bo, KEY_PROPERTY_PARAPET_HEIGHT, Strings.WALL_HOLE_PROPERTIES_PARAPET_HEIGHT, PropertyType.Length, true) {
                 @Override
                 public Length getValue() {
                     return wallHole.getParapetHeight();
@@ -82,7 +82,7 @@ public class WallHoleUIProperties extends BaseObjectUIRepresentation {
                     WallHoleReconciler.updateWallHoleAnchors(wallHole, uiController);
                 }
             },
-            new UiProperty<Length>(bo, KEY_PROPERTY_DISTANCE_FROM_WALL_END, "Abstand von Wandende", PropertyType.Length, true) {
+            new UiProperty<Length>(bo, KEY_PROPERTY_DISTANCE_FROM_WALL_END, Strings.WALL_HOLE_PROPERTIES_DISTANCE_FROM_WALL_END, PropertyType.Length, true) {
                 @Override
                 public Length getValue() {
                     return wallHole.getDistanceFromWallEnd();
@@ -95,7 +95,7 @@ public class WallHoleUIProperties extends BaseObjectUIRepresentation {
                     WallHoleReconciler.updateWallHoleAnchors(wallHole, uiController);
                 }
             },
-            new UiProperty<WallDockEnd>(bo, KEY_PROPERTY_WALL_DOCK_END, "Dock-Ende", PropertyType.WallDockEnd, true) {
+            new UiProperty<WallDockEnd>(bo, KEY_PROPERTY_WALL_DOCK_END, Strings.WALL_HOLE_PROPERTIES_DOCK_END, PropertyType.WallDockEnd, true) {
                 @Override
                 public WallDockEnd getValue() {
                     return wallHole.getDockEnd();
