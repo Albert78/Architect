@@ -48,8 +48,8 @@ public class PositionEditDialog extends Dialog<IPosition> {
     protected final LengthControl mY;
     protected final Optional<LengthControl> mZ;
 
-    public PositionEditDialog(IPosition position, NumberFormat numberFormat) {
-        setTitle("Position bearbeiten");
+    public PositionEditDialog(IPosition position, String title, NumberFormat numberFormat) {
+        setTitle(title);
         // TODO: Nice graphic
         ObservableList<ButtonType> buttonTypes = getDialogPane().getButtonTypes();
         buttonTypes.addAll(ButtonType.OK, ButtonType.CANCEL);

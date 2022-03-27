@@ -24,6 +24,7 @@ import java.util.Optional;
 import de.dh.cad.architect.model.coords.IPosition;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.coords.Position3D;
+import de.dh.cad.architect.ui.Strings;
 import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -44,7 +45,7 @@ public class PropertyIPositionControlProvider implements IPropertyControlProvide
             @Override
             public void run() {
                 IPosition value = (IPosition) cell.getItem();
-                PositionEditDialog dialog = new PositionEditDialog(value, mNumberFormat);
+                PositionEditDialog dialog = new PositionEditDialog(value, Strings.PROPERTIES_POSITION_DIALOG_TITLE, mNumberFormat);
                 Optional<IPosition> result = dialog.showAndWait();
                 if (result.isPresent()) {
                     cell.commitEdit(result.get());

@@ -289,7 +289,7 @@ public class UiController {
                     .map(e ->
                         e.getValue().size() + " " + BaseObjectUIRepresentation.getObjectTypeName(e.getKey(), e.getValue().size() == 1 ? Cardinality.Singular : Cardinality.Plural))
                     .collect(Collectors.joining(", "));
-            return MessageFormat.format(Strings.OBJECTS_SELECTED_X, str);
+            return MessageFormat.format(Strings.PROPERTIES_OBJECTS_SELECTED_X, str);
         } else {
             return Strings.PROPERTIES_NO_PROPERTIES_TO_SHOW;
         }

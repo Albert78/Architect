@@ -82,7 +82,7 @@ public class CeilingUIRepresentation extends BaseObjectUIRepresentation {
         if (minZ.eq(maxZ)) {
             return minZStr;
         }
-        return MessageFormat.format(Strings.CEILING_HEIGHT_FROM_TO, minZStr, maxZ.toHumanReadableString(maxZ.getBestUnitForDisplay(), 2, true));
+        return MessageFormat.format(Strings.CEILING_PROPERTIES_HEIGHT_FROM_TO, minZStr, maxZ.toHumanReadableString(maxZ.getBestUnitForDisplay(), 2, true));
     }
 
     @Override

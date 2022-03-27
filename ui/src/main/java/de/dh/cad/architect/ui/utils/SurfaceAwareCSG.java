@@ -39,6 +39,8 @@ import javafx.scene.shape.ObservableFaceArray;
 import javafx.scene.shape.TriangleMesh;
 
 public class SurfaceAwareCSG<S> extends CSG {
+    protected static final String KEY_SURFACE_PART = "surface-part";
+
     public static void main(String[] args) throws Exception {
         Vector3d x1;
 
@@ -405,12 +407,12 @@ public class SurfaceAwareCSG<S> extends CSG {
     }
 
     public static <S> void markSurfacePart(PropertyStorage properties, SurfacePart<S> surfacePart) {
-        properties.set("surface-part", surfacePart);
+        properties.set(KEY_SURFACE_PART, surfacePart);
     }
 
     @SuppressWarnings("unchecked")
     public static <S> SurfacePart<S> getSurfacePart(PropertyStorage properties) {
-        return (SurfacePart<S>) properties.getValue("surface-part").orElse(null);
+        return (SurfacePart<S>) properties.getValue(KEY_SURFACE_PART).orElse(null);
     }
 
     public static <S> PropertyStorage createSurfacePartProperties(SurfacePart<S> surfacePart) {

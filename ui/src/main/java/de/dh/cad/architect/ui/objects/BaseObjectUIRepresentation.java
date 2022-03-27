@@ -58,11 +58,11 @@ public abstract class BaseObjectUIRepresentation extends AbstractObjectUIReprese
 
     // To be overridden and called as super method
     protected void addProperties(Map<String, Collection<UiProperty<?>>> result, BaseObject bo, UiController uiController) {
-        Collection<UiProperty<?>> commonProperties = result.computeIfAbsent("Allgemein", cat -> new ArrayList<>());
+        Collection<UiProperty<?>> commonProperties = result.computeIfAbsent(Strings.BASE_OBJECT_PROPERTIES_GENERAL_SECTION, cat -> new ArrayList<>());
         commonProperties.addAll(Arrays.<UiProperty<?>>asList(
-                new ConstantUiProperty<>(bo, KEY_PROPERTY_TYPE, "Typ", PropertyType.String, bo.getClass().getSimpleName()),
-                new ConstantUiProperty<>(bo, KEY_PROPERTY_ID, "Id", PropertyType.String, bo.getId()),
-                new UiProperty<String>(bo, KEY_PROPERTY_NAME, "Name", PropertyType.String, true) {
+                new ConstantUiProperty<>(bo, KEY_PROPERTY_TYPE, Strings.BASE_OBJECT_PROPERTIES_TYPE, PropertyType.String, bo.getClass().getSimpleName()),
+                new ConstantUiProperty<>(bo, KEY_PROPERTY_ID, Strings.BASE_OBJECT_PROPERTIES_ID, PropertyType.String, bo.getId()),
+                new UiProperty<String>(bo, KEY_PROPERTY_NAME, Strings.BASE_OBJECT_PROPERTIES_NAME, PropertyType.String, true) {
                     @Override
                     public String getValue() {
                         return bo.getName();
@@ -76,10 +76,10 @@ public abstract class BaseObjectUIRepresentation extends AbstractObjectUIReprese
                 }
         ));
         if (bo instanceof BaseSolidObject bso) {
-            Collection<UiProperty<?>> surfaeProperties = result.computeIfAbsent("Oberflächen", cat -> new ArrayList<>());
+            Collection<UiProperty<?>> surfaeProperties = result.computeIfAbsent(Strings.BASE_OBJECT_PROPERTIES_SURFACES_SECTION, cat -> new ArrayList<>());
             for (SurfaceConfiguration sc : bso.getSurfaceConfigurations()) {
                 AssetRefPath materialAssignment = sc.getMaterialAssignment();
-                surfaeProperties.add(new ConstantUiProperty<>(bo, sc.getSurfaceTypeId(), sc.getSurfaceTypeId(), PropertyType.String, materialAssignment == null ? "<Standard>" : materialAssignment.toPathString()));
+                surfaeProperties.add(new ConstantUiProperty<>(bo, sc.getSurfaceTypeId(), sc.getSurfaceTypeId(), PropertyType.String, materialAssignment == null ? Strings.BASE_OBJECT_PROPERTIES_SURFACES_STANDARD : materialAssignment.toPathString()));
             }
         }
     }

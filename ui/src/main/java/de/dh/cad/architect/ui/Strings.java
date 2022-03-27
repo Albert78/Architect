@@ -142,10 +142,76 @@ public class Strings {
 
     // Properties
     public static final String PROPERTIES_NO_OBJECT_SELECTED = "Kein Objekt ausgewählt";
-    public static final String OBJECTS_SELECTED_X = "Ausgewählt: {0}";
+    public static final String PROPERTIES_OBJECTS_SELECTED_X = "Ausgewählt: {0}";
     public static final String PROPERTIES_NO_PROPERTIES_TO_SHOW = "Keine Eigenschaften zum Anzeigen";
 
-    public static final String CEILING_HEIGHT_FROM_TO = "{0} bis {1}";
+    public static final String BASE_OBJECT_PROPERTIES_GENERAL_SECTION = "Allgemein";
+    public static final String BASE_OBJECT_PROPERTIES_TYPE = "Typ";
+    public static final String BASE_OBJECT_PROPERTIES_ID = "Id";
+    public static final String BASE_OBJECT_PROPERTIES_NAME = "Name";
+    public static final String BASE_OBJECT_PROPERTIES_SURFACES_SECTION = "Oberflächen";
+    public static final String BASE_OBJECT_PROPERTIES_SURFACES_STANDARD = "<Standard>";
+
+    public static final String ANCHOR_PROPERTIES_POSITION = "Position";
+    public static final String ANCHOR_PROPERTIES_DOCKED = "Angedockt";
+    public static final String ANCHOR_PROPERTIES_IS_HANDLE = "Handle";
+    public static final String ANCHOR_PROPERTIES_OWNER = "Besitzer";
+    public static final String ANCHOR_PROPERTIES_ANCHOR_TYPE = "Anker-Typ";
+
+    public static final String CEILING_PROPERTIES_NUM_CORNERS = "Eckpunkte";
+    public static final String CEILING_PROPERTIES_HEIGHT = "Höhe";
+    public static final String CEILING_PROPERTIES_HEIGHT_FROM_TO = "{0} bis {1}";
+
+    public static final String DIMENSIONING_PROPERTIES_LENGTH = "Länge";
+
+    public static final String FLOOR_PROPERTIES_LEVEL = "Etage";
+    public static final String FLOOR_PROPERTIES_HEIGHT = "Höhe";
+    public static final String FLOOR_PROPERTIES_SET_HEIGHT_OPERATION_NAME = "Fußbodenhöhe setzen";
+    public static final String FLOOR_PROPERTIES_THICKNESS = "Dicke";
+    public static final String FLOOR_PROPERTIES_SET_THICKNESS_OPERATION_NAME = "Fußbodendicke setzen";
+    public static final String FLOOR_PROPERTIES_AREA = "Fläche";
+
+    public static final String GUIDELINE_PROPERTIES_POSITION = "Position";
+
+    public static final String OBJECTS_GROUP_PROPERTIES_NUM_OBJECTS = "# Objekte";
+
+    public static final String SUPPORT_OBJECT_PROPERTIES_DESCRIPTOR = "Deskriptor";
+    public static final String SUPPORT_OBJECT_PROPERTIES_POSITION = "Position";
+    public static final String SUPPORT_OBJECT_PROPERTIES_SIZE = "Größe X/Y";
+    public static final String SUPPORT_OBJECT_PROPERTIES_ROTATION_DEGREES = "Drehung (Grad)";
+    public static final String SUPPORT_OBJECT_PROPERTIES_HEIGHT = "Höhe";
+    public static final String SUPPORT_OBJECT_PROPERTIES_ELEVATION = "Vertikaler Versatz";
+
+    public static final String WALL_HOLE_PROPERTIES_DIMENSIONS = "Maße";
+    public static final String WALL_HOLE_PROPERTIES_PARAPET_HEIGHT = "Brüstungshöhe";
+    public static final String WALL_HOLE_PROPERTIES_DISTANCE_FROM_WALL_END = "Abstand von Wandende";
+    public static final String WALL_HOLE_PROPERTIES_DOCK_END = "Bezugs-Wandende";
+
+    public static final String WALL_PROPERTIES_THICKNESS = "Wanddicke";
+    public static final String WALL_PROPERTIES_BEVEL_TYPE_A = "Wandverbinder Ende A";
+    public static final String WALL_PROPERTIES_BEVEL_TYPE_B = "Wandverbinder Ende A";
+    public static final String WALL_PROPERTIES_HEIGHT_A = "Höhe am Ende A";
+    public static final String WALL_PROPERTIES_HEIGHT_B = "Höhe am Ende B";
+    public static final String WALL_PROPERTIES_OPERATION_HAME_SET_HEIGHT_A = "Anpassung von Wandankern an Höhenänderung Ende A";
+    public static final String WALL_PROPERTIES_OPERATION_HAME_SET_HEIGHT_B = "Anpassung von Wandankern an Höhenänderung Ende B";
+    public static final String WALL_PROPERTIES_BASE_LENGTH = "Basis-Wandlänge";
+    public static final String WALL_PROPERTIES_LENGTH_SIDE_1 = "Wandlänge Seite 1";
+    public static final String WALL_PROPERTIES_LENGTH_SIDE_2 = "Wandlänge Seite 2";
+
+    public static final String SUPPORT_OBJECT_CONTROL_WIDTH_X_0 = "Breite (X): {0}";
+    public static final String SUPPORT_OBJECT_CONTROL_HEIGHT_Y_0 = "Höhe (Y): {0}";
+    public static final String SUPPORT_OBJECT_CONTROL_DEPTH_Z_0 = "Tiefe (Z): {0}";
+    public static final String SUPPORT_OBJECT_CONTROL_ELEVATION_Y_0 = "Vertikaler Versatz (Y): {0}";
+
+    public static final String SUPPORT_OBJECT_CONTROL_DEFAULT_SIZE_TITLE = "Standardgröße:";
+    public static final String SUPPORT_OBJECT_CONTROL_WIDTH_X_LABEL = "Breite (X)";
+    public static final String SUPPORT_OBJECT_CONTROL_HEIGHT_Y_LABEL = "Höhe (Y)";
+    public static final String SUPPORT_OBJECT_CONTROL_DEPTH_Z_LABEL = "Tiefe (Z)";
+    public static final String SUPPORT_OBJECT_CONTROL_ELEVATION_Y_LABEL = "Vertikaler Versatz (Y)";
+
+    public static final String PROPERTIES_DIMENSIONS_DIALOG_TITLE = "Ausmaße bearbeiten";
+    public static final String PROPERTIES_LENGTH_DIALOG_TITLE = "Länge bearbeiten";
+    public static final String PROPERTIES_POSITION_DIALOG_TITLE = "Position bearbeiten";
 
     // Ground plan
     public static final String BEHAVIORS_OBJ_NAME = "{0}";
@@ -417,63 +483,4 @@ public class Strings {
     public static final String LIBRARY_MANAGER_EDIT_SUPPORT_OBJECT_TAKE_SNAPSHOT_DIALOG_TITLE = "Bilder für Bibliothek aufnehmen";
     public static final String LIBRARY_MANAGER_EDIT_SUPPORT_OBJECT_TAKE_SNAPSHOT_ICON_IMAGE_SAVED = "Icon gespeichert";
     public static final String LIBRARY_MANAGER_EDIT_SUPPORT_OBJECT_TAKE_SNAPSHOT_PLAN_VIEW_IMAGE_SAVED = "Grundriss-Bild gespeichert";
-
-    public static final String ANCHOR_PROPERTIES_POSITION = "Position";
-    public static final String ANCHOR_PROPERTIES_DOCKED = "Angedockt";
-    public static final String ANCHOR_PROPERTIES_IS_HANDLE = "Handle";
-    public static final String ANCHOR_PROPERTIES_OWNER = "Besitzer";
-    public static final String ANCHOR_PROPERTIES_ANCHOR_TYPE = "Anker-Typ";
-
-    public static final String CEILING_PROPERTIES_NUM_CORNERS = "Eckpunkte";
-    public static final String CEILING_PROPERTIES_HEIGHT = "Höhe";
-
-    public static final String DIMENSIONING_PROPERTIES_LENGTH = "Länge";
-
-    public static final String FLOOR_PROPERTIES_LEVEL = "Etage";
-    public static final String FLOOR_PROPERTIES_HEIGHT = "Höhe";
-    public static final String FLOOR_PROPERTIES_SET_HEIGHT_OPERATION_NAME = "Fußbodenhöhe setzen";
-    public static final String FLOOR_PROPERTIES_THICKNESS = "Dicke";
-    public static final String FLOOR_PROPERTIES_SET_THICKNESS_OPERATION_NAME = "Fußbodendicke setzen";
-    public static final String FLOOR_PROPERTIES_AREA = "Fläche";
-
-    public static final String GUIDELINE_PROPERTIES_POSITION = "Position";
-
-    public static final String OBJECTS_GROUP_PROPERTIES_NUM_OBJECTS = "# Objekte";
-
-    public static final String SUPPORT_OBJECT_PROPERTIES_DESCRIPTOR = "Deskriptor";
-    public static final String SUPPORT_OBJECT_PROPERTIES_POSITION = "Position";
-    public static final String SUPPORT_OBJECT_PROPERTIES_SIZE = "Größe X/Y";
-    public static final String SUPPORT_OBJECT_PROPERTIES_ROTATION_DEGREES = "Drehung (Grad)";
-    public static final String SUPPORT_OBJECT_PROPERTIES_HEIGHT = "Höhe";
-    public static final String SUPPORT_OBJECT_PROPERTIES_ELEVATION = "Vertikaler Versatz";
-
-    public static final String WALL_HOLE_PROPERTIES_DIMENSIONS = "Maße";
-    public static final String WALL_HOLE_PROPERTIES_PARAPET_HEIGHT = "Brüstungshöhe";
-    public static final String WALL_HOLE_PROPERTIES_DISTANCE_FROM_WALL_END = "Abstand von Wandende";
-    public static final String WALL_HOLE_PROPERTIES_DOCK_END = "Bezugs-Wandende";
-
-    public static final String WALL_PROPERTIES_THICKNESS = "Wanddicke";
-    public static final String WALL_PROPERTIES_BEVEL_TYPE_A = "Wandverbinder Ende A";
-    public static final String WALL_PROPERTIES_BEVEL_TYPE_B = "Wandverbinder Ende A";
-    public static final String WALL_PROPERTIES_HEIGHT_A = "Höhe am Ende A";
-    public static final String WALL_PROPERTIES_HEIGHT_B = "Höhe am Ende B";
-    public static final String WALL_PROPERTIES_OPERATION_HAME_SET_HEIGHT_A = "Anpassung von Wandankern an Höhenänderung Ende A";
-    public static final String WALL_PROPERTIES_OPERATION_HAME_SET_HEIGHT_B = "Anpassung von Wandankern an Höhenänderung Ende B";
-    public static final String WALL_PROPERTIES_BASE_LENGTH = "Basis-Wandlänge";
-    public static final String WALL_PROPERTIES_LENGTH_SIDE_1 = "Wandlänge Seite 1";
-    public static final String WALL_PROPERTIES_LENGTH_SIDE_2 = "Wandlänge Seite 2";
-
-    public static final String SUPPORT_OBJECT_CONTROL_WIDTH_X_0 = "Breite (X): {0}";
-    public static final String SUPPORT_OBJECT_CONTROL_HEIGHT_Y_0 = "Höhe (Y): {0}";
-    public static final String SUPPORT_OBJECT_CONTROL_DEPTH_Z_0 = "Tiefe (Z): {0}";
-    public static final String SUPPORT_OBJECT_CONTROL_ELEVATION_Y_0 = "Vertikaler Versatz (Y): {0}";
-
-    public static final String SUPPORT_OBJECT_CONTROL_DEFAULT_SIZE_TITLE = "Standardgröße:";
-    public static final String SUPPORT_OBJECT_CONTROL_WIDTH_X_LABEL = "Breite (X)";
-    public static final String SUPPORT_OBJECT_CONTROL_HEIGHT_Y_LABEL = "Höhe (Y)";
-    public static final String SUPPORT_OBJECT_CONTROL_DEPTH_Z_LABEL = "Tiefe (Z)";
-    public static final String SUPPORT_OBJECT_CONTROL_ELEVATION_Y_LABEL = "Vertikaler Versatz (Y)";
-
-    public static final String PROPERTIES_DIMENSIONS_DIALOG_TITLE = "Ausmaße bearbeiten";
-    public static final String PROPERTIES_LENGTH_DIALOG_TITLE = "Länge bearbeiten";
 }
