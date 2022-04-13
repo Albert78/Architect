@@ -347,9 +347,9 @@ public class ApplicationController {
             }
         }
 
-        public Path showOpenDialog(Window ownerWindow) {
+        public Optional<Path> showOpenDialog(Window ownerWindow) {
             File file = mFileChooser.showOpenDialog(ownerWindow);
-            return file.toPath();
+            return file == null ? Optional.empty() : Optional.of(file.toPath());
         }
 
         public Path showSaveDialog(Window ownerWindow) {
@@ -409,10 +409,7 @@ public class ApplicationController {
             fileChooser.setInitialFileName(lastPath.getFileName().toString());
         }
         addFileChooserExtensionFilters(fileChooser);
-        Path path = fileChooser.showOpenDialog(parentWindow);
-        if (path != null) {
-            return queryLoadPlanFile(mPrimaryStage, path);
-        }
-        return false;
+        Optional<Path> oPath = fileChooser.showOpenDialog(parentWindow);
+        return oPath.map(path -> queryLoadPlanFile(mPrimaryStage, path)).orElse(false);
     }
 }
