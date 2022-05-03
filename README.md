@@ -33,7 +33,7 @@ Außerdem:
 
 ## Was kommt noch?
 - Erweiterung des Plan-Modells, so dass in einer Datei / einem Workspace mehrere Pläne enthalten sind, die relativ zueinander platziert sind. Also z.B. pro Etage oder sogar pro Zimmer einen eigenen Plan, die in der 3D-Ansicht zusammen dargstellt werden.
-Aktuell ist das noch etwas hakelig mit dem Dateihandling, da Architect das Verzeichnis einer Plan-Datei als Workspace ansieht, man aber die Plan-XML-Datei explizit anklicken muss zum Öffnen.
+Das Dateihandling ist noch nicht ganz fertig; Architect sieht das Verzeichnis einer Plan-Datei als Workspace, es kommen später weitere Dateien neben der Plan-XML-Datei hinzu wie z.B. lokale Hilfsobjekte und Materials und ggf. weitere Plan-Dateien. Im Moment muss man noch im Öffnen-Dialog die Plan-XML-Datei explizit anklicken zum Öffnen.
 - Bessere Konfigurationsmöglichkeiten für Oberflächen auf Objekten, z.B. Lage, Skalierung und Drehung (z.B. für Dachziegeln, Tapeten- und Bodentexturen etc.)
 - Türen und Fenster in Wandöffnungen, Modellierung von verschiedenen Etagen und Übergänge/Treppen
 - Lampen, die auch leuchten :-)
