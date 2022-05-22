@@ -359,8 +359,6 @@ public class CSG {
     }
 
     private CSG _unionCSGBoundsOpt(CSG csg) {
-        System.err.println("WARNING: using " + CSG.OptType.NONE
-                + " since other optimization types missing for union operation.");
         return _unionIntersectOpt(csg);
     }
 
@@ -425,7 +423,7 @@ public class CSG {
     }
 
     private CSG _unionNoOpt(CSG csg) {
-        Node a = new Node(this.clone().mPolygons);
+        Node a = new Node(clone().mPolygons);
         Node b = new Node(csg.clone().mPolygons);
         a.clipTo(b);
         b.clipTo(a);

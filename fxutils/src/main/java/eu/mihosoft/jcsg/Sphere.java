@@ -33,14 +33,15 @@
  */
 package eu.mihosoft.jcsg;
 
-import eu.mihosoft.vvecmath.Vector3d;
 import java.util.ArrayList;
 import java.util.List;
+
+import eu.mihosoft.vvecmath.Vector3d;
 
 /**
  * A solid sphere.
  *
- * Tthe tessellation along the longitude and latitude directions can be
+ * The tessellation along the longitude and latitude directions can be
  * controlled via the {@link #numSlices} and {@link #numStacks} parameters.
  *
  * @author Michael Hoffer &lt;info@michaelhoffer.de&gt;

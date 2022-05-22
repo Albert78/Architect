@@ -22,6 +22,7 @@ import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.DragControl;
 import de.dh.utils.fx.Vector2D;
+import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -57,6 +58,7 @@ public class DimensioningVisual {
 
     protected BooleanProperty mMouseOverProperty = new SimpleBooleanProperty(false);
     protected DoubleProperty mLabelDistanceProperty = new SimpleDoubleProperty(50);
+    protected DoubleProperty mStrokeWidthProperty = new SimpleDoubleProperty(1d);
 
     public DimensioningVisual(Abstract2DUiObject parent) {
         mParent = parent;
@@ -156,12 +158,7 @@ public class DimensioningVisual {
         } else {
             mText.setFont(null);
         }
-        mBorderLine1.setStrokeWidth(strokeWidth);
-        mBorderLine2.setStrokeWidth(strokeWidth);
-        mAcrossLine1.setStrokeWidth(strokeWidth);
-        mAcrossLine2.setStrokeWidth(strokeWidth);
-        mAngularLine1.setStrokeWidth(strokeWidth);
-        mAngularLine2.setStrokeWidth(strokeWidth);
+        setStrokeWidth(strokeWidth);
 
         if (isEmphasis) {
             configureEmphasisStrokeDash(mBorderLine1, isEmphasis);
@@ -230,13 +227,14 @@ public class DimensioningVisual {
         mBorderLine1.setStartY(y1);
         mBorderLine1.setEndX(dp1Overhang.getX());
         mBorderLine1.setEndY(dp1Overhang.getY());
-        mBorderLine1.setStrokeWidth(1 * scaleCompensation);
+        DoubleBinding strokeWidth = mStrokeWidthProperty.multiply(scaleCompensation);
+        mBorderLine1.strokeWidthProperty().bind(strokeWidth);
 
         mBorderLine2.setStartX(x2);
         mBorderLine2.setStartY(y2);
         mBorderLine2.setEndX(dp2Overhang.getX());
         mBorderLine2.setEndY(dp2Overhang.getY());
-        mBorderLine2.setStrokeWidth(1 * scaleCompensation);
+        mBorderLine2.strokeWidthProperty().bind(strokeWidth);
 
         Length length = CoordinateUtils.coordsToLength(distance);
         mText.setText(length.toNormalPlanString());
@@ -258,26 +256,26 @@ public class DimensioningVisual {
         Vector2D al1e = dp1.plus(vu.times(acrossLineLength));
         mAcrossLine1.setEndX(al1e.getX());
         mAcrossLine1.setEndY(al1e.getY());
-        mAcrossLine1.setStrokeWidth(1 * scaleCompensation);
+        mAcrossLine1.strokeWidthProperty().bind(strokeWidth);
 
         Vector2D al2s = dp2.minus(vu.times(acrossLineLength));
         mAcrossLine2.setStartX(al2s.getX());
         mAcrossLine2.setStartY(al2s.getY());
         mAcrossLine2.setEndX(dp2.getX());
         mAcrossLine2.setEndY(dp2.getY());
-        mAcrossLine2.setStrokeWidth(1 * scaleCompensation);
+        mAcrossLine2.strokeWidthProperty().bind(strokeWidth);
 
         mAngularLine1.setStartX(dp1AngularP.getX());
         mAngularLine1.setStartY(dp1AngularP.getY());
         mAngularLine1.setEndX(dp1AngularM.getX());
         mAngularLine1.setEndY(dp1AngularM.getY());
-        mAngularLine1.setStrokeWidth(1 * scaleCompensation);
+        mAngularLine1.strokeWidthProperty().bind(strokeWidth);
 
         mAngularLine2.setStartX(dp2AngularP.getX());
         mAngularLine2.setStartY(dp2AngularP.getY());
         mAngularLine2.setEndX(dp2AngularM.getX());
         mAngularLine2.setEndY(dp2AngularM.getY());
-        mAngularLine2.setStrokeWidth(1 * scaleCompensation);
+        mAngularLine2.strokeWidthProperty().bind(strokeWidth);
     }
 
     public Text getText() {
@@ -297,6 +295,21 @@ public class DimensioningVisual {
             return;
         }
         mLabelDistanceProperty.set(value);
+    }
+
+    public DoubleProperty strokeWidthProperty() {
+        return mStrokeWidthProperty;
+    }
+
+    public double getStrokeWidth() {
+        return mStrokeWidthProperty.get();
+    }
+
+    public void setStrokeWidth(double value) {
+        if (mStrokeWidthProperty.get() == value) {
+            return;
+        }
+        mStrokeWidthProperty.set(value);
     }
 
     public BooleanProperty mouseOverProperty() {

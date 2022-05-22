@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -321,6 +322,10 @@ public class SurfaceAwareCSG<S> extends CSG {
             mSurfaceParts = surfacePart;
         }
 
+        public static <T> ShapeSurfaceData<T> empty() {
+            return new ShapeSurfaceData<>(new TriangleMesh(), Collections.emptyList());
+        }
+
         public Mesh getMesh() {
             return mMesh;
         }
@@ -333,19 +338,20 @@ public class SurfaceAwareCSG<S> extends CSG {
         }
     }
 
-    public ShapeSurfaceData<S> createJavaFXTrinagleMesh(S surface) {
-        Collection<SurfacePart<S>> parts = new ArrayList<>();
-        TriangleMesh mesh = new TriangleMesh();
-        ObservableFloatArray points = mesh.getPoints();
-        ObservableFloatArray texCoords = mesh.getTexCoords();
-        ObservableFaceArray faces = mesh.getFaces();
-        int vertexCount = 0;
+    public Map<S, ShapeSurfaceData<S>> createJavaFXTrinagleMeshes() {
+        Map<S, ShapeSurfaceData<S>> result = new HashMap<>();
         for (Polygon p : mPolygons) {
             SurfacePart<S> surfacePart = getSurfacePart(p.getStorage());
-            if (!surface.equals(surfacePart.getSurface())) {
-                continue;
-            }
+
+            S surface = surfacePart.getSurface();
+            ShapeSurfaceData<S> current = result.computeIfAbsent(surface, s -> new ShapeSurfaceData<>(new TriangleMesh(), new ArrayList<>()));
+            Collection<SurfacePart<S>> parts = current.getSurfaceParts();
             parts.add(surfacePart);
+            TriangleMesh mesh = (TriangleMesh) current.getMesh();
+            ObservableFloatArray points = mesh.getPoints();
+            ObservableFloatArray texCoords = mesh.getTexCoords();
+            ObservableFaceArray faces = mesh.getFaces();
+
             if (p.vertices.size() < 3) {
                 // Ignore polygon
             }
@@ -391,6 +397,7 @@ public class SurfaceAwareCSG<S> extends CSG {
                     (float) v3UV.getY());
                 int t2 = texCoords.size() / 2 - 1;
 
+                int vertexCount = faces.size() / 2;
                 faces.addAll(
                     vertexCount, // first vertex
                     t0,
@@ -399,11 +406,10 @@ public class SurfaceAwareCSG<S> extends CSG {
                     vertexCount + 2, // third vertex
                     t2
                 );
-                vertexCount += 3;
             } // end for vertex
         } // end for polygon
 
-        return new ShapeSurfaceData<>(mesh, parts);
+        return result;
     }
 
     public static <S> void markSurfacePart(PropertyStorage properties, SurfacePart<S> surfacePart) {

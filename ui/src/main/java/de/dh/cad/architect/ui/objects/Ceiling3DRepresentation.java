@@ -19,6 +19,7 @@ package de.dh.cad.architect.ui.objects;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import de.dh.cad.architect.model.assets.AssetRefPath;
@@ -173,7 +174,8 @@ public class Ceiling3DRepresentation extends Abstract3DRepresentation {
                 return Surface.S1;
             }
         }, 0, false);
-        ShapeSurfaceData<Surface> shapeSurfaceData = csg.createJavaFXTrinagleMesh(Surface.S1);
+        Map<Surface, ShapeSurfaceData<Surface>> meshes = csg.createJavaFXTrinagleMeshes();
+        ShapeSurfaceData<Surface> shapeSurfaceData = meshes.computeIfAbsent(Surface.S1, s -> ShapeSurfaceData.empty());
         Mesh mesh = shapeSurfaceData.getMesh();
         MeshView meshView = mSurfaceData.getMeshView();
         meshView.setMesh(mesh);

@@ -42,7 +42,7 @@ public class GroundPlanUIElementFilter extends ConstructionUIElementFilter {
 
     @Override
     public boolean isUIElementMouseTransparent(Abstract2DRepresentation repr) {
-        return repr instanceof SupportObjectConstructionRepresentation;
+        return false;
     }
 
     @Override

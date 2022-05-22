@@ -123,6 +123,7 @@ public class Wall3DRepresentation extends Abstract3DRepresentation {
             // Polygon must have a least 3 points
             return false;
         }
+        // Build points list which exactly mirrors the corners list - and will be modified the same way
         List<Vector2D> points = corners
                         .stream()
                         .map(c -> new Vector2D(
@@ -360,11 +361,12 @@ public class Wall3DRepresentation extends Abstract3DRepresentation {
                 csg = csg.difference(holeCSG);
             }
 
+            Map<WallSurface, ShapeSurfaceData<WallSurface>> meshes = csg.createJavaFXTrinagleMeshes();
             for (SurfaceData surfaceData : mSurfaces.values()) {
                 // One surface of the wall, e.g. A or One
                 String surfaceTypeId = surfaceData.getSurfaceTypeId();
                 WallSurface wallSurface = WallSurface.ofWallSurfaceType(surfaceTypeId);
-                ShapeSurfaceData<WallSurface> shapeSurfaceData = csg.createJavaFXTrinagleMesh(wallSurface);
+                ShapeSurfaceData<WallSurface> shapeSurfaceData = meshes.computeIfAbsent(wallSurface, s -> ShapeSurfaceData.empty());
                 MeshView meshView = surfaceData.getMeshView();
                 // The surface can potentially consist of several parts, e.g. a wall side might consist of the main part an a part of the bevel.
                 Iterator<SurfacePart<WallSurface>> si = shapeSurfaceData.getSurfaceParts().iterator();

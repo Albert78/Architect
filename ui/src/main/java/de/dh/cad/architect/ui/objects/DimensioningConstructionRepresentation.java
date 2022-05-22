@@ -83,6 +83,7 @@ public class DimensioningConstructionRepresentation extends AbstractAnchoredObje
         } else {
             setViewOrder(Constants.VIEW_ORDER_DIMENSIONING + Constants.VIEW_ORDER_OFFSET_NORMAL);
         }
+        updateShape();
     }
 
     @Override

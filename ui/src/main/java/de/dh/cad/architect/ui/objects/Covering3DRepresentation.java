@@ -204,8 +204,9 @@ public class Covering3DRepresentation extends Abstract3DRepresentation {
         }, 0, false);
         TextureCoordinateSystem tcs = TextureCoordinateSystem.create(Vector3d.Z_ONE, textureDirectionX);
         TextureProjection tp = TextureProjection.fromPointsBorder(tcs, bottomPoints);
+        Map<Surface, ShapeSurfaceData<Surface>> meshes = csg.createJavaFXTrinagleMeshes();
         for (Surface surface : Surface.values()) {
-            ShapeSurfaceData<Surface> shapeSurfaceData = csg.createJavaFXTrinagleMesh(surface);
+            ShapeSurfaceData<Surface> shapeSurfaceData = meshes.computeIfAbsent(surface, s -> ShapeSurfaceData.empty());
             SurfaceData surfaceData = mSurfaces.get(surface);
             MeshView meshView = surfaceData.getMeshView();
             // TODO: Support multiple surface parts
