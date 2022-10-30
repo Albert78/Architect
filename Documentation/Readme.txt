@@ -1,1 +1,1 @@
-Architect by Daniel Höh
+Architect by Daniel HÃ¶h
