@@ -5,8 +5,20 @@
 ![2D view](Documentation/Screenshots/Furniture-Living-Room-2D.png)
 ![3D view](Documentation/Screenshots/Selection-Living-Room-3D.png)
 
+## tl;dr
+Notwendig:
+- Apache Maven 3.x
+- JDK Version >=17
+
+```
+cd Architect
+mvn install
+cd main
+mvn javafx:run
+```
+
 ## Was ist Architect?
-Architect ist ein **Grundriss-Planer** mit **3D-Ansichtsfunktion** als komplett quelloffenes Java-Programm. Wer es zum Laufen bekommt (siehe Quick-Start bzw. Installation unten), sollte mit der Bedienung keine Probleme haben. Etwas Technik-Affinität schadet nicht. Das Programm eignet sich gut, um eine Wohnung zu zeichnen, zu möblieren, Möbel/Wände/Oberflächen zu ändern und sich das Resultat in 2D und 3D darstellen zu lassen. Die Funktionalität ist vergleichbar mit SweetHome3D, es ist nicht so ausgereift, dafür aber moderner und kann ein paar Dinge besser, z.B. Dachschrägen, bessere 3D-Darstellung und Usability, ...
+Architect ist ein **Grundriss-Planer** mit **3D-Ansichtsfunktion** als komplett quelloffenes Java-Programm. Wer es zum Laufen bekommt, sollte mit der Bedienung keine Probleme haben. Etwas Technik-Affinität schadet nicht. Das Programm eignet sich gut, um eine Wohnung zu zeichnen, zu möblieren, Möbel/Wände/Oberflächen zu ändern und sich das Resultat in 2D und 3D darstellen zu lassen. Die Funktionalität ist vergleichbar mit SweetHome3D, es hat zwar noch weniger Funktionen, ist dafür aber moderner und kann ein paar Dinge besser, z.B. Dachschrägen, bessere 3D-Darstellung und Usability, ... Außerdem können alle Möbel von SweetHome3D importiert werden, solange der Möbel-Designer noch so rudimentär ist und wir noch keine eigenen öffentlichen Möbel-Bibliotheken haben.
 Die Oberfläche liegt aktuell nur in deutscher Sprache vor.
 Funktional liegt der Fokus auf **Wohnungsplanung** und **Innenarchitektur**, also der Visualisierung einer Wohnung.
 Als Anwendungsentwickler ist mir neben guter Usability vor allem die Codearchitektur sehr wichtig. Hier liegt mein Fokus auf durchdachter Softwarearchitektur, sauberer Programmierung, guter Wartbarkeit, einfacher Erweiterbarkeit aber auch durchdachter Benutzerführung und Anwendbarkeit.
@@ -25,7 +37,8 @@ Außerdem:
 - Wände, Türen und Fenster (aktuell nur Wand-Löcher, wird noch ausgebaut), Böden, Decken, Dachschrägen modellieren
 - Möblierung und Objekte (Oberflächen-Begriff: Hilfsobjekte)
 - Konfiguration ("Anmalen") von Oberflächen (Wände, Böden, Möbel, ...)
-- 3D-Darstellung und intuitive, virtuelle Navigation durch das Objekt
+- Lineal und Hilfslinien
+- 3D-Darstellung und intuitive, virtuelle Navigation durch das Objekt mit den Maustasten und Scrollrad
 - Möbel- und Oberflächenbibliotheksverwaltung
 	- Eigenes Bibliotheksformat, Möbel/Hilfsobjekte werden im .obj-Format, Oberflächen im .mtl-Format mit zusätzlichen Metadaten verwaltet
 	- Einfacher Editor zum Anlegen und Ändern von Möbeln und Oberflächen
@@ -49,6 +62,7 @@ Das Dateihandling ist noch nicht ganz fertig; Architect sieht das Verzeichnis ei
 ### Quick-Start mit Maven
 #### Benötigt:
 - Apache Maven 3.x
+- JDK Version >=17
 
 #### Bauen und Ausführen über Maven:
 - Download des Architect-Repositories über `git clone` oder als Verzeichnis
