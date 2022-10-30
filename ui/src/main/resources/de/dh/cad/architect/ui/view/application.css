@@ -2,3 +2,8 @@
     -fx-background-color: transparent ;
     -fx-background-insets: 0px ;
 }
+
+.focusable-view:focused {
+	-fx-border-width: 2;
+	-fx-border-color: #0093ff;
+}

@@ -33,6 +33,7 @@ import de.dh.cad.architect.ui.objects.ObjectTypesRegistry;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.AbstractPlanView;
 import de.dh.cad.architect.ui.view.threed.behaviors.ThreeDNullBehavior;
+import de.dh.utils.fx.ClippingStackPane;
 import javafx.collections.ObservableList;
 import javafx.scene.AmbientLight;
 import javafx.scene.Group;
@@ -60,7 +61,7 @@ public abstract class Abstract3DView extends AbstractPlanView<Abstract3DRepresen
     protected Abstract3DView(UiController uiController) {
         super(uiController);
         mCenterPane = new Pane();
-        setCenter(mCenterPane);
+        setCenter(new ClippingStackPane(mCenterPane));
     }
 
     @Override

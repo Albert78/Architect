@@ -22,6 +22,7 @@ import java.util.Collection;
 
 import org.apache.commons.lang3.StringUtils;
 
+import de.dh.cad.architect.model.coords.Angle;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.coords.LengthUnit;
 import de.dh.cad.architect.model.coords.Position2D;

@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
+import de.dh.cad.architect.model.coords.Angle;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.model.wallmodel.IWallAnchor;

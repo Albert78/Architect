@@ -17,9 +17,13 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.view;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -42,46 +46,76 @@ import de.dh.cad.architect.ui.properties.PropertiesControl;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
 import de.dh.cad.architect.ui.view.libraries.LibraryManagerMainWindow;
 import de.dh.cad.architect.ui.view.threed.ThreeDView;
+import de.dh.utils.fx.viewsfx.AbstractDockableViewLocation;
+import de.dh.utils.fx.viewsfx.DockHostControl;
+import de.dh.utils.fx.viewsfx.DockSide;
+import de.dh.utils.fx.viewsfx.DockSystem;
+import de.dh.utils.fx.viewsfx.DockViewLocation;
+import de.dh.utils.fx.viewsfx.Dockable;
+import de.dh.utils.fx.viewsfx.DockableFloatingStage;
+import de.dh.utils.fx.viewsfx.IDockZoneProvider;
+import de.dh.utils.fx.viewsfx.TabDockHost;
+import de.dh.utils.fx.viewsfx.ViewsRegistry;
+import de.dh.utils.fx.viewsfx.ViewsRegistry.ViewLifecycleManager;
+import de.dh.utils.fx.viewsfx.io.DesktopSettings;
+import de.dh.utils.fx.viewsfx.io.DesktopSettingsIO;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Accordion;
 import javafx.scene.control.CustomMenuItem;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
-import javafx.scene.control.SingleSelectionModel;
-import javafx.scene.control.SplitPane;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
-import javafx.scene.control.ToolBar;
 import javafx.scene.control.Tooltip;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 
 public class MainWindow implements Initializable {
-    private ChangeListener<InteractionsTab> INTERACTIONS_TAB_LISTENER = new ChangeListener<>() {
+    protected ChangeListener<InteractionsControl> INTERACTIONS_CONTROL_LISTENER = new ChangeListener<>() {
         @Override
-        public void changed(ObservableValue<? extends InteractionsTab> observable, InteractionsTab oldValue, InteractionsTab newValue) {
-            removeInteractionsTab();
+        public void changed(ObservableValue<? extends InteractionsControl> observable, InteractionsControl oldValue, InteractionsControl newValue) {
+            removeInteractionsControl();
             if (newValue != null) {
-                addInteractionsTab(newValue.getTab(), newValue.hasPriority());
+                addInteractionsControl(newValue.getControl(), newValue.getTitle(), newValue.hasPriority());
             }
         }
     };
+
+    protected final ChangeListener<AbstractViewBehavior<? extends IModelBasedObject, ? extends Node>> VIEW_BEHAVIOR_LISTENER = new ChangeListener<>() {
+        @Override
+        public void changed(ObservableValue<? extends AbstractViewBehavior<? extends IModelBasedObject, ? extends Node>> observable,
+            AbstractViewBehavior<? extends IModelBasedObject, ? extends Node> oldValue,
+            AbstractViewBehavior<? extends IModelBasedObject, ? extends Node> newValue) {
+            unbindViewBehavior();
+            bindViewBehavior(newValue);
+        }
+    };
+
+    public static final String MAIN_DOCK_HOST_ID = "Dock-Host";
+
+    public static final String DOCK_ZONE_ID_MAIN = "Main";
+    public static final String DOCK_ZONE_ID_LEFT_UPPER = "LeftUpper";
+    public static final String DOCK_ZONE_ID_LEFT_LOWER = "LeftLower";
+    public static final String DOCK_ZONE_ID_BOTTOM = "Bottom";
+
+    public static final String VIEW_ID_PROPERTIES = "Properties";
+    public static final String VIEW_ID_INTERACTIONS_PANE = "InteractionsPane";
+    public static final String VIEW_ID_OBJECT_TREE = "ObjectTree";
+    public static final String VIEW_ID_CONSTRUCTION_AREA = "ConstructionArea";
+    public static final String VIEW_ID_3D_PRESENTATION = "3dPresentation";
 
     public static final int WINDOW_SIZE_X = 1000;
     public static final int WINDOW_SIZE_Y = 800;
@@ -94,22 +128,32 @@ public class MainWindow implements Initializable {
     protected final ApplicationController mApplicationController;
     protected final UiController mUIController;
 
-    protected PropertiesControl mPropertiesControl;
-    protected ObjectTreeControl mObjectTreeControl;
+    protected ThreeDView mThreeDView = null;
+    protected ConstructionView mConstructionView = null;
+    protected PropertiesControl mPropertiesControl = null;
+    protected ObjectTreeControl mObjectTreeControl = null;
+
+    protected ViewLifecycleManager<ConstructionView> mConstructionViewManager = null;
+    protected ViewLifecycleManager<ThreeDView> mThreeDViewManager = null;
+    protected ViewLifecycleManager<PropertiesControl> mPropertiesViewManager = null;
+    protected ViewLifecycleManager<Parent> mInteractionsPaneViewManager = null;
+    protected ViewLifecycleManager<ObjectTreeControl> mObjectTreeViewManager = null;
 
     protected final List<AbstractPlanView<? extends IModelBasedObject, ? extends Node>> mPlanViews = new ArrayList<>();
-
+    protected AbstractPlanView<? extends IModelBasedObject, ? extends Node> mActiveView = null;
     protected AbstractViewBehavior<? extends IModelBasedObject, ? extends Node> mViewBehavior = null;
-    protected Menu mViewMenu = null;
-    protected Label mBehaviorTitleLabel = null;
-    protected ToolBar mBehaviorActionsToolBar = null;
-    protected Tab mInteractionsTab = null;
+    protected StackPane mInteractionsPaneParent = new StackPane();
+
+    protected DockHostControl mMainDockHost = null;
 
     @FXML
     protected MenuBar mMenuBar;
 
     @FXML
     protected Parent mRoot;
+
+    @FXML
+    protected StackPane mDockHostParent;
 
     @FXML
     protected MenuItem mFileNewMenuItem;
@@ -133,40 +177,10 @@ public class MainWindow implements Initializable {
     protected MenuItem mOpenLibraryManagerMenuItem;
 
     @FXML
-    protected Menu mInsertionPointMenu;
-
-    @FXML
     protected Pane mMenuArea;
 
     @FXML
-    protected Pane mDefaultToolButtons;
-
-    @FXML
-    protected Pane mViewToolButtons;
-
-    @FXML
-    protected SplitPane mMainSplitPane;
-
-    @FXML
-    protected Accordion mLeftAccordion;
-
-    @FXML
-    protected TabPane mPropertiesInteractionsTabPane;
-
-    @FXML
-    protected Tab mPropertiesTab;
-
-    @FXML
-    protected BorderPane mPropertiesPane;
-
-    @FXML
-    protected BorderPane mObjectsTreePane;
-
-    @FXML
     protected Label mUserHintLabel;
-
-    @FXML
-    protected TabPane mPlansTabPane;
 
     protected MainWindow(ApplicationController applicationController, UiController uiController) {
         mApplicationController = applicationController;
@@ -185,68 +199,239 @@ public class MainWindow implements Initializable {
         return new MainWindow(applicationController, uiController);
     }
 
+    protected <T extends AbstractPlanView<?, ?>> Dockable<T> createDockableForView(T view, String viewId, String viewTitle) {
+        Dockable<T> result = Dockable.of(view, viewId, viewTitle, true);
+        result.setOnCloseRequestHandler(d -> {
+            return view.canClose();
+        });
+        result.visibleProperty().addListener(new ChangeListener<>() {
+            @Override
+            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                if (newValue) {
+                    openView(view);
+                } else {
+                    closeView(view);
+                }
+            }
+        });
+        result.setFocusControl(view);
+        result.floatingProperty().addListener((obs, oldVal, newVal) -> {
+            checkViewState(view, result);
+        });
+        view.focusedProperty().addListener((obs, oldVal, newVal) -> {
+            checkViewState(view, result);
+        });
+        return result;
+    }
+
+    protected void checkViewState(AbstractPlanView<?, ?> view, Dockable<?> dockable) {
+        Pane viewMenuArea = view.getViewMenuArea();
+        if (dockable.isFloating()) {
+            if (view == mActiveView) {
+                deactivateView();
+            }
+            view.setMenuArea(viewMenuArea);
+            return;
+        } else {
+            if (view.isFocused()) {
+                activateView(view);
+            }
+        }
+    }
+
+    // Creation/Restoration of views needs access to the scene, so this
+    // method must be called when the stage has already been shown.
+    protected void initializeViewsAndDockZones(Optional<DesktopSettings> oSettings) {
+        DockSystem.getFloatingStages().addListener(new ListChangeListener<>() {
+            @Override
+            public void onChanged(Change<? extends DockableFloatingStage> c) {
+                while (c.next()) {
+                    if (c.wasAdded()) {
+                        c.getAddedSubList().forEach(st -> {
+                            st.getScene().getStylesheets().add(Constants.APPLICATION_CSS.toExternalForm());
+                        });
+                    }
+                }
+            }
+        });
+
+        // Create the view lifecycle managers.
+        ViewsRegistry viewsRegistry = DockSystem.getViewsRegistry();
+        viewsRegistry.addView(mConstructionViewManager = new ViewLifecycleManager<>(VIEW_ID_CONSTRUCTION_AREA, true) {
+            @Override
+            protected Dockable<ConstructionView> createDockable() {
+                return createDockableForView(mConstructionView, VIEW_ID_CONSTRUCTION_AREA, mConstructionView.getTitle());
+            }
+
+            @Override
+            protected Optional<AbstractDockableViewLocation> getOrCreatePreferredViewLocation(IDockZoneProvider dzp) {
+                return dzp.getOrTryCreateDockZone(DOCK_ZONE_ID_MAIN).map(DockViewLocation::new);
+            }
+        });
+        viewsRegistry.addView(mThreeDViewManager = new ViewLifecycleManager<>(VIEW_ID_3D_PRESENTATION, true) {
+            @Override
+            protected Dockable<ThreeDView> createDockable() {
+                return createDockableForView(mThreeDView, VIEW_ID_3D_PRESENTATION, mThreeDView.getTitle());
+            }
+
+            @Override
+            protected Optional<AbstractDockableViewLocation> getOrCreatePreferredViewLocation(IDockZoneProvider dzp) {
+                return dzp.getOrTryCreateDockZone(DOCK_ZONE_ID_MAIN).map(DockViewLocation::new);
+            }
+        });
+        viewsRegistry.addView(mPropertiesViewManager = new ViewLifecycleManager<>(VIEW_ID_PROPERTIES, true) {
+            @Override
+            protected Dockable<PropertiesControl> createDockable() {
+                Dockable<PropertiesControl> result = Dockable.of(mPropertiesControl, VIEW_ID_PROPERTIES, Strings.PROPERTIES_VIEW_TITLE, false);
+                return result;
+            }
+
+            @Override
+            protected Optional<AbstractDockableViewLocation> getOrCreatePreferredViewLocation(IDockZoneProvider dzp) {
+                return dzp.getOrTryCreateDockZone(DOCK_ZONE_ID_LEFT_UPPER).map(DockViewLocation::new);
+            }
+        });
+        viewsRegistry.addView(mInteractionsPaneViewManager = new ViewLifecycleManager<>(VIEW_ID_INTERACTIONS_PANE, true) {
+            @Override
+            protected Dockable<Parent> createDockable() {
+                Dockable<Parent> result = Dockable.of(mInteractionsPaneParent, VIEW_ID_INTERACTIONS_PANE, "-", false);
+                return result;
+            }
+
+            @Override
+            protected Optional<AbstractDockableViewLocation> getOrCreatePreferredViewLocation(IDockZoneProvider dzp) {
+                return dzp.getOrTryCreateDockZone(DOCK_ZONE_ID_LEFT_UPPER).map(DockViewLocation::new);
+            }
+        });
+        viewsRegistry.addView(mObjectTreeViewManager = new ViewLifecycleManager<>(VIEW_ID_OBJECT_TREE, true) {
+            @Override
+            protected Dockable<ObjectTreeControl> createDockable() {
+                Dockable<ObjectTreeControl> result = Dockable.of(mObjectTreeControl, VIEW_ID_OBJECT_TREE, Strings.OBJECT_TREE_VIEW_TITLE, false);
+                return result;
+            }
+
+            @Override
+            protected Optional<AbstractDockableViewLocation> getOrCreatePreferredViewLocation(IDockZoneProvider dzp) {
+                return dzp.getOrTryCreateDockZone(DOCK_ZONE_ID_LEFT_LOWER).map(DockViewLocation::new);
+            }
+        });
+
+        // Step 2: Create all needed dock host controls using builder instances and install the controls in the node hierarchy.
+        DockHostControl.Builder builder = new DockHostControl.Builder(MAIN_DOCK_HOST_ID, DOCK_ZONE_ID_MAIN)
+                .addDockZone(DOCK_ZONE_ID_BOTTOM, (dh, dzp) -> {
+                    TabDockHost mainDockHost = dzp.getOrTryCreateDockZone(DOCK_ZONE_ID_MAIN).orElseGet(() -> dh.getFirstLeaf());
+                    return mainDockHost.split(DockSide.South, DOCK_ZONE_ID_BOTTOM, 0.7);
+                })
+
+                .addDockZone(DOCK_ZONE_ID_LEFT_UPPER, (dh, dzp) -> {
+                    TabDockHost mainDockHost = dzp.getOrTryCreateDockZone(DOCK_ZONE_ID_MAIN).orElseGet(() -> dh.getFirstLeaf());
+                    return mainDockHost.split(DockSide.West, DOCK_ZONE_ID_LEFT_UPPER, 0.2);
+                })
+
+                .addDockZone(DOCK_ZONE_ID_LEFT_LOWER, (dh, dzp) -> {
+                    TabDockHost mainDockHost = dzp.getOrTryCreateDockZone(DOCK_ZONE_ID_LEFT_UPPER).orElseGet(() -> dh.getFirstLeaf());
+                    return mainDockHost.split(DockSide.South, DOCK_ZONE_ID_LEFT_LOWER, 0.5);
+                });
+        // When restoring the dock host control, all views and dock zones must have been declared.
+        mMainDockHost = builder.createOrRestoreFromSettings(oSettings);
+        mDockHostParent.getChildren().add(mMainDockHost);
+
+        // Step 3: Restore or initialize default floating views.
+        if (oSettings.isPresent()) {
+            DesktopSettings settings = oSettings.get();
+            viewsRegistry.restoreFloatingViews(settings, getStage());
+        } else {
+            showDefaultViews();
+        }
+
+        mApplicationController.planProperty().addListener(new ChangeListener<Plan>() {
+            @Override
+            public void changed(ObservableValue<? extends Plan> observable, Plan oldValue, Plan newValue) {
+                for (AbstractPlanView<? extends IModelBasedObject, ? extends Node> planView : mPlanViews) {
+                    if (planView.isAlive()) {
+                        closeView(planView);
+                        openView(planView);
+                    }
+                }
+                updateRecentFilesMenu();
+            }
+        });
+
+        updateRecentFilesMenu();
+
+        Platform.runLater(() -> {
+            if (mConstructionViewManager.getDockable().map(d -> d.isVisible()).orElse(false)) {
+                mConstructionView.requestFocus();
+            } else if (mThreeDViewManager.getDockable().map(d -> d.isVisible()).orElse(false)) {
+                mThreeDView.requestFocus();
+            }
+        });
+    }
+
+    protected void showDefaultViews() {
+        Stage stage = mApplicationController.getPrimaryStage();
+        mConstructionViewManager.ensureVisible(stage);
+        mThreeDViewManager.ensureVisible(stage);
+        mPropertiesViewManager.ensureVisible(stage);
+        mObjectTreeViewManager.ensureVisible(stage);
+    }
+
+    public void saveSettings() {
+        try {
+            DesktopSettings settings = new DesktopSettings();
+
+            // For each dock host control:
+            mMainDockHost.saveViewHierarchy(settings);
+
+            DockSystem.getViewsRegistry().storeFloatingViewsSettings(settings);
+
+            try (BufferedWriter bw = Files.newBufferedWriter(Paths.get(DesktopSettingsIO.DEFAULT_SETTINGS_FILE_NAME))) {
+                DesktopSettingsIO.serializeDesktopSettings(settings, bw);
+            }
+        } catch (Exception e) {
+            log.warn("Unable to store settings", e);
+        }
+    }
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        mConstructionView = new ConstructionView(mUIController);
+        mThreeDView = new ThreeDView(mUIController);
+        mPlanViews.add(mConstructionView);
+        mPlanViews.add(mThreeDView);
+        mPropertiesControl = PropertiesControl.create();
+        mObjectTreeControl = ObjectTreeControl.create();
+        mObjectTreeControl.setObjectsVisibilityChanger((objs, hidden) -> {
+            mUIController.setObjectsVisibility(objs, hidden);
+        });
+
         mFileNewMenuItem.setOnAction(this::onFileNewAction);
         mFileOpenMenuItem.setOnAction(this::onFileOpenAction);
         mFileSaveMenuItem.setOnAction(this::onFileSaveAction);
         mFileSaveAsMenuItem.setOnAction(this::onFileSaveAsAction);
         mFileQuitMenuItem.setOnAction(this::onFileQuitAction);
         mOpenLibraryManagerMenuItem.setOnAction(this::onOpenLibraryManagerAction);
-
-        mPropertiesControl = PropertiesControl.create();
-        mPropertiesPane.setCenter(mPropertiesControl);
-        mObjectTreeControl = ObjectTreeControl.create();
-        mObjectTreeControl.setObjectsVisibilityChanger((objs, hidden) -> {
-            mUIController.setObjectsVisibility(objs, hidden);
-        });
-        mObjectsTreePane.setCenter(mObjectTreeControl);
-
-        addPlanView(new ConstructionView(mUIController));
-        addPlanView(new ThreeDView(mUIController));
-//        addPlanView(new Test3DPlanView(mUIController));
-        //addPlanView(new Test2DPlanView(mUIController));
-        SingleSelectionModel<Tab> selectionModel = mPlansTabPane.getSelectionModel();
-        selectionModel.selectedItemProperty().addListener(new ChangeListener<Tab>() {
-            @Override
-            public void changed(ObservableValue<? extends Tab> observable, Tab oldValue, Tab newValue) {
-                if (oldValue != null) {
-                    AbstractPlanView<? extends IModelBasedObject, ? extends Node> view = (AbstractPlanView<?, ?>) oldValue.getUserData();
-                    closeView(view);
-                }
-                if (newValue != null) {
-                    AbstractPlanView<? extends IModelBasedObject, ? extends Node> view = (AbstractPlanView<?, ?>) newValue.getUserData();
-                    openView(view);
-                }
-            }
-        });
-        mApplicationController.planProperty().addListener(new ChangeListener<Plan>() {
-            @Override
-            public void changed(ObservableValue<? extends Plan> observable, Plan oldValue, Plan newValue) {
-                closeView(getActivePlanView());
-                openView(getActivePlanView());
-                updateRecentFilesMenu();
-            }
-        });
-
-        updateRecentFilesMenu();
     }
 
     public void initializeAfterShow() {
         Platform.runLater(() -> {
-            double mainWidth = mMainSplitPane.getWidth();
-            double leftAreaWidth = mApplicationController.getConfig().getLastMainWindowLeftAreaWidth().orElse(LEFT_AREA_WIDTH);
-            double first = leftAreaWidth / mainWidth;
-            mMainSplitPane.setDividerPositions(first, 1 - first);
+            Optional<DesktopSettings> oSettings = Optional.empty();
+            try {
+                Path settingsPath = Paths.get(DesktopSettingsIO.DEFAULT_SETTINGS_FILE_NAME);
+                if (Files.exists(settingsPath)) {
+                    try (BufferedReader br = Files.newBufferedReader(settingsPath)) {
+                        oSettings = Optional.of(DesktopSettingsIO.deserializeDesktopSettings(br));
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Unable to load settings", e);
+            }
+            initializeViewsAndDockZones(oSettings);
         });
     }
 
     public void shutdown() {
-        try {
-            mApplicationController.getConfig().setLastMainWindowLeftAreaWidth((int) (mMainSplitPane.getWidth() * mMainSplitPane.getDividerPositions()[0]));
-        } catch (Exception e) {
-            log.warn("Unable to write settings", e);
-        }
+        saveSettings();
     }
 
     public void updateRecentFilesMenu() {
@@ -302,99 +487,79 @@ public class MainWindow implements Initializable {
         }
     }
 
-    public void initView() {
-        openView(getActivePlanView());
-    }
-
-    public List<AbstractPlanView<? extends IModelBasedObject, ? extends Node>> getPlanViews() {
-        return mPlanViews;
-    }
-
-    public AbstractPlanView<? extends IModelBasedObject, ? extends Node> getActivePlanView() {
-        return (AbstractPlanView<?, ?>) mPlansTabPane.getSelectionModel().getSelectedItem().getUserData();
-    }
-
-    protected void addInteractionsTab(Tab tab, boolean bringToFront) {
-        if (tab.equals(mInteractionsTab)) {
+    protected void addInteractionsControl(Node control, String title, boolean bringToFront) {
+        ObservableList<Node> children = mInteractionsPaneParent.getChildren();
+        if (children.contains(control)) {
             return;
         }
-        removeInteractionsTab();
-        mInteractionsTab = tab;
-        ObservableList<Tab> tabs = mPropertiesInteractionsTabPane.getTabs();
-        tabs.add(mInteractionsTab);
-        if (bringToFront) {
-            mPropertiesInteractionsTabPane.getSelectionModel().select(mInteractionsTab);
-        }
+        removeInteractionsControl();
+        children.add(control);
+        mInteractionsPaneViewManager.ensureVisible(getStage());
+        mInteractionsPaneViewManager.getDockable().ifPresent(d -> {
+            d.setDockableTitle(title);
+            if (bringToFront) {
+                // TODO
+            }
+        });
     }
 
-    protected void removeInteractionsTab() {
-        if (mInteractionsTab != null) {
-            mPropertiesInteractionsTabPane.getTabs().remove(mInteractionsTab);
-            mInteractionsTab = null;
-        }
+    protected void removeInteractionsControl() {
+        mInteractionsPaneParent.getChildren().clear();
+        mInteractionsPaneViewManager.close();
     }
 
-    protected void closeView(AbstractPlanView<? extends IModelBasedObject, ? extends Node> view) {
+    protected void deactivateView() {
+        if (mActiveView == null) {
+            return;
+        }
+        mActiveView.behaviorProperty().removeListener(VIEW_BEHAVIOR_LISTENER);
         unbindViewBehavior();
-        unbindView();
+        mMenuArea.getChildren().remove(mActiveView.getViewMenuArea());
+        mActiveView = null;
         mUIController.setCurrentView(null);
+    }
+
+    /**
+     * Activates the given view as result of a focus change.
+     */
+    protected void activateView(AbstractPlanView<? extends IModelBasedObject, ? extends Node> view) {
+        if (mActiveView == view) {
+            return;
+        }
+        deactivateView();
+        mActiveView = view;
+        mUIController.setCurrentView(view);
+        AbstractViewBehavior<? extends IModelBasedObject, ? extends Node> behavior = view.getBehavior();
+        mMenuArea.getChildren().add(mActiveView.getViewMenuArea());
+        bindViewBehavior(behavior);
+        view.behaviorProperty().addListener(VIEW_BEHAVIOR_LISTENER);
+    }
+
+    /**
+     * Hides the given view, also deactivating it.
+     */
+    protected void closeView(AbstractPlanView<? extends IModelBasedObject, ? extends Node> view) {
+        if (view == mActiveView) {
+            deactivateView();
+        }
         view.dispose();
     }
 
+    /**
+     * Shows the given view.
+     */
     protected void openView(AbstractPlanView<? extends IModelBasedObject, ? extends Node> view) {
-        try {
-            view.revive();
-            mUIController.setCurrentView(view);
-            view.behaviorProperty().addListener(new ChangeListener<AbstractViewBehavior<? extends IModelBasedObject, ? extends Node>>() {
-                @Override
-                public void changed(ObservableValue<? extends AbstractViewBehavior<? extends IModelBasedObject, ? extends Node>> observable,
-                    AbstractViewBehavior<? extends IModelBasedObject, ? extends Node> oldValue,
-                    AbstractViewBehavior<? extends IModelBasedObject, ? extends Node> newValue) {
-                    unbindViewBehavior();
-                    bindViewBehavior(newValue);
-                }
-            });
-            AbstractViewBehavior<? extends IModelBasedObject, ? extends Node> behavior = view.getBehavior();
-            bindView(view);
-            bindViewBehavior(behavior);
-        } catch (Exception e) {
-            log.error("Error opening view '" + view + "'", e);
-        }
-    }
-
-    protected void unbindView() {
-        mViewToolButtons.getChildren().clear();
-    }
-
-    protected void bindView(AbstractPlanView<? extends IModelBasedObject, ? extends Node> view) {
-        if (view == null) {
-            return;
-        }
-        ObservableList<Node> viewToolButtons = mViewToolButtons.getChildren();
-        viewToolButtons.addAll(view.getToolBarContributionItems());
+        view.revive();
     }
 
     protected void unbindViewBehavior() {
         if (mViewBehavior != null) {
-            mViewBehavior.interactionsTabProperty().removeListener(INTERACTIONS_TAB_LISTENER);
+            mViewBehavior.interactionsControlProperty().removeListener(INTERACTIONS_CONTROL_LISTENER);
             mViewBehavior = null;
-        }
-        if (mViewMenu != null) {
-            mMenuBar.getMenus().remove(mViewMenu);
-            mViewMenu = null;
         }
         mUserHintLabel.textProperty().unbind();
         mUserHintLabel.setText("");
-        removeInteractionsTab();
-        ObservableList<Node> menuAreaChildren = mMenuArea.getChildren();
-        if (mBehaviorActionsToolBar != null) {
-            menuAreaChildren.remove(mBehaviorActionsToolBar);
-            mBehaviorActionsToolBar = null;
-        }
-        if (mBehaviorTitleLabel != null) {
-            menuAreaChildren.remove(mBehaviorTitleLabel);
-            mBehaviorTitleLabel = null;
-        }
+        removeInteractionsControl();
     }
 
     protected void bindViewBehavior(AbstractViewBehavior<? extends IModelBasedObject, ? extends Node> behavior) {
@@ -403,48 +568,12 @@ public class MainWindow implements Initializable {
             return;
         }
         mViewBehavior = behavior;
-        mViewMenu = behavior.getBehaviorMenu();
-        if (mViewMenu != null) {
-            ObservableList<Menu> menus = mMenuBar.getMenus();
-            int index = menus.indexOf(mInsertionPointMenu);
-            menus.add(index + 1, mViewMenu);
-        }
         mUserHintLabel.textProperty().bind(behavior.userHintProperty());
-        InteractionsTab interactionsTab = behavior.getInteractionsTab();
-        if (interactionsTab != null) {
-            addInteractionsTab(interactionsTab.getTab(), interactionsTab.hasPriority());
+        InteractionsControl interactionsControl = behavior.getInteractionsControl();
+        if (interactionsControl != null) {
+            addInteractionsControl(interactionsControl.getControl(), interactionsControl.getTitle(), interactionsControl.hasPriority());
         }
-        behavior.interactionsTabProperty().addListener(INTERACTIONS_TAB_LISTENER);
-        ObservableList<Node> menuAreaChildren = mMenuArea.getChildren();
-        mBehaviorActionsToolBar = behavior.getActionsToolBar();
-        mBehaviorTitleLabel = new Label(behavior.getTitle());
-        mBehaviorTitleLabel.setPadding(new Insets(5, 5, 0, 5));
-        mBehaviorTitleLabel.setStyle(Constants.BEHAVIOR_TITLE_STYLE);
-        menuAreaChildren.add(mBehaviorTitleLabel);
-        if (mBehaviorActionsToolBar != null) {
-            menuAreaChildren.add(mBehaviorActionsToolBar);
-        }
-    }
-
-    public void addPlanView(AbstractPlanView<? extends IModelBasedObject, ? extends Node> view) {
-        mPlanViews.add(view);
-        ObservableList<Tab> tabs = mPlansTabPane.getTabs();
-        Tab tab = new Tab(view.getTitle());
-        tab.setUserData(view);
-        tab.setOnCloseRequest(event -> {
-            if (!view.canClose()) {
-                event.consume();
-            }
-        });
-        tab.setOnClosed(event -> {
-            closeView(view);
-        });
-        tab.setContent(view);
-        tabs.add(tab);
-    }
-
-    public void removePlanView(AbstractPlanView<? extends IModelBasedObject, ? extends Node> view) {
-        mPlanViews.remove(view);
+        behavior.interactionsControlProperty().addListener(INTERACTIONS_CONTROL_LISTENER);
     }
 
     public void show(Stage primaryStage) {

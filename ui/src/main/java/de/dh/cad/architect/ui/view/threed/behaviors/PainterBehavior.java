@@ -39,15 +39,13 @@ import de.dh.cad.architect.ui.utils.Cursors;
 import de.dh.cad.architect.ui.view.AbstractPlanView;
 import de.dh.cad.architect.ui.view.AbstractUiMode;
 import de.dh.cad.architect.ui.view.IContextAction;
-import de.dh.cad.architect.ui.view.InteractionsTab;
+import de.dh.cad.architect.ui.view.InteractionsControl;
 import de.dh.cad.architect.ui.view.threed.ThreeDView;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
 import javafx.scene.Cursor;
-import javafx.scene.Scene;
-import javafx.scene.control.Tab;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -184,14 +182,14 @@ public class PainterBehavior extends Abstract3DViewBehavior {
 
         protected void updateMouseCursor() {
             if (getMouseAndKeyState().isMouseOverView()) {
-                getScene().setCursor(mAction.getMouseCursor());
+                getView().setCursor(mAction.getMouseCursor());
             } else {
                 resetMouseCursor();
             }
         }
 
         protected void resetMouseCursor() {
-            getScene().setCursor(Cursor.DEFAULT);
+            getView().setCursor(Cursor.DEFAULT);
         }
 
         protected void checkActionAndCursor() {
@@ -342,6 +340,7 @@ public class PainterBehavior extends Abstract3DViewBehavior {
 
         }
 
+        actions.add(createCameraPositionsMenuAction());
         actions.add(createResetSupportObjectBehaviorAction());
 
         mActionsList.setAll(actions);
@@ -362,11 +361,8 @@ public class PainterBehavior extends Abstract3DViewBehavior {
     }
 
     protected void createInteractionsTab() {
-        Tab tab = new Tab(Strings.THREE_D_PAINTER_BEHAVIOR_MATERIAL_TAB);
         mChoosePainterMaterialControl = new ChoosePainterMaterialControl(getUiController());
-        tab.setContent(mChoosePainterMaterialControl);
-        InteractionsTab interactionsTab = new InteractionsTab(tab, true);
-        setInteractionsTab(interactionsTab);
+        setInteractionsControl(new InteractionsControl(mChoosePainterMaterialControl, Strings.THREE_D_PAINTER_BEHAVIOR_MATERIAL_TAB, true));
     }
 
     @Override
@@ -389,20 +385,18 @@ public class PainterBehavior extends Abstract3DViewBehavior {
         CombinedTransformGroup transformedRoot = threeDView.getTransformedRoot();
         transformedRoot.addEventHandler(MouseEvent.MOUSE_ENTERED, SET_MOUSE_OVER_EVENT_HANDLER);
         transformedRoot.addEventHandler(MouseEvent.MOUSE_EXITED, RESET_MOUSE_OVER_EVENT_HANDLER);
-        Scene scene = getScene();
-        scene.addEventHandler(KeyEvent.KEY_PRESSED, CHECK_CONTROL_EVENT_HANDLER);
-        scene.addEventHandler(KeyEvent.KEY_RELEASED, CHECK_CONTROL_EVENT_HANDLER);
+        view.addEventHandler(KeyEvent.KEY_PRESSED, CHECK_CONTROL_EVENT_HANDLER);
+        view.addEventHandler(KeyEvent.KEY_RELEASED, CHECK_CONTROL_EVENT_HANDLER);
     }
 
     @Override
     public void uninstall() {
-        ThreeDView threeDView = getView();
-        CombinedTransformGroup transformedRoot = threeDView.getTransformedRoot();
+        ThreeDView view = getView();
+        CombinedTransformGroup transformedRoot = view.getTransformedRoot();
         transformedRoot.removeEventHandler(MouseEvent.MOUSE_ENTERED, SET_MOUSE_OVER_EVENT_HANDLER);
         transformedRoot.removeEventHandler(MouseEvent.MOUSE_EXITED, RESET_MOUSE_OVER_EVENT_HANDLER);
-        Scene scene = getScene();
-        scene.removeEventHandler(KeyEvent.KEY_PRESSED, CHECK_CONTROL_EVENT_HANDLER);
-        scene.removeEventHandler(KeyEvent.KEY_RELEASED, CHECK_CONTROL_EVENT_HANDLER);
+        view.removeEventHandler(KeyEvent.KEY_PRESSED, CHECK_CONTROL_EVENT_HANDLER);
+        view.removeEventHandler(KeyEvent.KEY_RELEASED, CHECK_CONTROL_EVENT_HANDLER);
 
         IConfig configuration = getUiController().getConfiguration();
         AssetRefPath selectedMaterial = mChoosePainterMaterialControl.getSelectedMaterial();

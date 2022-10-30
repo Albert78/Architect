@@ -48,9 +48,7 @@ import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.Menu;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.ToolBar;
 import javafx.scene.input.KeyCode;
@@ -140,7 +138,7 @@ public abstract class AbstractViewBehavior<TRepr extends IModelBasedObject, TAnc
     protected final ToolBar mActionsToolBar;
 
     // Behavior specific actions Tab which is presented next to the properties tab
-    protected final ObjectProperty<InteractionsTab> mInteractionsTabProperty = new SimpleObjectProperty<>();
+    protected final ObjectProperty<InteractionsControl> mInteractionsControlProperty = new SimpleObjectProperty<>();
 
     protected AbstractPlanView<TRepr, TAnc> mView = null;
     protected ListChangeListener<IContextAction> mActionsListChangeListener = new ListChangeListener<>() {
@@ -179,10 +177,6 @@ public abstract class AbstractViewBehavior<TRepr extends IModelBasedObject, TAnc
         return getUiController().getPlan();
     }
 
-    protected Scene getScene() {
-        return mView.getScene();
-    }
-
     public StringProperty userHintProperty() {
         return mUserHintProperty;
     }
@@ -195,16 +189,16 @@ public abstract class AbstractViewBehavior<TRepr extends IModelBasedObject, TAnc
         mUserHintProperty.set(value);
     }
 
-    public ObjectProperty<InteractionsTab> interactionsTabProperty() {
-        return mInteractionsTabProperty;
+    public ObjectProperty<InteractionsControl> interactionsControlProperty() {
+        return mInteractionsControlProperty;
     }
 
-    public InteractionsTab getInteractionsTab() {
-        return mInteractionsTabProperty.get();
+    public InteractionsControl getInteractionsControl() {
+        return mInteractionsControlProperty.get();
     }
 
-    public void setInteractionsTab(InteractionsTab value) {
-        mInteractionsTabProperty.set(value);
+    public void setInteractionsControl(InteractionsControl value) {
+        mInteractionsControlProperty.set(value);
     }
 
     public ObservableList<IContextAction> getContextActions() {
@@ -220,10 +214,6 @@ public abstract class AbstractViewBehavior<TRepr extends IModelBasedObject, TAnc
     }
 
     public abstract String getTitle();
-
-    public Menu getBehaviorMenu() {
-        return null;
-    }
 
     protected List<BaseObject> getSelectedObjects() {
         Plan plan = getPlan();
@@ -486,19 +476,19 @@ public abstract class AbstractViewBehavior<TRepr extends IModelBasedObject, TAnc
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     protected void installDefaultEscapeBehaviorKeyHandler() {
-        getScene().addEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_ESCAPE_BEHAVIOR);
+        getView().addEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_ESCAPE_BEHAVIOR);
     }
 
     protected void uninstallDefaultEscapeBehaviorKeyHandler() {
-        getScene().removeEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_ESCAPE_BEHAVIOR);
+        getView().removeEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_ESCAPE_BEHAVIOR);
     }
 
     protected void installDefaultSpaceToggleObjectVisibilityKeyHandler() {
-        getScene().addEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_SPACE_TOGGLE_OBJECT_VISIBILITY);
+        getView().addEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_SPACE_TOGGLE_OBJECT_VISIBILITY);
     }
 
     protected void uninstallDefaultSpaceToggleObjectVisibilityKeyHandler() {
-        getScene().removeEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_SPACE_TOGGLE_OBJECT_VISIBILITY);
+        getView().removeEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_SPACE_TOGGLE_OBJECT_VISIBILITY);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

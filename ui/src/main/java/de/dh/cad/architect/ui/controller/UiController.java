@@ -711,7 +711,7 @@ public class UiController {
         if (obj == null) {
             throw new IOException("Error creating support object");
         }
-        Set<String> meshIds = obj.getMeshViews().stream().map(mv -> mv.getId()).collect(Collectors.toSet());
+        Set<String> meshIds = obj.getSurfaces().stream().map(mv -> mv.getId()).collect(Collectors.toSet());
         SupportObject result = SupportObject.create(supportObjectDescriptor.getName(), pos,
             new Dimensions2D(supportObjectDescriptor.getWidth(), supportObjectDescriptor.getDepth()),
             supportObjectDescriptor.getHeight(), 0, supportObjectDescriptor.getElevation(), meshIds, plan, changeSet);

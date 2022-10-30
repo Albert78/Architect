@@ -29,6 +29,7 @@ import de.dh.cad.architect.ui.objects.Abstract3DRepresentation;
 import de.dh.cad.architect.ui.persistence.CameraPosition;
 import de.dh.cad.architect.ui.view.AbstractUiMode;
 import de.dh.cad.architect.ui.view.AbstractViewBehavior;
+import de.dh.cad.architect.ui.view.IContextAction;
 import de.dh.cad.architect.ui.view.threed.DragController3D;
 import de.dh.cad.architect.ui.view.threed.DragController3D.DragMode;
 import de.dh.cad.architect.ui.view.threed.ThreeDView;
@@ -36,13 +37,13 @@ import de.dh.cad.architect.utils.Namespace;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.scene.Cursor;
-import javafx.scene.Scene;
-import javafx.scene.control.Menu;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.ScrollEvent;
+import javafx.scene.robot.Robot;
 
 public abstract class Abstract3DViewBehavior extends AbstractViewBehavior<Abstract3DRepresentation, Abstract3DAncillaryObject> {
     protected DragMode mCurrentDragMode = DragMode.None;
@@ -54,20 +55,19 @@ public abstract class Abstract3DViewBehavior extends AbstractViewBehavior<Abstra
 
     protected void enablePlanMouseGestures() {
         DragController3D dragController = new DragController3D();
-        Scene scene = mView.getScene();
 
         mView.setOnMousePressed(event -> {
             dragController.mousePressed(event, getView().getTransformedRoot());
             if (dragController.getCurrentDragMode() == DragMode.None) {
-                scene.setCursor(Cursor.DEFAULT);
+                mView.setCursor(Cursor.DEFAULT);
             } else {
-                scene.setCursor(Cursor.MOVE);
+                mView.setCursor(Cursor.MOVE);
             }
         });
 
         mView.setOnMouseReleased(event -> {
             dragController.mouseReleased(event);
-            scene.setCursor(Cursor.DEFAULT);
+            mView.setCursor(Cursor.DEFAULT);
         });
 
         mView.setOnMouseDragged(event -> {
@@ -164,12 +164,26 @@ public abstract class Abstract3DViewBehavior extends AbstractViewBehavior<Abstra
     @Override
     public abstract String getTitle();
 
-    @Override
-    public Menu getBehaviorMenu() {
-        Menu result = new Menu(Strings.THREE_D_MENU);
-        Menu cameraPositionsSubMenu = new Menu(Strings.THREE_D_MENU_CAMERA_POSITIONS);
+    protected IContextAction createCameraPositionsMenuAction() {
+        return new IContextAction() {
+            @Override
+            public String getTitle() {
+                return Strings.THREE_D_CAMERA_POSITIONS_ACTION_TITLE;
+            }
+
+            @Override
+            public void execute() {
+                ContextMenu contextMenu = createCameraPositionsContextMenu();
+                Robot r = new Robot();
+                contextMenu.show(getView().getScene().getWindow(), r.getMouseX(), r.getMouseY());
+            }
+        };
+    }
+
+    public ContextMenu createCameraPositionsContextMenu() {
+        ContextMenu result = new ContextMenu();
         result.setOnShowing(showingEvent -> {
-            ObservableList<MenuItem> items = cameraPositionsSubMenu.getItems();
+            ObservableList<MenuItem> items = result.getItems();
             items.clear();
             MenuItem saveItem = new MenuItem(Strings.THREE_D_MENU_CAMERA_POSITIONS_SAVE_CURRENT);
             saveItem.setOnAction(event -> {
@@ -193,7 +207,6 @@ public abstract class Abstract3DViewBehavior extends AbstractViewBehavior<Abstra
                 }
             }
         });
-        result.getItems().add(cameraPositionsSubMenu);
         return result;
     }
 

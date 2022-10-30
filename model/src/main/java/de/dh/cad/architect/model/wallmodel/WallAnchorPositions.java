@@ -20,6 +20,7 @@ package de.dh.cad.architect.model.wallmodel;
 import java.util.Optional;
 
 import de.dh.cad.architect.model.ChangeSet;
+import de.dh.cad.architect.model.coords.Angle;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.coords.LengthUnit;
 import de.dh.cad.architect.model.coords.MathUtils;
@@ -380,7 +381,7 @@ public class WallAnchorPositions {
                 // Neighbour wall too short and thus invalid; treat it as if it would not exist
                 continue;
             }
-            double angle = Vector2D.angleBetween(neighbourFN, thisWallFN);
+            double angle = Angle.angleBetween(neighbourFN, thisWallFN).getAngleDeg();
             if (Math.abs(angle % 360) < EPSILON) {
                 // Neighbour wall is parallel, skip
             }

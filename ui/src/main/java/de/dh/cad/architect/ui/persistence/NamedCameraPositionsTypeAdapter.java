@@ -19,6 +19,7 @@ package de.dh.cad.architect.ui.persistence;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -68,17 +69,22 @@ public class NamedCameraPositionsTypeAdapter extends XmlAdapter<NamedCameraPosit
             }
             return result;
         }
+
+        public Map<String, CameraPosition> unwrap() {
+            Map<String, CameraPosition> result = new TreeMap<>(); // TreeMap for stable sorting
+            for (NamedCameraPosition cameraPosition : mCameraPositions) {
+                result.put(cameraPosition.getName(), cameraPosition);
+            }
+            return result;
+        }
     }
 
     @Override
     public Map<String, CameraPosition> unmarshal(NamedCameraPositionsWrapper v) throws Exception {
-        Map<String, CameraPosition> result = new TreeMap<>();
         if (v != null) {
-            for (NamedCameraPosition cameraPosition : v.getCameraPositions()) {
-                result.put(cameraPosition.getName(), cameraPosition);
-            }
+            return v.unwrap();
         }
-        return result;
+        return Collections.emptyMap();
     }
 
     @Override

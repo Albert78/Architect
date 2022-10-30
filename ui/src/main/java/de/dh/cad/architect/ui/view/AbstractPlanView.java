@@ -27,6 +27,7 @@ import java.util.Optional;
 
 import de.dh.cad.architect.model.Plan;
 import de.dh.cad.architect.model.objects.BaseObject;
+import de.dh.cad.architect.ui.Constants;
 import de.dh.cad.architect.ui.assets.AssetLoader;
 import de.dh.cad.architect.ui.controller.ObjectsChangeHandler;
 import de.dh.cad.architect.ui.controller.UiController;
@@ -37,11 +38,19 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
+import javafx.scene.control.ToolBar;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.scene.shape.Shape;
 
 public abstract class AbstractPlanView<TRepr extends IModelBasedObject, TAnc extends Node> extends BorderPane {
+    public static final String FOCUSABLE_VIEW_STYLE_CLASS = "focusable-view";
+
     protected final ObjectsChangeHandler OBJECTS_CHANGE_HANDLER = new ObjectsChangeHandler() {
         @Override
         public void objectsRemoved(Collection<BaseObject> removedObjects) {
@@ -90,15 +99,34 @@ public abstract class AbstractPlanView<TRepr extends IModelBasedObject, TAnc ext
         }
     };
 
+    protected final ChangeListener<AbstractViewBehavior<? extends IModelBasedObject, ? extends Node>> VIEW_BEHAVIOR_LISTENER = new ChangeListener<>() {
+        @Override
+        public void changed(ObservableValue<? extends AbstractViewBehavior<? extends IModelBasedObject, ? extends Node>> observable,
+            AbstractViewBehavior<? extends IModelBasedObject, ? extends Node> oldValue,
+            AbstractViewBehavior<? extends IModelBasedObject, ? extends Node> newValue) {
+            unbindBehavior();
+            if (newValue != null) {
+                bindBehavior();
+            }
+        }
+    };
+
     protected final UiController mUiController;
-    protected ObjectProperty<AbstractViewBehavior<TRepr, TAnc>> mBehaviorProperty = new SimpleObjectProperty<>();
     protected AssetLoader mAssetLoader = null;
+    protected ObjectProperty<AbstractViewBehavior<TRepr, TAnc>> mBehaviorProperty = new SimpleObjectProperty<>();
+
+    protected VBox mViewMenuArea = null;
+    protected ToolBar mToolBar = null;
+    protected HBox mViewToolButtons = null;
+    protected ToolBar mBehaviorActionsToolBar = null;
+    protected Label mBehaviorTitleLabel = null;
 
     protected final Map<String, TRepr> mRepresentationsById = new HashMap<>();
     protected final Map<String, TAnc> mAncillaryObjectsById = new HashMap<>();
 
     public AbstractPlanView(UiController uiController) {
         mUiController = uiController;
+        getStyleClass().add(FOCUSABLE_VIEW_STYLE_CLASS);
     }
 
     public UiController getUiController() {
@@ -129,16 +157,24 @@ public abstract class AbstractPlanView<TRepr extends IModelBasedObject, TAnc ext
     }
 
     protected void initialize() {
+        initializeMenuArea();
+
         mAssetLoader = mUiController.getAssetManager().buildAssetLoader();
 
         mUiController.selectedObjectIds().addListener(SELECTED_OBJECTS_CHANGE_HANDLER);
         mUiController.focusedObjectId().addListener(FOCUSED_OBJECT_CHANGE_LISTENER);
         mUiController.addChangeHandler(OBJECTS_CHANGE_HANDLER);
 
+        mBehaviorProperty.addListener(VIEW_BEHAVIOR_LISTENER);
+        bindBehavior();
+
         initializeFromPlan();
     }
 
     protected void uninitialize() {
+        unbindBehavior();
+        mBehaviorProperty.removeListener(VIEW_BEHAVIOR_LISTENER);
+
         mUiController.removeChangeHandler(OBJECTS_CHANGE_HANDLER);
         mUiController.focusedObjectId().removeListener(FOCUSED_OBJECT_CHANGE_LISTENER);
         mUiController.selectedObjectIds().removeListener(SELECTED_OBJECTS_CHANGE_HANDLER);
@@ -149,6 +185,23 @@ public abstract class AbstractPlanView<TRepr extends IModelBasedObject, TAnc ext
     }
 
     protected abstract void initializeFromPlan();
+
+    protected void initializeMenuArea() {
+        mToolBar = new ToolBar();
+        mViewToolButtons = new HBox(5.0);
+        mToolBar.getItems().add(mViewToolButtons);
+        mViewMenuArea = new VBox(mToolBar);
+    }
+
+    // To be called by subclasses
+    protected void setToolBarContributionItems(Node... items) {
+        ObservableList<Node> viewToolButtons = mViewToolButtons.getChildren();
+        viewToolButtons.addAll(items);
+    }
+
+    public void setMenuArea(Node menuArea) {
+        setTop(menuArea);
+    }
 
     public AssetLoader getAssetLoader() {
         return mAssetLoader;
@@ -207,7 +260,10 @@ public abstract class AbstractPlanView<TRepr extends IModelBasedObject, TAnc ext
         return result;
     }
 
-    public abstract Collection<Node> getToolBarContributionItems();
+    public VBox getViewMenuArea() {
+        return mViewMenuArea;
+    }
+
     public abstract Class<? extends ViewState> getViewStateClass();
     public abstract Optional<? extends ViewState> getViewState();
     public abstract void setViewState(ViewState viewState);
@@ -317,5 +373,30 @@ public abstract class AbstractPlanView<TRepr extends IModelBasedObject, TAnc ext
     protected final void handleObjectsChanged(Collection<BaseObject> changedObjects) {
         changedObjects = UiController.unwrapGroups(changedObjects);
         onModelObjectsUpdated(changedObjects);
+    }
+
+    protected void bindBehavior() {
+        AbstractViewBehavior<TRepr, TAnc> behavior = getBehavior();
+        ObservableList<Node> menuAreaChildren = mViewMenuArea.getChildren();
+        mBehaviorActionsToolBar = behavior.getActionsToolBar();
+        mBehaviorTitleLabel = new Label(behavior.getTitle());
+        mBehaviorTitleLabel.setPadding(new Insets(5, 5, 0, 5));
+        mBehaviorTitleLabel.setStyle(Constants.BEHAVIOR_TITLE_STYLE);
+        menuAreaChildren.add(mBehaviorTitleLabel);
+        if (mBehaviorActionsToolBar != null) {
+            menuAreaChildren.add(mBehaviorActionsToolBar);
+        }
+    }
+
+    protected void unbindBehavior() {
+        ObservableList<Node> menuAreaChildren = mViewMenuArea.getChildren();
+        if (mBehaviorActionsToolBar != null) {
+            menuAreaChildren.remove(mBehaviorActionsToolBar);
+            mBehaviorActionsToolBar = null;
+        }
+        if (mBehaviorTitleLabel != null) {
+            menuAreaChildren.remove(mBehaviorTitleLabel);
+            mBehaviorTitleLabel = null;
+        }
     }
 }

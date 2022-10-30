@@ -144,7 +144,7 @@ public class ShowSupportObjectControl extends BorderPane implements Initializabl
         SupportObjectDescriptor soDescriptor = mAssetDescriptor;
         ThreeDObject obj = mAssetLoader.loadSupportObject3DObject(soDescriptor, Optional.empty(), true);
         Group group = new Group();
-        group.getChildren().addAll(obj.getMeshViews());
+        group.getChildren().addAll(obj.getSurfaces());
         Bounds boundsInParent = group.getBoundsInParent();
         Optional<Transform> oTrans = obj.getORootTransformation();
         ObservableList<Transform> transforms = group.getTransforms();

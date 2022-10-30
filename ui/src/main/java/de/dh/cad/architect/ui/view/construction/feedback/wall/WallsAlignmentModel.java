@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 
+import de.dh.cad.architect.model.coords.Angle;
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.model.coords.Vector2D;
 import de.dh.cad.architect.model.wallmodel.IWall;
@@ -120,7 +121,7 @@ public class WallsAlignmentModel {
      */
     public static class WallStates {
         protected final IWall mWallOfInterest;
-        protected double mOrientationAngle = -1;
+        protected Angle mOrientationAngle = null;
         protected final Map<SortedPair<IWallAnchor>, BendPointAngle> mNeighbourWallAngles = new TreeMap<>(); // (Anchor1, anchor2) -> bend point angle
         protected final Map<String, POWallState> mPOWallStates = new TreeMap<>(); // Other wall id -> other wall state
 
@@ -139,20 +140,20 @@ public class WallsAlignmentModel {
          * Gets the information whether the wall of interest is horizontal.
          */
         public boolean isHorizontal() {
-            return Math.abs(mOrientationAngle % 180) < EPSILON;
+            return Math.abs(mOrientationAngle.getAngleDeg() % 180) < EPSILON;
         }
 
         /**
          * Gets the information whether the wall of interest is vertical.
          */
         public boolean isVertical() {
-            return Math.abs((mOrientationAngle + 90) % 180) < EPSILON;
+            return Math.abs((mOrientationAngle.getAngleDeg() + 90) % 180) < EPSILON;
         }
 
         /**
          * Gets the angle of the wall of interest in relation to the Vector {@link Vector2D#X1M}.
          */
-        public double getOrientationAngle() {
+        public Angle getOrientationAngle() {
             return mOrientationAngle;
         }
 
@@ -186,7 +187,7 @@ public class WallsAlignmentModel {
             IWallAnchor handleB = wallOfInterest.getAnchorWallHandleB();
             Vector2D vThisWallA = getVWall(handleA);
             Vector2D vThisWallB = getVWall(handleB);
-            mOrientationAngle = Vector2D.angleBetween(vThisWallA, Vector2D.X1M);
+            mOrientationAngle = Angle.angleBetween(vThisWallA, Vector2D.X1M);
 
             // Update neighbour walls
             Collection<SortedPair<IWallAnchor>> unconfirmedBendpoints = new ArrayList<>(mNeighbourWallAngles.keySet());

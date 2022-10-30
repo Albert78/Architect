@@ -28,6 +28,7 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.dh.cad.architect.model.coords.Angle;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.coords.MathUtils;
 import de.dh.cad.architect.model.coords.Position2D;
@@ -75,7 +76,7 @@ public class WallsSnappingModel {
             Collection<SnapLine> result = new ArrayList<>();
             for (VirtualLinesCenter wsd : wallSnapData) {
                 for (Angle snapAngle : wsd.getAngles()) {
-                    result.add(new SnapLine(wsd.getCenterPosition(), snapAngle.calculateVector()));
+                    result.add(new SnapLine(wsd.getCenterPosition(), Vector2D.ofAngle(snapAngle)));
                 }
             }
             return result;

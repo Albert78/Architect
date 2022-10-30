@@ -20,20 +20,30 @@ package de.dh.cad.architect.ui.assets;
 import java.util.Collection;
 import java.util.Optional;
 
+import javafx.scene.Node;
 import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Transform;
 
+/**
+ * Contains a 3D object, consisting of surfaces and an optional global normalization transformation.
+ * Each surface is meant to be textured with an arbitrary material. The global normalization transform is used
+ * to compensate a potential object rotation of the base object.
+ */
 public class ThreeDObject {
-    protected final Collection<MeshView> mMeshViews;
+    protected final Collection<MeshView> mSurfaces;
     protected final Optional<Transform> mORootTransformation;
 
-    public ThreeDObject(Collection<MeshView> meshViews, Optional<Transform> oTrans) {
-        mMeshViews = meshViews;
+    public ThreeDObject(Collection<MeshView> surfaces, Optional<Transform> oTrans) {
+        mSurfaces = surfaces;
         mORootTransformation = oTrans;
     }
 
-    public Collection<MeshView> getMeshViews() {
-        return mMeshViews;
+    /**
+     * Returns the surfaces of this 3D object. Each returned {@link MeshView} has the surface id set
+     * in the {@link Node#getId() id property}.
+     */
+    public Collection<MeshView> getSurfaces() {
+        return mSurfaces;
     }
 
     public Optional<Transform> getORootTransformation() {

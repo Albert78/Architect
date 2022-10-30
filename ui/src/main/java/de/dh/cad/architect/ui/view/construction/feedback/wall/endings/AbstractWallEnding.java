@@ -25,6 +25,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import de.dh.cad.architect.model.ChangeSet;
+import de.dh.cad.architect.model.coords.Angle;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.model.coords.Vector2D;
@@ -153,7 +154,7 @@ public abstract class AbstractWallEnding {
         Vector2D vWall = Vector2D.between(
             startHandle.getPosition(),
             wall.getAnchorWallHandle(otherSide).getPosition());
-        double angle = Vector2D.angleBetween(vWall, Vector2D.X1M);
+        double angle = Angle.angleBetween(vWall, Vector2D.X1M).getAngleDeg();
         if (Math.abs(angle - 90) <= 45) {
             return WallDirection.N;
         } else if (Math.abs(angle - 180) <= 45) {

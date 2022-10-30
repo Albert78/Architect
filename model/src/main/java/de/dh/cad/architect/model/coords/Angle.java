@@ -15,14 +15,16 @@
  *     You should have received a copy of the GNU General Public License
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>
  *******************************************************************************/
-package de.dh.cad.architect.ui.view.construction.feedback.wall;
+package de.dh.cad.architect.model.coords;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
 
-import de.dh.cad.architect.model.coords.Vector2D;
-
+/**
+ * Represents an angle of rotation based on an arbitrary starting vector. Typically, the starting vector is
+ * <code>(1; 0)</code> and this angle is interpreted as a counter-clockwise rotation from that vector.
+ */
 public class Angle implements Comparable<Angle> {
     protected final double mAngleDeg;
 
@@ -30,8 +32,25 @@ public class Angle implements Comparable<Angle> {
         mAngleDeg = angle;
     }
 
+    /**
+     * Returns the angle between vector {@code a1} and {@code a2} in degrees from 0-360 degrees.
+     */
+    public static Angle angleBetween(Vector2D a1, Vector2D a2) {
+        double x1 = a1.getX().inInternalFormat();
+        double y1 = a1.getY().inInternalFormat();
+        double x2 = a2.getX().inInternalFormat();
+        double y2 = a2.getY().inInternalFormat();
+
+        double res = Math.atan2(x1*y2 - y1*x2, x1*x2 + y1*y2) * 180/Math.PI;
+        return new Angle(res < 0 ? 360 + res : res);
+    }
+
+    /**
+     * Returns the angle between {@link Vector2D#X1M} and the given vector.
+     * @param v Vector to calculate the angle.
+     */
     public static Angle ofVector(Vector2D v) {
-        return new Angle(-Vector2D.angleBetween(v, Vector2D.X1M));
+        return angleBetween(Vector2D.X1M, v);
     }
 
     public double getAngleDeg() {
@@ -40,13 +59,6 @@ public class Angle implements Comparable<Angle> {
 
     public double getAngleRad() {
         return mAngleDeg * Math.PI / 180;
-    }
-
-    /**
-     * Returns a unit vector which is {@link Vector2D#X1M} rotated counter-clockwise by this angle.
-     */
-    protected Vector2D calculateVector() {
-        return Vector2D.X1M.rotate(mAngleDeg);
     }
 
     public Angle plusDeg(double deg) {

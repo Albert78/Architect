@@ -37,6 +37,7 @@ module de.dh.cad.architect.ui {
     requires de.dh.cad.architect.utils;
     requires transitive de.dh.cad.architect.model;
     requires transitive de.dh.cad.architect.fxutils;
+    requires de.dh.utils.fx.viewsfx;
 
     requires javafx.web;
     requires transitive javafx.base;

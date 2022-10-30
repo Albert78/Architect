@@ -122,7 +122,7 @@ public class SupportObject3DRepresentation extends Abstract3DRepresentation {
         }
         // Prepare object
         ThreeDObject object = assetLoader.loadSupportObject3DObject(supportObject.getSupportObjectDescriptorRef(), Optional.of(overriddenMaterials), true);
-        Collection<MeshView> meshViews = object.getMeshViews();
+        Collection<MeshView> meshViews = object.getSurfaces();
         mObjectViewRoot = new Group();
         mObjectViewRoot.getChildren().addAll(meshViews);
         Optional<Transform> oTrans = object.getORootTransformation();
@@ -175,7 +175,7 @@ public class SupportObject3DRepresentation extends Abstract3DRepresentation {
         if (obj == null) {
             return;
         }
-        Set<String> meshIds = obj.getMeshViews().stream().map(mv -> mv.getId()).collect(Collectors.toSet());
+        Set<String> meshIds = obj.getSurfaces().stream().map(mv -> mv.getId()).collect(Collectors.toSet());
         supportObject.initializeSurfaces(meshIds);
         initializeNode();
         uiController.notifyObjectsChanged(supportObject);

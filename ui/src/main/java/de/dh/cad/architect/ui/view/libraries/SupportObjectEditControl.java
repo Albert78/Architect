@@ -249,14 +249,14 @@ public class SupportObjectEditControl extends AbstractAssetEditControl implement
         SupportObjectDescriptor descriptor = getDescriptor();
         try {
             ThreeDObject threeDObject = mAssetLoader.loadSupportObject3DResource(descriptor, Optional.empty());
-            children.addAll(threeDObject.getMeshViews());
+            children.addAll(threeDObject.getSurfaces());
             Bounds boundsInParent = result.getBoundsInParent();
             result.getTransforms().add(0, new Translate(-boundsInParent.getCenterX(), -boundsInParent.getCenterY(), -boundsInParent.getCenterZ()));
         } catch (IOException e) {
             log.error("3D resource of support object <" + descriptor + "> could not be loaded", e);
         }
         if (children.isEmpty()) {
-            children.addAll(AssetLoader.loadBroken3DResource().getMeshViews());
+            children.addAll(AssetLoader.loadBroken3DResource().getSurfaces());
         }
         return result;
     }

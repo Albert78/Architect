@@ -124,19 +124,17 @@ public class ApplicationController {
 
         updateTitle();
 
-        Platform.runLater(() -> {
-            Path path = mConfig.getLastPlanFilePath();
-            if (path == null) {
+        Path path = mConfig.getLastPlanFilePath();
+        if (path == null) {
+            newPlan();
+        } else {
+            try {
+                loadPlanFile(path);
+            } catch (Exception e) {
+                log.error("Unable to load last plan '" + path + "', starting with a new one", e);
                 newPlan();
-            } else {
-                try {
-                    loadPlanFile(path);
-                } catch (Exception e) {
-                    log.error("Unable to load last plan '" + path + "', starting with a new one", e);
-                    newPlan();
-                }
             }
-        });
+        }
     }
 
     public void shutdown() {
@@ -160,6 +158,10 @@ public class ApplicationController {
         String firstPart = planFilePath == null ? (Strings.NEW_PLAN_FILE + dirtyMarker) : (getPlanName(planFilePath) + dirtyMarker + " - " + planFilePath.toString());
         String title = firstPart + " - " + Strings.MAIN_WINDOW_TITLE;
         mPrimaryStage.setTitle(title);
+    }
+
+    public Stage getPrimaryStage() {
+        return mPrimaryStage;
     }
 
     public Configuration getConfig() {

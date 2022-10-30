@@ -30,11 +30,11 @@ import de.dh.cad.architect.ui.utils.Cursors;
 import de.dh.cad.architect.ui.view.AbstractPlanView;
 import de.dh.cad.architect.ui.view.AbstractUiMode;
 import de.dh.cad.architect.ui.view.IContextAction;
+import de.dh.cad.architect.ui.view.threed.ThreeDView;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
 import javafx.scene.Cursor;
-import javafx.scene.Scene;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 
@@ -45,11 +45,11 @@ public class ResetSupportObjectSurfacesBehavior extends Abstract3DViewBehavior {
     protected ChangeListener<Boolean> MOUSE_OVER_SUPPORT_OBJECT_LISTENER = new ChangeListener<>() {
         @Override
         public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-            Scene scene = getScene();
+            ThreeDView view = getView();
             if (newValue) {
-                scene.setCursor(RESET_CURSOR);
+                view.setCursor(RESET_CURSOR);
             } else {
-                scene.setCursor(Cursor.DEFAULT);
+                view.setCursor(Cursor.DEFAULT);
             }
         }
     };
@@ -57,11 +57,11 @@ public class ResetSupportObjectSurfacesBehavior extends Abstract3DViewBehavior {
     protected ChangeListener<Boolean> MOUSE_OVER_OTHER_OBJECT_LISTENER = new ChangeListener<>() {
         @Override
         public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-            Scene scene = getScene();
+            ThreeDView view = getView();
             if (newValue) {
-                scene.setCursor(FORBIDDEN_CURSOR);
+                view.setCursor(FORBIDDEN_CURSOR);
             } else {
-                scene.setCursor(Cursor.DEFAULT);
+                view.setCursor(Cursor.DEFAULT);
             }
         }
     };
@@ -122,6 +122,7 @@ public class ResetSupportObjectSurfacesBehavior extends Abstract3DViewBehavior {
     protected void updateActionsList(List<BaseObject> selectedObjects, List<BaseObject> selectedRootObjects) {
         Collection<IContextAction> actions = new ArrayList<>();
 
+        actions.add(createCameraPositionsMenuAction());
         actions.add(createCancelBehaviorAction(Strings.CANCEL_RESET_SUPPORT_OBJECT_SURFACES_BEHAVIOR));
 
         mActionsList.setAll(actions);

@@ -17,19 +17,25 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.view;
 
-import javafx.scene.control.Tab;
+import javafx.scene.Node;
 
-public class InteractionsTab {
-    protected final Tab mTab;
+public class InteractionsControl {
+    protected final Node mControl;
+    protected final String mTitle;
     protected final boolean mHasPriority;
 
-    public InteractionsTab(Tab tab, boolean hasPriority) {
-        mTab = tab;
+    public InteractionsControl(Node control, String title, boolean hasPriority) {
+        mControl = control;
+        mTitle = title;
         mHasPriority = hasPriority;
     }
 
-    public Tab getTab() {
-        return mTab;
+    public Node getControl() {
+        return mControl;
+    }
+
+    public String getTitle() {
+        return mTitle;
     }
 
     public boolean hasPriority() {

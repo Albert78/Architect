@@ -17,7 +17,6 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.view.construction;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
@@ -51,7 +50,6 @@ import de.dh.utils.fx.ImageUtils;
 import de.dh.utils.fx.Vector2D;
 import javafx.event.EventHandler;
 import javafx.geometry.Point2D;
-import javafx.scene.Node;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseEvent;
@@ -105,9 +103,10 @@ public class ConstructionView extends Abstract2DView {
 
     @Override
     protected void uninitialize() {
+        setBehavior(null);
+
         takeViewStateFromView();
 
-        setBehavior(new ConstructionNullBehavior());
         mGuideLines.clear();
         mVerticalRuler.clearGuideLines();
         mHorizontalRuler.clearGuideLines();
@@ -148,6 +147,8 @@ public class ConstructionView extends Abstract2DView {
         });
 
         super.initialize();
+        setToolBarContributionItems(mSelectionModeButton, mGroundPlanModeButton, mSupportObjectsModeButton);
+
         updateViewToViewState();
         updateToTransform(true);
 // TODO: Move to stylesheet
@@ -203,11 +204,6 @@ mCenterPane.setStyle("-fx-background-color: cornsilk;");
 
     public Affine getRootTransform() {
         return mRootTransform;
-    }
-
-    @Override
-    public Collection<Node> getToolBarContributionItems() {
-        return Arrays.asList(mSelectionModeButton, mGroundPlanModeButton, mSupportObjectsModeButton);
     }
 
     @Override

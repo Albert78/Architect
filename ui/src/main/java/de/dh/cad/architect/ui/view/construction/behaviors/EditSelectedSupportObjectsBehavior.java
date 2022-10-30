@@ -44,13 +44,12 @@ import de.dh.cad.architect.ui.objects.SupportObjectConstructionRepresentation.IM
 import de.dh.cad.architect.ui.view.AbstractPlanView;
 import de.dh.cad.architect.ui.view.AbstractUiMode;
 import de.dh.cad.architect.ui.view.IContextAction;
-import de.dh.cad.architect.ui.view.InteractionsTab;
+import de.dh.cad.architect.ui.view.InteractionsControl;
 import de.dh.cad.architect.ui.view.ObjectReconcileOperation;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
 import de.dh.cad.architect.ui.view.construction.SupportObjectsUIElementFilter;
 import de.dh.cad.architect.ui.view.construction.feedback.supportobjects.EditSupportObjectsVisualFeedbackManager;
 import de.dh.cad.architect.ui.view.construction.feedback.supportobjects.EditSupportObjectsVisualFeedbackManager.SupportObjectLocationData;
-import javafx.scene.control.Tab;
 
 /**
  * Behavior to handle the selection of one or more support objects.
@@ -208,8 +207,7 @@ public class EditSelectedSupportObjectsBehavior extends AbstractConstructionBeha
     }
 
     protected void createInteractionsPane() {
-        Tab tab = new Tab(Strings.INTERACTIONS_TAB_SELECTED_SUPPORT_OBJECT_TITLE, mSOInfo);
-        setInteractionsTab(new InteractionsTab(tab, false));
+        setInteractionsControl(new InteractionsControl(mSOInfo, Strings.INTERACTIONS_TAB_SELECTED_SUPPORT_OBJECT_TITLE, false));
     }
 
     protected void updateInteractionsPane() {

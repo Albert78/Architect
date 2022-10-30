@@ -201,7 +201,7 @@ public class CatalogPieceOfFurnitureControl extends BorderPane implements Initia
         Node objView = ObjectLoader.load3DResource(mPieceOfFurniture.getModel(), mPieceOfFurniture.getModelRotationJavaFX(), mDefaultMaterials);
         if (objView == null) {
             Group g = new Group();
-            g.getChildren().addAll(AssetLoader.loadBroken3DResource().getMeshViews());
+            g.getChildren().addAll(AssetLoader.loadBroken3DResource().getSurfaces());
             objView = g;
         }
         mThreeDObjectView.setObjView(objView, 100);

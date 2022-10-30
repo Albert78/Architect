@@ -42,10 +42,9 @@ import de.dh.cad.architect.ui.objects.WallReconciler;
 import de.dh.cad.architect.ui.view.AbstractPlanView;
 import de.dh.cad.architect.ui.view.AbstractUiMode;
 import de.dh.cad.architect.ui.view.IContextAction;
-import de.dh.cad.architect.ui.view.InteractionsTab;
+import de.dh.cad.architect.ui.view.InteractionsControl;
 import de.dh.cad.architect.ui.view.construction.EditedAnchorUIElementFilter;
 import javafx.application.Platform;
-import javafx.scene.control.Tab;
 
 /**
  * Behavior to edit a single selected anchor.
@@ -213,8 +212,7 @@ public class EditSelectedAnchorBehavior extends AbstractConstructionBehavior {
     }
 
     protected void createInteractionsPane() {
-        Tab tab = new Tab(Strings.INTERACTIONS_TAB_SELECTED_ANCHOR_TITLE, mDockInfo);
-        setInteractionsTab(new InteractionsTab(tab, false));
+        setInteractionsControl(new InteractionsControl(mDockInfo, Strings.INTERACTIONS_TAB_SELECTED_ANCHOR_TITLE, false));
     }
 
     protected void updateInteractionsPane() {
@@ -232,7 +230,7 @@ public class EditSelectedAnchorBehavior extends AbstractConstructionBehavior {
         }
 
         if (selectedAnchorRepr == null) {
-            throw new IllegalStateException("Cannot handle selected object constellatio");
+            throw new IllegalStateException("Cannot handle selected object constellation");
         }
 
         initializeForAnchorRepr(selectedAnchorRepr);

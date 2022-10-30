@@ -213,13 +213,13 @@ public class SelectionBehavior extends AbstractConstructionBehavior {
             finishDrag();
         });
         installDefaultSpaceToggleObjectVisibilityKeyHandler();
-        constructionView.getScene().addEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_DELETE_SELECTED_OBJECTS);
+        view.addEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_DELETE_SELECTED_OBJECTS);
     }
 
     @Override
     public void uninstall() {
-        ConstructionView constructionView = getView();
-        constructionView.getScene().removeEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_DELETE_SELECTED_OBJECTS);
+        ConstructionView view = getView();
+        view.removeEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_DELETE_SELECTED_OBJECTS);
         uninstallDefaultSpaceToggleObjectVisibilityKeyHandler();
         Pane topLayer = getView().getTopLayer();
         if (mSelectionRectangle != null) {

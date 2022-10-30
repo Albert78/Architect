@@ -15,7 +15,7 @@
  *     You should have received a copy of the GNU General Public License
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>
  *******************************************************************************/
-package de.dh.cad.architect.ui.view.construction;
+package de.dh.cad.architect.ui.view.construction.behaviors;
 
 import java.util.Collection;
 import java.util.List;
@@ -24,7 +24,6 @@ import de.dh.cad.architect.model.objects.BaseObject;
 import de.dh.cad.architect.ui.objects.Abstract2DAncillaryObject;
 import de.dh.cad.architect.ui.objects.Abstract2DRepresentation;
 import de.dh.cad.architect.ui.view.AbstractPlanView;
-import de.dh.cad.architect.ui.view.construction.behaviors.AbstractConstructionBehavior;
 
 public class ConstructionNullBehavior extends AbstractConstructionBehavior {
     public ConstructionNullBehavior() {
@@ -59,6 +58,22 @@ public class ConstructionNullBehavior extends AbstractConstructionBehavior {
     @Override
     public void uninstall() {
         // Do nothing
+    }
+
+    @Override
+    public void onObjectFocusChanged(Abstract2DRepresentation repr, boolean focused) {
+        // DO nothing
+    }
+
+    @Override
+    protected void onObjectSpotChanged(Abstract2DRepresentation repr, boolean isSpotted) {
+        // DO nothing
+    }
+
+    @Override
+    public void onObjectsSelectionChanged(Collection<Abstract2DRepresentation> removedSelectionReprs,
+        Collection<Abstract2DRepresentation> addedSelectionReprs) {
+        // DO nothing
     }
 
     @Override

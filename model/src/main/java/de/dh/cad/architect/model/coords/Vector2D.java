@@ -38,6 +38,13 @@ public class Vector2D {
         return pos2.minus(pos1);
     }
 
+    /**
+     * Returns a unit vector which is {@link X1M} rotated counter-clockwise by the given angle.
+     */
+    public static Vector2D ofAngle(Angle angle) {
+        return Vector2D.X1M.rotate(angle.getAngleDeg());
+    }
+
     public Length getX() {
         return mX;
     }
@@ -78,19 +85,6 @@ public class Vector2D {
         return new Vector2D(
             Length.ofInternalFormat(xInternal * cos - yInternal * sin),
             Length.ofInternalFormat(xInternal * sin + yInternal * cos));
-    }
-
-    /**
-     * Returns the angle between vector {@code a1} and {@code a2} in degrees from 0-360 degrees.
-     */
-    public static double angleBetween(Vector2D a1, Vector2D a2) {
-        double x1 = a1.getX().inInternalFormat();
-        double y1 = a1.getY().inInternalFormat();
-        double x2 = a2.getX().inInternalFormat();
-        double y2 = a2.getY().inInternalFormat();
-
-        double res = Math.atan2(x1*y2 - y1*x2, x1*x2 + y1*y2) * 180/Math.PI;
-        return res < 0 ? 360 + res : res;
     }
 
     public boolean isParallelTo(Vector2D v, double epsilon) {

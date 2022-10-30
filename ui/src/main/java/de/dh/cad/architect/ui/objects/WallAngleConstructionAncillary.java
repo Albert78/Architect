@@ -17,11 +17,11 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.objects;
 
+import de.dh.cad.architect.model.coords.Angle;
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.ui.Constants;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
-import de.dh.cad.architect.ui.view.construction.feedback.wall.Angle;
 import javafx.geometry.Point2D;
 import javafx.geometry.VPos;
 import javafx.scene.paint.Color;

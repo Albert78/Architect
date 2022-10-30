@@ -38,7 +38,7 @@ import de.dh.cad.architect.ui.objects.BaseObjectUIRepresentation;
 import de.dh.cad.architect.ui.utils.Cursors;
 import de.dh.cad.architect.ui.view.AbstractPlanView;
 import de.dh.cad.architect.ui.view.AbstractUiMode;
-import de.dh.cad.architect.ui.view.InteractionsTab;
+import de.dh.cad.architect.ui.view.InteractionsControl;
 import de.dh.cad.architect.ui.view.construction.EditedAnchorUIElementFilter;
 import de.dh.cad.architect.ui.view.construction.behaviors.DockInteractionsPaneControl.DockTargetObject;
 import de.dh.cad.architect.ui.view.construction.behaviors.DockInteractionsPaneControl.IChangeListener;
@@ -48,7 +48,6 @@ import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.scene.Cursor;
 import javafx.scene.Scene;
-import javafx.scene.control.Tab;
 
 /**
  * Behavior supporting dock-like operations. Subclasses can implement the concrete operation.
@@ -321,10 +320,8 @@ public abstract class AbstractDockBehavior extends AbstractConstructionBehavior 
     }
 
     protected void createInteractionsTab() {
-        Tab interactionsTab = new Tab(getInteractionsTabTitle());
         mDockInteractionsPane.setSourceAnchor(mHandleAnchor);
-        interactionsTab.setContent(mDockInteractionsPane);
-        setInteractionsTab(new InteractionsTab(interactionsTab, true));
+        setInteractionsControl(new InteractionsControl(mDockInteractionsPane, getInteractionsTabTitle(), true));
         showTargetObjectFeedback(null);
     }
 

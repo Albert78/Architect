@@ -141,6 +141,8 @@ public class Strings {
     public static final String EDIT_CEILING_ANCHORS_BEHAVIOR_TITLE = "Deckenaufhängung bearbeiten";
 
     // Properties
+    public static final String PROPERTIES_VIEW_TITLE = "Eigenschaften";
+
     public static final String PROPERTIES_NO_OBJECT_SELECTED = "Kein Objekt ausgewählt";
     public static final String PROPERTIES_OBJECTS_SELECTED_X = "Ausgewählt: {0}";
     public static final String PROPERTIES_NO_PROPERTIES_TO_SHOW = "Keine Eigenschaften zum Anzeigen";
@@ -189,7 +191,7 @@ public class Strings {
 
     public static final String WALL_PROPERTIES_THICKNESS = "Wanddicke";
     public static final String WALL_PROPERTIES_BEVEL_TYPE_A = "Wandverbinder Ende A";
-    public static final String WALL_PROPERTIES_BEVEL_TYPE_B = "Wandverbinder Ende A";
+    public static final String WALL_PROPERTIES_BEVEL_TYPE_B = "Wandverbinder Ende B";
     public static final String WALL_PROPERTIES_HEIGHT_A = "Höhe am Ende A";
     public static final String WALL_PROPERTIES_HEIGHT_B = "Höhe am Ende B";
     public static final String WALL_PROPERTIES_OPERATION_HAME_SET_HEIGHT_A = "Anpassung von Wandankern an Höhenänderung Ende A";
@@ -212,6 +214,9 @@ public class Strings {
     public static final String PROPERTIES_DIMENSIONS_DIALOG_TITLE = "Ausmaße bearbeiten";
     public static final String PROPERTIES_LENGTH_DIALOG_TITLE = "Länge bearbeiten";
     public static final String PROPERTIES_POSITION_DIALOG_TITLE = "Position bearbeiten";
+
+    // Object tree
+    public static final String OBJECT_TREE_VIEW_TITLE = "Objekte";
 
     // Ground plan
     public static final String BEHAVIORS_OBJ_NAME = "{0}";
@@ -359,8 +364,7 @@ public class Strings {
     // 3D plan
     public static final String THREE_D_PLAN_VIEW_TITLE = "3D-Ansicht";
 
-    public static final String THREE_D_MENU = "3D-Ansicht";
-    public static final String THREE_D_MENU_CAMERA_POSITIONS = "Kamerapositionen";
+    public static final String THREE_D_CAMERA_POSITIONS_ACTION_TITLE = "Kamerapositionen";
     public static final String THREE_D_MENU_CAMERA_POSITIONS_SAVE_CURRENT = "Aktuelle Position speichern...";
     public static final String THREE_D_MENU_CAMERA_POSITIONS_MANAGE_POSITIONS = "Positionen verwalten...";
     public static final String THREE_D_SAVE_CAMERA_DIALOG_TITLE = "Kameraposition speichern...";

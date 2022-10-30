@@ -29,6 +29,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
+import de.dh.cad.architect.model.coords.Angle;
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.model.wallmodel.IWallAnchor;
 import de.dh.cad.architect.ui.objects.WallAngleConstructionAncillary;

@@ -17,8 +17,6 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.view.threed;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 
@@ -37,7 +35,6 @@ import de.dh.cad.architect.ui.view.AbstractUiMode;
 import de.dh.cad.architect.ui.view.NullMode;
 import de.dh.cad.architect.ui.view.threed.behaviors.Abstract3DViewBehavior;
 import de.dh.utils.fx.ImageUtils;
-import javafx.scene.Node;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.Tooltip;
 import javafx.scene.transform.Translate;
@@ -83,12 +80,6 @@ public class ThreeDView extends Abstract3DView {
         }
     }
 
-    @Override
-    public void dispose() {
-        setBehavior(null);
-        super.dispose();
-    }
-
     protected void initializeViewState() {
         CameraPosition currentCameraPosition = new CameraPosition();
 
@@ -117,12 +108,17 @@ public class ThreeDView extends Abstract3DView {
         });
 
         super.initialize();
+        setToolBarContributionItems(mSelectionModeButton, mPainterModeButton);
+
         updateViewToViewState();
+
         setThreeDMode(mSelectionMode);
     }
 
     @Override
     protected void uninitialize() {
+        setBehavior(null);
+
         takeViewStateFromView();
 
         mSelectionModeButton = null;
@@ -152,11 +148,6 @@ public class ThreeDView extends Abstract3DView {
         } else if (value instanceof PainterMode) {
             mPainterModeButton.setSelected(true);
         }
-    }
-
-    @Override
-    public Collection<Node> getToolBarContributionItems() {
-        return Arrays.asList(mSelectionModeButton, mPainterModeButton);
     }
 
     @Override

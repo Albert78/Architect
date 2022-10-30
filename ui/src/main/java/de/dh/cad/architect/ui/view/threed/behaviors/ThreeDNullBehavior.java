@@ -76,6 +76,22 @@ public class ThreeDNullBehavior extends Abstract3DViewBehavior {
     }
 
     @Override
+    public void onObjectFocusChanged(Abstract3DRepresentation repr, boolean focused) {
+        // Do nothing
+    }
+
+    @Override
+    protected void onObjectSpotChanged(Abstract3DRepresentation repr, boolean isSpotted) {
+        // Do nothing
+    }
+
+    @Override
+    public void onObjectsSelectionChanged(Collection<Abstract3DRepresentation> removedSelectionReprs,
+        Collection<Abstract3DRepresentation> addedSelectionReprs) {
+        // Do nothing
+    }
+
+    @Override
     protected void configureDefaultObjectHandlers(Abstract3DRepresentation repr) {
         // Do nothing
     }

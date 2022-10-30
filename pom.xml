@@ -19,6 +19,7 @@
 
         <mainclass>de.dh.cad.architect.ArchitectApplication</mainclass>
         <architect-modules-version>0.0.1-SNAPSHOT</architect-modules-version>
+        <viewsfx-version>0.0.1-SNAPSHOT</viewsfx-version>
         <javafx-version>17.0.1</javafx-version>
         <log4j-version>2.17.1</log4j-version>
         <slf4j-version>1.8.0-beta4</slf4j-version>
@@ -97,6 +98,11 @@
                 <artifactId>codeeditors</artifactId>
                 <version>${architect-modules-version}</version>
             </dependency>
+            <dependency>
+                <groupId>de.dh.utils.fx</groupId>
+                <artifactId>viewsfx</artifactId>
+                <version>${viewsfx-version}</version>
+            </dependency>
 
             <!-- JavaFX -->
             <dependency>
@@ -171,6 +177,7 @@
     </dependencyManagement>
 
     <modules>
+        <module>viewsfx</module>
         <module>utilities</module>
         <module>model</module>
         <module>fxutils</module>

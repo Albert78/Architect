@@ -26,6 +26,10 @@
             <artifactId>fxutils</artifactId>
         </dependency>
         <dependency>
+            <groupId>de.dh.utils.fx</groupId>
+            <artifactId>viewsfx</artifactId>
+        </dependency>
+        <dependency>
             <groupId>de.dh.cad.architect</groupId>
             <artifactId>codeeditors</artifactId>
         </dependency>

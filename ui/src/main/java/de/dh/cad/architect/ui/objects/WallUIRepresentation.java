@@ -83,7 +83,7 @@ public class WallUIRepresentation extends BaseObjectUIRepresentation {
                 new UiProperty<WallBevelType>(wall, KEY_PROPERTY_BEVEL_TYPE_A, Strings.WALL_PROPERTIES_BEVEL_TYPE_A, PropertyType.WallBevelType, true) {
                     @Override
                     public WallBevelType getValue() {
-                        return WallAnchorPositions.getWallBevelTypeOfAnchorDock(new AdaptedModelAnchor(wall.getAnchorWallHandleB())).orElse(null);
+                        return WallAnchorPositions.getWallBevelTypeOfAnchorDock(new AdaptedModelAnchor(wall.getAnchorWallHandleA())).orElse(null);
                     }
 
                     @Override

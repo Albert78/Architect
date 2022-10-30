@@ -41,7 +41,7 @@ import de.dh.cad.architect.ui.objects.AnchorConstructionRepresentation;
 import de.dh.cad.architect.ui.objects.BaseObjectUIRepresentation;
 import de.dh.cad.architect.ui.view.AbstractPlanView;
 import de.dh.cad.architect.ui.view.AbstractUiMode;
-import de.dh.cad.architect.ui.view.InteractionsTab;
+import de.dh.cad.architect.ui.view.InteractionsControl;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
 import de.dh.cad.architect.ui.view.construction.GroundPlanUIElementFilter;
 import de.dh.cad.architect.ui.view.construction.feedback.wall.AncillaryWallsModel;
@@ -56,7 +56,6 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.scene.control.Tab;
 
 /**
  * Second part of the two-part behavior to create walls. First part is {@link GroundPlanStartWallBehavior}.
@@ -546,10 +545,8 @@ public class GroundPlanAddWallBehavior extends AbstractGroundPlanCreateWallBehav
     }
 
     protected void createInteractionsTab() {
-        Tab interactionsTab = new Tab(Strings.GROUND_PLAN_ADD_WALL_BEHAVIOR_INTERACTIONS_TAB_TITLE);
         buildInteractionsPane();
-        interactionsTab.setContent(mInteractionsPane);
-        setInteractionsTab(new InteractionsTab(interactionsTab, true));
+        setInteractionsControl(new InteractionsControl(mInteractionsPane, Strings.GROUND_PLAN_ADD_WALL_BEHAVIOR_INTERACTIONS_TAB_TITLE, true));
     }
 
     @Override

@@ -27,6 +27,8 @@ import de.dh.cad.architect.ui.objects.Abstract2DRepresentation;
 import de.dh.cad.architect.ui.objects.AbstractObjectUIRepresentation;
 import de.dh.cad.architect.ui.objects.ObjectTypesRegistry;
 import de.dh.cad.architect.ui.view.AbstractPlanView;
+import de.dh.cad.architect.ui.view.construction.behaviors.ConstructionNullBehavior;
+import de.dh.utils.fx.ClippingStackPane;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.ObservableList;
@@ -81,7 +83,7 @@ public abstract class Abstract2DView extends AbstractPlanView<Abstract2DRepresen
         super.initialize();
 
         ObservableList<Node> children = mCenterPane.getChildren();
-        children.addAll(mTransformedRoot, mTopLayer);
+        children.addAll(new ClippingStackPane(mTransformedRoot), mTopLayer);
 
         mTopLayer.setMouseTransparent(true);
     }

@@ -51,7 +51,9 @@ public class SelectionBehavior extends Abstract3DViewBehavior {
     @Override
     protected void updateActionsList(List<BaseObject> selectedObjects, List<BaseObject> selectedRootObjects) {
         Collection<IContextAction> actions = new ArrayList<>();
-        // TODO
+
+        actions.add(createCameraPositionsMenuAction());
+
         mActionsList.setAll(actions);
     }
 }
