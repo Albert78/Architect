@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -27,7 +27,8 @@ import javax.xml.bind.annotation.XmlTransient;
 
 import org.apache.commons.lang3.StringUtils;
 
-import de.dh.cad.architect.model.ChangeSet;
+import de.dh.cad.architect.model.changes.IModelChange;
+import de.dh.cad.architect.model.changes.ObjectModificationChange;
 import de.dh.cad.architect.model.coords.IPosition;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.coords.Position2D;
@@ -103,28 +104,51 @@ public abstract class BaseLimitedPlane extends BaseSolidObject {
         return anchorType.substring(PREFIX_EDGE_ANCHOR_POSITION.length());
     }
 
+    protected void addEdgeAnchorType_Internal(int indexAfter, String edgeAnchorTypeId, List<IModelChange> changeTrace) {
+        mEdgeAnchorTypes.add(indexAfter, edgeAnchorTypeId);
+        changeTrace.add(
+            new ObjectModificationChange(this) {
+                @Override
+                public void undo(List<IModelChange> undoChangeTrace) {
+                    removeEdgeAnchorType_Internal(edgeAnchorTypeId, undoChangeTrace);
+                }
+            });
+    }
+
+    protected void removeEdgeAnchorType_Internal(String edgeAnchorTypeId, List<IModelChange> changeTrace) {
+        int index = mEdgeAnchorTypes.indexOf(edgeAnchorTypeId);
+        mEdgeAnchorTypes.remove(edgeAnchorTypeId);
+        changeTrace.add(
+            new ObjectModificationChange(this) {
+                @Override
+                public void undo(List<IModelChange> undoChangeTrace) {
+                    addEdgeAnchorType_Internal(index, edgeAnchorTypeId, changeTrace);
+                }
+            });
+    }
+
     /**
      * Creates and adds a new edge anchor before the anchor at the given position.
      * @param edgeHandleAnchorAfter Edge handle anchor which specifies the insert position, the new edge anchor will be added before that
      * edge handle anchor. If the given anchor is {@code null}, the new anchor will be added as last anchor in the edge anchor's list.
      * @param position Position of the anchor which will be created.
-     * @param changeSet Changeset to track plan changes.
+     * @param changeTrace Tracked model changes.
      * @return Created edge handle and position anchors.
      */
-    public PlaneEdge createEdgeAnchor(Anchor edgeHandleAnchorAfter, Position2D handlePosition, ChangeSet changeSet) {
+    public PlaneEdge createEdgeAnchor(Anchor edgeHandleAnchorAfter, Position2D handlePosition, List<IModelChange> changeTrace) {
         int indexAfter = mEdgeAnchorTypes.size();
         if (edgeHandleAnchorAfter != null) {
             String edgeAnchorTypeIdAfter = getEdgeHandleAnchorTypeId(edgeHandleAnchorAfter);
             indexAfter = mEdgeAnchorTypes.indexOf(edgeAnchorTypeIdAfter);
         }
         Position3D position3D = get3DPosition(handlePosition);
-        String edgeTypeId = IdGenerator.generateUniqueId();
-        String edgeHandleType = PREFIX_EDGE_ANCHOR_HANDLE + edgeTypeId;
-        String edgePositionType = PREFIX_EDGE_ANCHOR_POSITION + edgeTypeId;
-        Anchor handleAnchor = createAnchor(edgeHandleType, handlePosition, changeSet);
+        String edgeAnchorTypeId = IdGenerator.generateUniqueId();
+        String edgeHandleType = PREFIX_EDGE_ANCHOR_HANDLE + edgeAnchorTypeId;
+        String edgePositionType = PREFIX_EDGE_ANCHOR_POSITION + edgeAnchorTypeId;
+        Anchor handleAnchor = createAnchor(edgeHandleType, handlePosition, changeTrace);
 
-        Anchor positionAnchor = createAnchor(edgePositionType, position3D, changeSet);
-        mEdgeAnchorTypes.add(indexAfter, edgeTypeId);
+        Anchor positionAnchor = createAnchor(edgePositionType, position3D, changeTrace);
+        addEdgeAnchorType_Internal(indexAfter, edgeAnchorTypeId, changeTrace);
         return new PlaneEdge(handleAnchor, positionAnchor);
     }
 
@@ -132,16 +156,16 @@ public abstract class BaseLimitedPlane extends BaseSolidObject {
      * Removes the given edge.
      * Edge anchor and connected position anchor must not be docked, the anchors must be removed from all docks before.
      */
-    public void removeEdge(Anchor edgeHandleAnchor, ChangeSet changeSet) {
+    public void removeEdge(Anchor edgeHandleAnchor, List<IModelChange> changeTrace) {
         if (!isEdgeHandleAnchor(edgeHandleAnchor)) {
             throw new IllegalArgumentException("The given anchor is not an edge handle anchor of <" + this + ">");
         }
         String edgeAnchorTypeId = getEdgeHandleAnchorTypeId(edgeHandleAnchor);
         Anchor edgePositionAnchor = getEdgePositionAnchorForConnectedEdgeHandleAnchor(edgeHandleAnchor);
-        mEdgeAnchorTypes.remove(edgeAnchorTypeId);
-        edgeHandleAnchor.delete(changeSet);
-        edgePositionAnchor.delete(changeSet);
-        changeSet.changed(this);
+        removeEdgeAnchorType_Internal(edgeAnchorTypeId, changeTrace);
+
+        edgeHandleAnchor.delete(changeTrace);
+        edgePositionAnchor.delete(changeTrace);
     }
 
     public Anchor getEdgePositionAnchorForConnectedEdgeHandleAnchor(Anchor edgeHandleAnchor) {
@@ -200,16 +224,14 @@ public abstract class BaseLimitedPlane extends BaseSolidObject {
     }
 
     @Override
-    public ReconcileResult reconcileAfterHandleChange(ChangeSet changeSet) throws IllegalStateException {
+    public ReconcileResult reconcileAfterHandleChange(List<IModelChange> changeTrace) throws IllegalStateException {
         Collection<Anchor> changedDependentAnchors = new ArrayList<>();
         for (Anchor edgeHandleAnchor : getEdgeHandleAnchors()) {
             Anchor edgePositionAnchor = getEdgePositionAnchorForConnectedEdgeHandleAnchor(edgeHandleAnchor);
             IPosition position = edgeHandleAnchor.getPosition();
-            edgePositionAnchor.setPosition(get3DPosition(position.projectionXY()));
+            edgePositionAnchor.setPosition(get3DPosition(position.projectionXY()), changeTrace);
             changedDependentAnchors.add(edgePositionAnchor);
-            changeSet.changed(edgePositionAnchor);
         }
-        changeSet.changed(this);
         return new ReconcileResult(changedDependentAnchors);
     }
 

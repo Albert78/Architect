@@ -1,3 +1,20 @@
+/*******************************************************************************
+ *     Architect - A free 2D/3D home and interior designer
+ *     Copyright (C) 2021 - 2023  Daniel Höh
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program.  If not, see <https://www.gnu.org/licenses/>
+ *******************************************************************************/
 package de.dh.utils.fx.viewsfx;
 
 import java.util.ArrayList;
@@ -263,7 +280,7 @@ public class Dockable<T extends Node> {
     public Optional<AbstractDockableViewLocation> getViewLocation() {
         IDockableUIRepresentation dockableUIRepresentation = getDockableUIRepresentation();
         if (dockableUIRepresentation instanceof DockableTabControl dtc) {
-            return Optional.of(new DockViewLocation(dtc.getDockHost()));
+            return Optional.of(new DockViewLocation(dtc.getTabDockHost()));
         }
         if (dockableUIRepresentation instanceof DockableFloatingStage dfs) {
             return Optional.of(new FloatingViewLocation(new BoundingBox(dfs.getX(), dfs.getY(), dfs.getWidth(), dfs.getHeight()), dfs.getOwner()));
@@ -323,10 +340,12 @@ public class Dockable<T extends Node> {
         int currentDockPosition = host.getDockPosition(dockableUIRepresentation);
         if (currentDockPosition != -1) { // Already docked at that host
             if (currentDockPosition == beforePosition || currentDockPosition + 1 == beforePosition) {
-                // Nothing to do, control is already docked at that position
+                // Control is already docked at that position, just select it
+                host.selectDockable(this);
                 return (DockableTabControl) dockableUIRepresentation;
             }
             if (currentDockPosition < beforePosition) {
+                // Tab will be removed when changing dock position, so there's one tab less in front of the new position
                 beforePosition--;
             }
         }
@@ -343,21 +362,21 @@ public class Dockable<T extends Node> {
     }
 
     public DockableTabControl dockAt(IDockZone dockZone, DockSide side) {
-        return dockAt(dockZone, side, UUID.randomUUID().toString());
+        return dockAt(dockZone, side, UUID.randomUUID().toString(), UUID.randomUUID().toString());
     }
 
     /**
-     * Docks this dockable in the given dockZone at the side given by {@code side} by dividing that zone into two zones with a splitter.
+     * Docks this dockable in the given dockZone at the side given by {@code side} by dividing that zone into two zones with a sash.
      * This dockable will be detached from its former docking host before docking at the new position.
      * @param targetDockZone DockZone which should be divided to host the current content and this dockable.
      * @param side The side of the DockZone where this dockable should be docked.
      * @param newDockZoneId ID of the new dock zone which will arise for this dockable to be docked at the declared place.
+     * @param newParentDockZoneId ID of the new dock zone which will take the place of the given targetDockZone after splitting.
      * @return The dockable's new tab representation object.
      */
-    public DockableTabControl dockAt(IDockZone targetDockZone, DockSide side, String newDockZoneId) {
+    public DockableTabControl dockAt(IDockZone targetDockZone, DockSide side, String newDockZoneId, String newParentDockZoneId) {
         // Check for invalid situations
-        if (targetDockZone instanceof TabDockHost) {
-            TabDockHost targetPane = (TabDockHost) targetDockZone;
+        if (targetDockZone instanceof TabDockHost targetPane) {
             IDockableUIRepresentation dockableUIRepresentation = getDockableUIRepresentation();
             if (targetPane.isSingleChild(dockableUIRepresentation)) {
                 // Nothing to do, control is already docked at that position.
@@ -372,23 +391,21 @@ public class Dockable<T extends Node> {
         // In case the dockable is the single child of its tab dock host (which means the
         // tab dock host will disappear by undocking)
         // AND
-        // the user docks the dockable to the same splitter parent where the tab host is already located
-        // (which might make sense if the dockable is put to the other side or if it should be docked at the
-        // other splitter orientation),
-        // then that splitter parent will disappear by the following undocking operation.
-        // In fact we would need to remember the position of the splitter in its parent (which in fact is
+        // the user docks the dockable to the same sash parent where the tab host is already located
+        // (which is the case if the dockable is put to the other side or if it should be docked at the
+        // other sash orientation), then that sash parent will disappear by the following undocking operation.
+        // In fact we would need to remember the position of the sash in its parent (which in fact is
         // the correct definition of a "docking zone") instead of representing the docking zone by the
-        // component which is currently docked there (the splitter).
-        // To prevent overcomplication, we just store the "new citizen" of the docking zone inside the splitter,
-        // in case the splitter is removed by the undocking operation. That solves completely our problem without
+        // component which is currently docked there (the sash).
+        // To prevent overcomplication, we just store the "new citizen" of the docking zone inside the sash,
+        // in case the sash is removed by the undocking operation. That solves completely our problem without
         // new formalization and model elements.
         detachFromDockingHost();
-        if (targetDockZone instanceof SplitterDockHost) {
-            SplitterDockHost splitterDockZone = (SplitterDockHost) targetDockZone;
-            targetDockZone = splitterDockZone.getReplacementOrSelf();
+        if (targetDockZone instanceof SashDockHost sdh) {
+            targetDockZone = sdh.getReplacementOrSelf();
         }
 
-        TabDockHost newSibling = targetDockZone.split(side, newDockZoneId);
+        TabDockHost newSibling = targetDockZone.split(side, newDockZoneId, newParentDockZoneId);
 
         DockableTabControl result = newSibling.addDockable(this, 0);
         mDockableUIRepresentationProperty.set(result);
@@ -440,12 +457,14 @@ public class Dockable<T extends Node> {
     }
 
     public boolean tryMakeVisible(AbstractDockableViewLocation targetViewLocation) {
+        // TODO: Use switch instanceof expression instead of if statements
         if (targetViewLocation instanceof DockViewLocation dvl) {
-            TabDockHost dockHost = dvl.getDockHost();
-            if (dockHost.isAlive()) {
-                dockLast(dockHost);
-                return true;
+            TabDockHost tdh = dvl.getTabDockHost();
+            if (!tdh.isAlive()) {
+                return false;
             }
+            dockLast(tdh);
+            return true;
         }
         if (targetViewLocation instanceof FloatingViewLocation fvl) {
             Bounds area = fvl.getFloatingArea();

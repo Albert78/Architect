@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,9 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.view;
 
-import de.dh.cad.architect.model.ChangeSet;
+import java.util.List;
+
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.objects.BaseAnchoredObject;
 import de.dh.cad.architect.model.objects.ReconcileResult;
 
@@ -35,8 +37,8 @@ public interface IObjectReconciler {
      * For example, a wall has a defined thickness and has handle anchors at both sides. A move operation to one of the wall handle anchors
      * will have an effect to the corner anchors. If such dependencies are affected, the positions of all dependent anchors are updated.
      * @param changedObject Object which was changed, either by movements of handle anchors or by changing properties which causes a reconcile operation.
-     * @param changeSet Changeset to add changes which were made during this operation.
+     * @param changeTrace List to add changes which were made during this operation.
      * @return Set of dependent anchors which have been updated as a result of this reconcile operation and set of object heal instructions.
      */
-    ReconcileResult reconcileObjectChange(BaseAnchoredObject changedObject, ChangeSet changeSet);
+    ReconcileResult reconcileObjectChange(BaseAnchoredObject changedObject, List<IModelChange> changeTrace);
 }

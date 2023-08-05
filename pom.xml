@@ -10,8 +10,8 @@
     <version>0.0.1-SNAPSHOT</version>
 
     <properties>
-        <maven.compiler.target>17</maven.compiler.target>
-        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>20</maven.compiler.target>
+        <maven.compiler.source>20</maven.compiler.source>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <maven-source-plugin-version>3.2.0</maven-source-plugin-version>
@@ -19,8 +19,8 @@
 
         <mainclass>de.dh.cad.architect.ArchitectApplication</mainclass>
         <architect-modules-version>0.0.1-SNAPSHOT</architect-modules-version>
-        <viewsfx-version>0.0.1-SNAPSHOT</viewsfx-version>
-        <javafx-version>17.0.1</javafx-version>
+        <viewsfx-version>0.1.1-SNAPSHOT</viewsfx-version>
+        <javafx-version>20.0.1</javafx-version>
         <log4j-version>2.17.1</log4j-version>
         <slf4j-version>1.8.0-beta4</slf4j-version>
         <jaxb-version>2.3.2</jaxb-version>

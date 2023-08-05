@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -31,9 +31,11 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
 
-import de.dh.cad.architect.model.ChangeSet;
 import de.dh.cad.architect.model.Plan;
 import de.dh.cad.architect.model.assets.SupportObjectDescriptor;
+import de.dh.cad.architect.model.changes.IModelChange;
+import de.dh.cad.architect.model.changes.MacroChange;
+import de.dh.cad.architect.model.changes.ObjectChange;
 import de.dh.cad.architect.model.coords.Dimensions2D;
 import de.dh.cad.architect.model.coords.IPosition;
 import de.dh.cad.architect.model.coords.Length;
@@ -68,7 +70,10 @@ import de.dh.cad.architect.ui.view.MainWindow;
 import de.dh.cad.architect.ui.view.ObjectReconcileOperation;
 import de.dh.cad.architect.utils.IdGenerator;
 import de.dh.utils.fx.SimpleObservableListWrapper;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.Property;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
@@ -84,6 +89,9 @@ public class UiController {
     protected final StringProperty mFocusedObjectId = new SimpleStringProperty(null);
     protected final List<ObjectsChangeHandler> mChangeHandlers = new ArrayList<>();
     protected final List<IObjectContextMenuProvider> mContextMenuProviders = new ArrayList<>();
+    protected final ChangeHistory mChangeHistory = new ChangeHistory();
+    protected final ObjectProperty<ChangeEntry> mNextUndoOperation = new SimpleObjectProperty<>(null);
+    protected final ObjectProperty<ChangeEntry> mNextRedoOperation = new SimpleObjectProperty<>(null);
 
     // Initialized in initialize(...)
     protected ApplicationController mApplicationController;
@@ -117,19 +125,20 @@ public class UiController {
         addChangeHandler(new ObjectsChangeHandler() {
             @Override
             public void objectsRemoved(Collection<BaseObject> removedObjects) {
-                updateProperties();
                 objectTreeControl.objectsRemoved(removedObjects);
             }
 
             @Override
             public void objectsChanged(Collection<BaseObject> changedObjects) {
-                updateProperties();
                 objectTreeControl.objectsChanged(changedObjects);
+                if (changedObjects.stream().map(bo -> bo.getId()).anyMatch(id -> mSelectedObjectIds.contains(id))) {
+                    // A selected object is in the set of changed objects -> protential visible property change
+                    updateProperties();
+                }
             }
 
             @Override
             public void objectsAdded(Collection<BaseObject> addedObjects) {
-                updateProperties();
                 objectTreeControl.objectsAdded(addedObjects);
             }
         });
@@ -139,6 +148,7 @@ public class UiController {
         mPlanProperty.addListener(new ChangeListener<>() {
             @Override
             public void changed(ObservableValue<? extends Plan> observable, Plan oldValue, Plan newValue) {
+                mChangeHistory.clear();
                 objectsTreeSelectedObjectIds.clear();
                 objectTreeControl.setInput(getPlan());
                 objectsTreeSelectedObjectIds.addAll(mSelectedObjectIds);
@@ -359,63 +369,97 @@ public class UiController {
     }
 
     public void removeObject(BaseObject object) {
-        ChangeSet changeSet = new ChangeSet();
-        doRemoveObject(object, changeSet);
-        fireChanges(changeSet);
+        List<IModelChange> changeTrace = new ArrayList<>();
+        doRemoveObject(object, changeTrace);
+        notifyChange(changeTrace, MessageFormat.format(Strings.REMOVE_OBJECTS_CHANGE, 1));
     }
 
     public void removeObjects(Collection<? extends BaseObject> objects) {
-        ChangeSet changeSet = new ChangeSet();
-        doRemoveObjects(objects, changeSet);
-        fireChanges(changeSet);
+        List<IModelChange> changeTrace = new ArrayList<>();
+        doRemoveObjects(objects, changeTrace);
+        notifyChange(changeTrace, MessageFormat.format(Strings.REMOVE_OBJECTS_CHANGE, objects.size()));
     }
 
-    public void doRemoveObjects(Collection<? extends BaseObject> objects, ChangeSet changeSet) {
-        mSelectedObjectIds.publicBeginChange();
-        try {
-            for (BaseObject object : objects) {
-                doRemoveObject(object, changeSet);
-            }
-        } finally {
-            mSelectedObjectIds.publicEndChange();
+    public void doRemoveObjects(Collection<? extends BaseObject> objects, List<IModelChange> changeTrace) {
+        for (BaseObject object : objects) {
+            doRemoveObject(object, changeTrace);
         }
     }
 
-    public void doRemoveObject(BaseObject object, ChangeSet changeSet) {
-        Collection<BaseAnchoredObject> allDockedObjects = new ArrayList<>();
-        mSelectedObjectIds.publicBeginChange();
-        try {
-            if (object instanceof ObjectsGroup group) {
-                // Delete objects in group recursively - this behavior is different than the behavior implemented in model
-                Collection<BaseObject> objectsInGroup = group.getGroupedObjects();
-                for (BaseObject obj : new ArrayList<>(objectsInGroup)) {
-                    doRemoveObject(obj, changeSet);
-                }
+    public void doRemoveObject(BaseObject object, List<IModelChange> changeTrace) {
+        if (object instanceof ObjectsGroup group) {
+            // Delete objects in group recursively - this behavior is different than the behavior implemented in model
+            Collection<BaseObject> objectsInGroup = group.getGroupedObjects();
+            for (BaseObject obj : new ArrayList<>(objectsInGroup)) {
+                doRemoveObject(obj, changeTrace);
             }
-            // Remove children
-            if (object instanceof IObjectsContainer parent) {
-                for (BaseObject child : new ArrayList<>(parent.getOwnedChildren())) {
-                    doRemoveObject(child, changeSet);
-                }
-            }
-            // Undock object
-            if (object instanceof BaseAnchoredObject bao) {
-                for (Anchor anchor : new ArrayList<>(bao.getAnchors())) {
-                    doRemoveAnchorFromDock(anchor, changeSet);
-                }
-            }
-            Collection<? extends BaseObject> deletedObjects = object.delete(changeSet);
-            allDockedObjects.removeAll(deletedObjects);
-            Collection<String> deletedIds = deletedObjects
-                .stream()
-                .map(obj -> obj.getId())
-                .collect(Collectors.toList());
-            mSelectedObjectIds.removeAll(deletedIds);
-        } finally {
-            mSelectedObjectIds.publicEndChange();
         }
-        ObjectReconcileOperation oro = new ObjectReconcileOperation("Cleanup after remove operation", allDockedObjects);
-        doReconcileObjects(oro, changeSet);
+        // Remove children
+        if (object instanceof IObjectsContainer parent) {
+            for (BaseObject child : new ArrayList<>(parent.getOwnedChildren())) {
+                doRemoveObject(child, changeTrace);
+            }
+        }
+        // Undock object
+        if (object instanceof BaseAnchoredObject bao) {
+            for (Anchor anchor : new ArrayList<>(bao.getAnchors())) {
+                doRemoveAnchorFromDock(anchor, changeTrace);
+            }
+        }
+        object.delete(changeTrace);
+    }
+
+    public enum DockConflict {
+        SameOwnerObject, SourceNotAHandle;
+    }
+
+    public static class DockConflictDescription {
+        protected final Anchor mSource;
+        protected final Anchor mDesignatedTarget;
+        protected final DockConflict mType;
+
+        public DockConflictDescription(Anchor source, Anchor designatedTarget, DockConflict type) {
+            mSource = source;
+            mDesignatedTarget = designatedTarget;
+            mType = type;
+        }
+
+        public DockConflict getType() {
+            return mType;
+        }
+
+        public Anchor getSource() {
+            return mSource;
+        }
+
+        public Anchor getDesignatedTarget() {
+            return mDesignatedTarget;
+        }
+    }
+
+    public enum DockConflictStrategy {
+        SkipDock, Exception;
+    }
+
+    /**
+     * Creates a dock conflict result for the situation that some of the participant anchors in a designated dock would have the same owner object.
+     */
+    protected static Optional<Collection<DockConflictDescription>> dockConflictSameAnchorOwner(Anchor source, Anchor designatedTarget) {
+        return Optional.of(Arrays.asList(new DockConflictDescription(source, designatedTarget, DockConflict.SameOwnerObject)));
+    }
+
+    /**
+     * Creates a dock conflict result for the situation that the source object is not a handle anchor and thus cannot be docked.
+     */
+    protected static Optional<Collection<DockConflictDescription>> dockConflictSourceNotAHandle(Anchor source, Anchor designatedTarget) {
+        return Optional.of(Arrays.asList(new DockConflictDescription(source, designatedTarget, DockConflict.SourceNotAHandle)));
+    }
+
+    /**
+     * Creates a dock result without conflicts.
+     */
+    protected static Optional<Collection<DockConflictDescription>> dockOk() {
+        return Optional.empty();
     }
 
     protected Collection<BaseAnchoredObject> getAllDockedObjects(BaseAnchoredObject obj) {
@@ -429,53 +473,60 @@ public class UiController {
     }
 
     public void removeAnchorFromDock(Anchor anchor) {
-        ChangeSet changeSet = new ChangeSet();
-        doRemoveAnchorFromDock(anchor, changeSet);
-        notifyChanges(changeSet);
+        List<IModelChange> changeTrace = new ArrayList<>();
+        doRemoveAnchorFromDock(anchor, changeTrace);
+        notifyChange(changeTrace, Strings.REMOVE_ANCHOR_FROM_DOCK_CHANGE);
     }
 
     /**
      * Removes a single anchor from a dock, if present, retaining all other anchors in the dock.
      * After this method returns, the given anchor is not docked any more nor has it any more dock slaves.
      * If there were dock slaves before, this method attaches them to the former dock master or, if not present,
-     * to the first slave dock anchor.
+     * to the first slave dock anchor, if possible.
+     * Attention: This method might not succeed with attaching all objects to the resulting dock hierarchy,
+     * e.g. one of the anchor's slaves might have the same owner then the anchors's master, which would cause
+     * a conflict. So the dock hierarchy will only be restored as far as possible without causing conflicts.
      */
-    public void doRemoveAnchorFromDock(Anchor anchor, ChangeSet changeSet) {
-        Optional<Anchor> oDockMaster = anchor.getODockMaster();
+    public void doRemoveAnchorFromDock(Anchor anchor, List<IModelChange> changeTrace) {
+        Collection<BaseAnchoredObject> formerDockOwners = anchor.getAllDockOwners();
+        Optional<Anchor> oDockMaster = anchor.getDockMaster();
         if (oDockMaster.isPresent()) {
             Anchor dockMaster = oDockMaster.get();
-            doUndockIfDocked(anchor, changeSet);
+            anchor.setDockMaster(null, changeTrace);
             // Move our dock slaves to our dock master
             for (Anchor dockSlave : new ArrayList<>(anchor.getDockSlaves())) {
-                doDock(dockSlave, dockMaster, changeSet);
+                doDock(dockSlave, dockMaster, DockConflictStrategy.SkipDock, changeTrace);
             }
         } else {
             Iterator<Anchor> iterator = new ArrayList<>(anchor.getDockSlaves()).iterator();
             if (iterator.hasNext()) {
                 Anchor newDockMaster = iterator.next();
-                doUndock(newDockMaster, changeSet);
+                newDockMaster.setDockMaster(null, changeTrace);
                 while (iterator.hasNext()) {
                     Anchor dockSlave = iterator.next();
-                    doDock(dockSlave, newDockMaster, changeSet);
+                    doDock(dockSlave, newDockMaster, DockConflictStrategy.SkipDock, changeTrace);
                 }
             }
         }
+        ObjectReconcileOperation oro = new ObjectReconcileOperation("Cleanup after removing anchor from dock operation", formerDockOwners);
+        doReconcileObjects(oro, changeTrace);
     }
 
     /**
      * Binds the position of the handle anchor and all its dependent anchors to the given target anchor.
      * @param handle Source anchor to bind to {@code targetAnchor}. This anchor must not be {@link Anchor#isManaged() managed}.
      * @param targetAnchor Anchor to which the handle anchor should be bound.
+     * @param conflictStrategy Strategy to choose if the dock process is not possible.
      */
-    public void dock(Anchor handle, Anchor targetAnchor) {
-        ChangeSet changeSet = new ChangeSet();
-        doDock(handle, targetAnchor, changeSet);
-        fireChanges(changeSet);
+    public void dock(Anchor handle, Anchor targetAnchor, DockConflictStrategy conflictStrategy) {
+        List<IModelChange> changeTrace = new ArrayList<>();
+        doDock(handle, targetAnchor, conflictStrategy, changeTrace);
+        notifyChange(changeTrace, Strings.DOCK_ANCHOR_CHANGE);
     }
 
-    public boolean canDock(Anchor sourceAnchor, Anchor targetAnchor) {
+    public Optional<Collection<DockConflictDescription>> checkDockConflicts(Anchor sourceAnchor, Anchor targetAnchor) {
         if (!sourceAnchor.isHandle()) {
-            return false;
+            return dockConflictSourceNotAHandle(sourceAnchor, targetAnchor);
         }
         // Those would be contained in the resulting dock from target side
         Collection<BaseAnchoredObject> targetDockOwners = targetAnchor.getAllDockOwners();
@@ -485,88 +536,60 @@ public class UiController {
                         .stream()
                         .map(Anchor::getAnchorOwner)
                         .collect(Collectors.toList());
-        if (!CollectionUtils.intersection(targetDockOwners, sourceDockSlaveOwners).isEmpty()) {
+        Collection<BaseAnchoredObject> sourceAndTargetOwners = CollectionUtils.intersection(targetDockOwners, sourceDockSlaveOwners);
+        if (!sourceAndTargetOwners.isEmpty()) {
             // Docking the anchors would connect two anchors of the same owner object
-            return false;
+            return dockConflictSameAnchorOwner(sourceAnchor, targetAnchor);
         }
-        return true;
+        return dockOk();
     }
 
-    public void doDock(Anchor sourceHandleAnchor, Anchor targetAnchor, ChangeSet changeSet) {
-        if (!canDock(sourceHandleAnchor, targetAnchor)) {
-            throw new RuntimeException("Cannot dock source anchor <" + sourceHandleAnchor + "> to anchor dock of target anchor <" + targetAnchor + ">");
+    public void doDock(Anchor sourceHandleAnchor, Anchor targetAnchor, DockConflictStrategy conflictStrategy, List<IModelChange> changeTrace) {
+        if (sourceHandleAnchor.getDockMaster()
+                        .map(dm -> Boolean.valueOf(dm.equals(targetAnchor))) // Already docked to target anchor
+                        .orElse(Boolean.FALSE)) {
+            // Already docked to target anchor
+            return;
+        }
+        Optional<Collection<DockConflictDescription>> oConflicts = checkDockConflicts(sourceHandleAnchor, targetAnchor);
+        if (oConflicts.isPresent()) {
+            switch (conflictStrategy) {
+            case SkipDock:
+                return;
+            case Exception:
+                throw new RuntimeException("Cannot dock source anchor <" + sourceHandleAnchor + "> to anchor dock of target anchor <" + targetAnchor + ">");
+            }
         }
 
-        changeSet.changed(sourceHandleAnchor);
-        changeSet.changed(targetAnchor);
-        changeSet.changed(sourceHandleAnchor.getAnchorOwner());
-        changeSet.changed(targetAnchor.getAnchorOwner());
-
-        sourceHandleAnchor.getODockMaster().ifPresent(dockMaster -> {
-            dockMaster.getDockSlaves().remove(sourceHandleAnchor);
-            changeSet.changed(dockMaster);
-            changeSet.changed(dockMaster.getAnchorOwner());
-        });
+        sourceHandleAnchor.undockFromDockMaster(changeTrace);
         IPosition targetPosition = targetAnchor.getPosition();
-        sourceHandleAnchor.setODockMaster(Optional.of(targetAnchor));
-        targetAnchor.getDockSlaves().add(sourceHandleAnchor);
+        sourceHandleAnchor.setDockMaster(targetAnchor, changeTrace);
 
-        doSetDockPosition(sourceHandleAnchor, targetPosition, changeSet);
+        doSetDockPosition_Internal(sourceHandleAnchor, targetPosition, changeTrace, false);
     }
 
     /**
      * Undocks the given anchor from its dock master, retaining all its dock slaves docked, if any.
      * To remove an anchor completely from a dock, call {@link #doRemoveAnchorFromDock(Anchor, ChangeSet)}.
      */
-    public void doUndock(Anchor handleToUndock, ChangeSet changeSet) {
-        Collection<Anchor> allDockedAnchors = handleToUndock.getAllDockedAnchors();
-        handleToUndock.getODockMaster().ifPresent(dockMaster -> {
-            dockMaster.getDockSlaves().remove(handleToUndock);
-        });
-        handleToUndock.setODockMaster(Optional.empty());
+    public void doUndock(Anchor handleToUndock, List<IModelChange> changeTrace) {
+        List<BaseAnchoredObject> formerDockOwners = handleToUndock.getAllDockOwners();
+        handleToUndock.undockFromDockMaster(changeTrace);
 
-        Collection<BaseAnchoredObject> owners = new ArrayList<>();
-        for (Anchor changeAnchor : allDockedAnchors) {
-            BaseAnchoredObject owner = changeAnchor.getAnchorOwner();
-            changeSet.changed(changeAnchor);
-            changeSet.changed(owner);
-            owners.add(owner);
-        }
-
-        ObjectReconcileOperation oro = new ObjectReconcileOperation("Undock operation", owners);
-        doReconcileObjects(oro, changeSet);
+        ObjectReconcileOperation oro = new ObjectReconcileOperation("Undock operation", formerDockOwners);
+        doReconcileObjects(oro, changeTrace);
     }
 
-    public void undock(Anchor handle) {
-        ChangeSet changeSet = new ChangeSet();
-        doUndock(handle, changeSet);
-        fireChanges(changeSet);
-    }
-
-    public void doUndockIfDocked(Anchor anchorToUndock, ChangeSet changeSet) {
-        if (anchorToUndock.getODockMaster().isPresent()) {
-            doUndock(anchorToUndock, changeSet);
+    public void doUndockIfDocked(Anchor anchorToUndock, List<IModelChange> changeTrace) {
+        if (anchorToUndock.getDockMaster().isPresent()) {
+            doUndock(anchorToUndock, changeTrace);
         }
-    }
-
-    /**
-     * Transfers the dock situation of the source anchor to the target anchor, i.e. docks
-     * the target anchor to the dock master of source and docks all dock slaves from source
-     * to the target anchor.
-     */
-    public void doTransferDocks(Anchor source, Anchor target, ChangeSet changeSet) {
-        for (Anchor dockedAnchor : new ArrayList<>(source.getDockSlaves())) {
-            doDock(dockedAnchor, target, changeSet);
-        }
-        source.getODockMaster().ifPresent(sourceDockMaster -> {
-            doDock(target, sourceDockMaster, changeSet);
-        });
     }
 
     public ObjectsGroup groupObjects(Collection<BaseObject> objects, String groupName) {
-        ChangeSet changeSet = new ChangeSet();
-        ObjectsGroup group = doGroupObjects(groupName, objects, changeSet);
-        fireChanges(changeSet);
+        List<IModelChange> changeTrace = new ArrayList<>();
+        ObjectsGroup group = doGroupObjects(groupName, objects, changeTrace);
+        notifyChange(changeTrace, MessageFormat.format(Strings.GROUP_OBJECTS_CHANGE, objects.size()));
         return group;
     }
 
@@ -575,23 +598,23 @@ public class UiController {
      * This is a convenience method for just creating a new {@link ObjectsGroup} and adding objects to it.
      * @return Group of objects.
      */
-    public ObjectsGroup doGroupObjects(String groupName, Collection<BaseObject> objects, ChangeSet changeSet) {
+    public ObjectsGroup doGroupObjects(String groupName, Collection<BaseObject> objects, List<IModelChange> changeTrace) {
         if (objects.isEmpty()) {
             throw new IllegalStateException("Cannot create an empty objects group");
         }
-        ObjectsGroup group = new ObjectsGroup(IdGenerator.generateUniqueId(ObjectsGroup.class), groupName, getPlan(), changeSet);
+        ObjectsGroup group = new ObjectsGroup(IdGenerator.generateUniqueId(ObjectsGroup.class), groupName, getPlan(), changeTrace);
         for (BaseObject object : objects) {
-            group.addObject(object, changeSet);
+            group.addObject(object, changeTrace);
         }
-        changeSet.changed(group);
         return group;
     }
 
     // The ungroup operation is nothing more than just deleting the group; for clarity, we retain this operation
     public void ungroup(ObjectsGroup group) {
-        ChangeSet changeSet = new ChangeSet();
-        group.removeAllGroupedObjects(changeSet);
-        fireChanges(changeSet);
+        List<IModelChange> changeTrace = new ArrayList<>();
+        group.removeAllGroupedObjects(changeTrace);
+        group.delete(changeTrace);
+        notifyChange(changeTrace, Strings.UNGROUP_OBJECTS_CHANGE);
     }
 
     public void setObjectsVisibilityFromId(Collection<String> objIds, boolean hidden) {
@@ -603,71 +626,118 @@ public class UiController {
     }
 
     public void setObjectsVisibility(Collection<? extends BaseObject> objs, boolean hidden) {
-        ChangeSet changeSet = new ChangeSet();
-        doSetObjectsVisibility(objs, hidden, changeSet);
-        fireChanges(changeSet);
+        List<IModelChange> changeTrace = new ArrayList<>();
+        doSetObjectsVisibility(objs, hidden, changeTrace);
+        notifyChange(changeTrace, Strings.SET_OBJECTS_VISIBILITY_CHANGE);
     }
 
-    public void doSetObjectsVisibility(Collection<? extends BaseObject> objs, boolean hidden, ChangeSet changeSet) {
+    public void doSetObjectsVisibility(Collection<? extends BaseObject> objs, boolean hidden, List<IModelChange> changeTrace) {
         for (BaseObject obj : objs) {
             if (obj.isHidden() != hidden) {
-                obj.setHidden(hidden);
-                changeSet.changed(obj);
+                obj.setHidden(hidden, changeTrace);
             }
             if (obj instanceof BaseAnchoredObject bao) {
-                doSetObjectsVisibility(bao.getAnchors(), hidden, changeSet);
+                doSetObjectsVisibility(bao.getAnchors(), hidden, changeTrace);
             }
             if (obj instanceof ObjectsGroup group) {
-                doSetObjectsVisibility(group.getGroupedObjects(), hidden, changeSet);
+                doSetObjectsVisibility(group.getGroupedObjects(), hidden, changeTrace);
             }
         }
     }
 
-    public void doSetHandleAnchorPosition(Anchor handleAnchor, IPosition position, ChangeSet changeSet) {
+    public void doSetHandleAnchorPosition(Anchor handleAnchor, IPosition position, List<IModelChange> changeTrace) {
         if (!handleAnchor.isHandle()) {
             throw new RuntimeException("Cannot set position of anchor <" + handleAnchor + ">, it is not a handle");
         }
-        Optional<Anchor> oDockMaster = handleAnchor.getODockMaster();
+        Optional<Anchor> oDockMaster = handleAnchor.getDockMaster();
         if (oDockMaster.isPresent()) {
             throw new RuntimeException("Cannot set position of anchor <" + handleAnchor + ">, it is docked to anchor <" + oDockMaster.get() + ">");
         }
-        doSetDockPosition(handleAnchor, position, changeSet);
+        doSetDockPosition(handleAnchor, position, changeTrace);
     }
 
-    protected void doSetDockPosition(Anchor anchor, IPosition position, ChangeSet changeSet) {
+    public class MergeableSetAnchorDockPositionChange extends ObjectChange {
+        protected final Anchor mRootMasterOfDock;
+        protected final IPosition mOldPosition;
+
+        public MergeableSetAnchorDockPositionChange(Anchor rootMasterOfDock, IPosition oldPosition, List<IModelChange> setAnchorDockInnerChanges) {
+            mRootMasterOfDock = rootMasterOfDock;
+            mOldPosition = oldPosition;
+
+            MacroChange consolidatedChange = MacroChange.create(setAnchorDockInnerChanges, false);
+            objectsAdded(consolidatedChange.getAdditions());
+            objectsModified(consolidatedChange.getModifications());
+            objectsRemoved(consolidatedChange.getRemovals());
+        }
+
+        @Override
+        public Optional<IModelChange> tryMerge(IModelChange oldChange) {
+            if (oldChange instanceof MergeableSetAnchorDockPositionChange sadpc && sadpc.mRootMasterOfDock.equals(mRootMasterOfDock)) {
+                return Optional.of(oldChange);
+            }
+            return Optional.empty();
+        }
+
+        @Override
+        public void undo(List<IModelChange> undoChangeTrace) {
+            doSetDockPosition(mRootMasterOfDock, mOldPosition, undoChangeTrace);
+        }
+    }
+
+    public void setDockPosition(Anchor anchor, IPosition position, boolean tryMergeChange) {
+        List<IModelChange> changeTrace = new ArrayList<>();
+        doSetDockPosition(anchor, position, changeTrace);
+        notifyChange(changeTrace, Strings.SET_DOCK_POSITION_CHANGE, tryMergeChange);
+    }
+
+    protected void doSetDockPosition(Anchor anchor, IPosition position, List<IModelChange> changeTrace) {
+        doSetDockPosition_Internal(anchor, position, changeTrace, true);
+    }
+
+    /**
+     * Sets all positions of anchors docked to the same dock of the given anchor.
+     * @param generateMergableChange Will generate a mergeable change for repeated calls to this method. This is wanted for
+     * operations where the undo operation should skip repeated dock positions change, for example in case of a drag operation.
+     * ATTENTION: With parameter {@code generateMergeableChange} set to {@code true}, this method assumes that all docked
+     * anchors already had the same (dock) position. For the initial docking operation, that parameter must be set to
+     * {@code false}.
+     */
+    protected void doSetDockPosition_Internal(Anchor anchor, IPosition position, List<IModelChange> changeTrace, boolean generateMergeableChange) {
+        IPosition oldPosition = anchor.getPosition();
+        Anchor rootMasterOfDock = anchor.getRootMasterOfAnchorDock();
+        List<IModelChange> innerChangeTrace = new ArrayList<>();
+
         Collection<BaseAnchoredObject> owners = new ArrayList<>();
         for (Anchor changeAnchor : anchor.getAllDockedAnchors()) {
             BaseAnchoredObject owner = changeAnchor.getAnchorOwner();
-            changeAnchor.setPosition(ObjectReconcileOperation.calculateTargetPositionForAnchor(changeAnchor, position));
-            changeSet.changed(changeAnchor);
-            changeSet.changed(owner);
+            changeAnchor.setPosition(ObjectReconcileOperation.calculateTargetPositionForAnchor(changeAnchor, position), innerChangeTrace);
             owners.add(owner);
         }
 
-        ObjectReconcileOperation oro = new ObjectReconcileOperation("Set Dock Position", owners);
-        doReconcileObjects(oro, changeSet);
+        ObjectReconcileOperation oro = new ObjectReconcileOperation("Set dock position", owners);
+        doReconcileObjects(oro, innerChangeTrace);
+
+        if (generateMergeableChange) {
+            changeTrace.add(new MergeableSetAnchorDockPositionChange(rootMasterOfDock, oldPosition, innerChangeTrace));
+        } else {
+            changeTrace.addAll(innerChangeTrace);
+        }
     }
 
-    public void setHandleAnchorPosition(Anchor anchor, IPosition position) {
-        ChangeSet changeSet = new ChangeSet();
-        doSetHandleAnchorPosition(anchor, position, changeSet);
-        fireChanges(changeSet);
+    public void setHandleAnchorPosition(Anchor anchor, IPosition position, boolean tryMergeChange) {
+        List<IModelChange> changeTrace = new ArrayList<>();
+        doSetHandleAnchorPosition(anchor, position, changeTrace);
+        notifyChange(changeTrace, Strings.SET_HANDLE_ANCHOR_POSITION, tryMergeChange);
     }
 
-    public void doReconcileObjects(ObjectReconcileOperation oro, ChangeSet changeSet) {
-        oro.reconcileObjects(changeSet);
-    }
-
-    public void reconcileObjects(ObjectReconcileOperation oro) {
-        ChangeSet changeSet = new ChangeSet();
-        doReconcileObjects(oro, changeSet);
-        fireChanges(changeSet);
+    public void doReconcileObjects(ObjectReconcileOperation oro, List<IModelChange> changeTrace) {
+        oro.reconcileObjects(changeTrace);
     }
 
     public void createGuideLine(GuideLineDirection direction, Length position) {
-        ChangeSet changeSet = new ChangeSet();
-        new GuideLine(IdGenerator.generateUniqueId("GuideLine"), null, direction, position, getPlan(), changeSet);
-        fireChanges(changeSet);
+        List<IModelChange> changeTrace = new ArrayList<>();
+        GuideLine.create(null, direction, position, getPlan(), changeTrace);
+        notifyChange(changeTrace, Strings.CREATE_GUIDE_LINE_CHANGE);
     }
 
     public void deleteGuideLine(GuideLine guideLine) {
@@ -675,82 +745,130 @@ public class UiController {
     }
 
     public void setGuideLinePosition(GuideLine guideLine, Length position) {
-        guideLine.setPosition(position);
-        fireObjectsChanged(Arrays.asList(guideLine));
+        List<IModelChange> changeTrace = new ArrayList<>();
+        guideLine.setPosition(position, changeTrace);
+        notifyChange(changeTrace, Strings.GUIDE_LINE_SET_PROPERTY_CHANGE);
     }
 
     public void setWallBevelTypeOfAnchorDock(Anchor anchorDock, WallBevelType wallBevel) {
-        ChangeSet changeSet = new ChangeSet();
-        doSetWallBevelTypeOfAnchorDock(anchorDock, wallBevel, changeSet);
-        notifyChanges(changeSet);
+        List<IModelChange> changeTrace = new ArrayList<>();
+        doSetWallBevelTypeOfAnchorDock(anchorDock, wallBevel, changeTrace);
+        notifyChange(changeTrace, Strings.WALL_SET_PROPERTY_CHANGE);
     }
 
-    public void doSetWallBevelTypeOfAnchorDock(Anchor anchorDock, WallBevelType wallBevel, ChangeSet changeSet) {
-        WallAnchorPositions.setWallBevelTypeOfAnchorDock(anchorDock, wallBevel, changeSet);
+    public void doSetWallBevelTypeOfAnchorDock(Anchor anchorDock, WallBevelType wallBevel, List<IModelChange> changeTrace) {
+        WallAnchorPositions.setWallBevelTypeOfAnchorDock(anchorDock, wallBevel, changeTrace);
         for (Anchor dockedAnchor : anchorDock.getAllDockedAnchors()) {
             BaseAnchoredObject owner = dockedAnchor.getAnchorOwner();
             if (!(owner instanceof Wall)) {
                 continue;
             }
             Wall wall = (Wall) owner;
-            wall.healObject(Collections.singleton(Wall.HEAL_OUTLINE), changeSet);
+            wall.healObject(Collections.singleton(Wall.HEAL_OUTLINE), changeTrace);
         }
     }
 
     public SupportObject createNewSupportObject(SupportObjectDescriptor supportObjectDescriptor, Position2D pos) throws IOException {
-        ChangeSet changeSet = new ChangeSet();
-        SupportObject result = doCreateNewSupportObject(supportObjectDescriptor, pos, changeSet);
-        notifyChanges(changeSet);
+        List<IModelChange> changeTrace = new ArrayList<>();
+        SupportObject result = doCreateNewSupportObject(supportObjectDescriptor, pos, changeTrace);
+        notifyChange(changeTrace, Strings.SUPPORT_OBJECT_CREATE_CHANGE);
         return result;
     }
 
-    public SupportObject doCreateNewSupportObject(SupportObjectDescriptor supportObjectDescriptor, Position2D pos, ChangeSet changeSet) throws IOException {
+    public SupportObject doCreateNewSupportObject(SupportObjectDescriptor supportObjectDescriptor, Position2D pos, List<IModelChange> changeTrace) throws IOException {
         Plan plan = getPlan();
         AssetLoader assetLoader = getAssetManager().buildAssetLoader();
         ThreeDObject obj = assetLoader.loadSupportObject3DObject(supportObjectDescriptor, Optional.empty(), false);
         if (obj == null) {
             throw new IOException("Error creating support object");
         }
-        Set<String> meshIds = obj.getSurfaces().stream().map(mv -> mv.getId()).collect(Collectors.toSet());
-        SupportObject result = SupportObject.create(supportObjectDescriptor.getName(), pos,
+        Set<String> meshIds = obj.getSurfaceMeshViews().stream().map(mv -> mv.getId()).collect(Collectors.toSet());
+        SupportObject result = SupportObject.create(supportObjectDescriptor.getName(), supportObjectDescriptor.getSelfRef(), pos,
             new Dimensions2D(supportObjectDescriptor.getWidth(), supportObjectDescriptor.getDepth()),
-            supportObjectDescriptor.getHeight(), 0, supportObjectDescriptor.getElevation(), meshIds, plan, changeSet);
-        result.setSupportObjectDescriptorRef(supportObjectDescriptor.getSelfRef());
+            supportObjectDescriptor.getHeight(), 0, supportObjectDescriptor.getElevation(), meshIds, plan, changeTrace);
         return result;
     }
 
-    public void notifyObjectsAdded(BaseObject... objects) {
-        fireObjectsAdded(Arrays.asList(objects));
+    public void notifyChange(List<IModelChange> combinedChange, String changeDescription) {
+        notifyChange(combinedChange, changeDescription, false);
     }
 
-    public void notifyObjectsRemoved(BaseObject... objects) {
-        fireObjectsRemoved(Arrays.asList(objects));
+    public void notifyChange(List<IModelChange> combinedChange, String changeDescription, boolean tryMergeChange) {
+        if (combinedChange.size() == 1) {
+            notifyChange(combinedChange.get(0), changeDescription, tryMergeChange);
+        } else {
+            notifyChange(MacroChange.create(combinedChange, tryMergeChange), changeDescription, tryMergeChange);
+        }
     }
 
-    public void notifyObjectsChanged(BaseObject... objects) {
-        fireObjectsChanged(Arrays.asList(objects));
+    public void notifyChange(IModelChange change, String changeDescription) {
+        notifyChange(change, changeDescription, false);
     }
 
-    public void notifyObjectsAdded(Collection<BaseObject> objects) {
-        fireObjectsAdded(objects);
+    public void notifyChange(IModelChange change, String changeDescription, boolean tryMergeChange) {
+        ChangeEntry changeEntry = new ChangeEntry(change, changeDescription);
+        mChangeHistory.pushChange(changeEntry, tryMergeChange);
+        checkUndoRedo();
+        fireChanges(change);
     }
 
-    public void notifyObjectsRemoved(Collection<BaseObject> objects) {
-        fireObjectsRemoved(objects);
+    public ReadOnlyObjectProperty<ChangeEntry> nextUndoOperationProperty() {
+        return mNextUndoOperation;
     }
 
-    public void notifyObjectsChanged(Collection<BaseObject> objects) {
-        fireObjectsChanged(objects);
+    public ReadOnlyObjectProperty<ChangeEntry> nextRedoOperationProperty() {
+        return mNextRedoOperation;
     }
 
-    public void notifyChanges(ChangeSet changeSet) {
-        fireChanges(changeSet);
+    public boolean canUndo() {
+        return mNextUndoOperation.getValue() != null;
     }
 
-    protected void fireChanges(ChangeSet changeSet) {
-        fireObjectsAdded(changeSet.getAdditions());
-        fireObjectsRemoved(changeSet.getRemovals());
-        fireObjectsChanged(changeSet.getChanges());
+    public boolean canRedo() {
+        return mNextRedoOperation.getValue() != null;
+    }
+
+    protected void checkUndoRedo() {
+        mNextUndoOperation.setValue(mChangeHistory.tryPeekNextUndoChange().orElse(null));
+        mNextRedoOperation.setValue(mChangeHistory.tryPeekNextRedoChange().orElse(null));
+    }
+
+    public void undo() {
+        ChangeEntry undoChange = mChangeHistory.undo();
+        checkUndoRedo();
+        fireChanges(undoChange.getModelChange());
+    }
+
+    public void redo() {
+        ChangeEntry redoChange = mChangeHistory.redo();
+        checkUndoRedo();
+        fireChanges(redoChange.getModelChange());
+    }
+
+    protected void fireChanges(IModelChange change) {
+        Collection<BaseObject> additions = change.getAdditions();
+        Collection<BaseObject> removals = change.getRemovals();
+        boolean objectSetUnChanged = additions.isEmpty() && removals.isEmpty();
+
+        if (objectSetUnChanged) {
+            // "Simple" change which won't impact our selected object ids
+            fireObjectsChanged(change.getModifications());
+        } else {
+            // "Complex" change with additions and/or removals which potentially can impact our selected objet ids
+            mSelectedObjectIds.publicBeginChange();
+            // TODO: We should also begin/end change of object tree here
+            try {
+                fireObjectsRemoved(removals);
+                fireObjectsAdded(additions);
+                fireObjectsChanged(change.getModifications());
+                mSelectedObjectIds.removeAll(removals
+                    .stream()
+                    .map(BaseObject::getId)
+                    .toList());
+            } finally {
+                mSelectedObjectIds.publicEndChange();
+            }
+        }
     }
 
     protected void fireObjectsAdded(Collection<? extends BaseObject> objects) {

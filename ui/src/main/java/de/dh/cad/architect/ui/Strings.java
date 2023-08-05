@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ public class Strings {
 
     public static final String ERROR_LOADING_DATA = "Fehler beim Laden der Daten. Details siehe Log-Datei.";
 
-    public  static final String NO_ENTRY_CHOOSEN = "Kein Eintrag ausgewählt";
+    public static final String NO_ENTRY_CHOOSEN = "Kein Eintrag ausgewählt";
 
     public static final String PROPERTY_DIMENSIONS_WIDTH = "Breite";
     public static final String PROPERTY_DIMENSIONS_DEPTH = "Tiefe";
@@ -106,6 +106,21 @@ public class Strings {
     public static final String OBJECT_TYPE_NAME_WALL_HOLE_S = "Wandöffnung";
     public static final String OBJECT_TYPE_NAME_WALL_HOLE_P = "Wandöffnungen";
 
+    // General changes
+    public static final String REMOVE_OBJECTS_CHANGE = "{0} Objekt(e) entfernen";
+    public static final String GROUP_OBJECTS_CHANGE = "{0} Objekte gruppieren";
+    public static final String UNGROUP_OBJECTS_CHANGE = "Objektgruppe auflösen";
+    public static final String SET_OBJECTS_VISIBILITY_CHANGE = "Objektsichtbarkeit ändern";
+    public static final String SET_OBJECT_NAME_CHANGE = "Objektname setzen";
+    public static final String SET_HANDLE_ANCHOR_POSITION = "Ankerposition setzen";
+    public static final String CREATE_GUIDE_LINE_CHANGE = "Hilfslinie erstellen";
+    public static final String REMOVE_ANCHOR_FROM_DOCK_CHANGE = "Anker aus Anker-Dock entfernen";
+    public static final String DOCK_ANCHOR_CHANGE = "Anker andocken";
+    public static final String SET_OBJECT_MATERIAL_CHANGE = "Oberfläche von {0} ändern";
+    public static final String SET_DOCK_POSITION_CHANGE = "Position des Anker-Docks setzen";
+
+    public static final String GUIDE_LINE_SET_PROPERTY_CHANGE = "Hilfslinien-Eigenschaft ändern";
+
     // Main window
     public static final String ACTION_OPEN_ROOT_PLAN = "Plan öffnen...";
     public static final String MAIN_WINDOW_TITLE = APPLICATION_NAME;
@@ -116,6 +131,11 @@ public class Strings {
     public static final String FILE_TYPE_ROOT_PLAN_EXTENSION_NAME = "Architect Plan";
 
     public static final String PLAN_FILES_HISTORY_CLEAR_HISTORY_MENU_ITEM = "History löschen";
+
+    public static final String MAIN_WINDOW_UNDO_MENU_ITEM_INVALID = "Rückgängig";
+    public static final String MAIN_WINDOW_UNDO_MENU_ITEM_VALID = "Rückgängig: {0}";
+    public static final String MAIN_WINDOW_REDO_MENU_ITEM_INVALID = "Wiederherstellen";
+    public static final String MAIN_WINDOW_REDO_MENU_ITEM_VALID = "Wiederherstellen: {0}";
 
     // Actions
     public static final String UNGROUP_ACTION_TITLE = "Gruppe auflösen";
@@ -139,6 +159,7 @@ public class Strings {
     public static final String ACTION_EDIT_CEILING_ANCHORS_TITLE = "Deckenaufhängung bearbeiten";
     public static final String EDIT_CEILING_ANCHORS_USER_HINT = "Ändere die Positon eines Decken-Ankers oder docke ihn an einen anderen Anker an";
     public static final String EDIT_CEILING_ANCHORS_BEHAVIOR_TITLE = "Deckenaufhängung bearbeiten";
+    public static final String CEILING_CREATE_HANDLE_CHANGE = "Decken-Ecke hinzufügen";
 
     // Properties
     public static final String PROPERTIES_VIEW_TITLE = "Eigenschaften";
@@ -163,8 +184,15 @@ public class Strings {
     public static final String CEILING_PROPERTIES_NUM_CORNERS = "Eckpunkte";
     public static final String CEILING_PROPERTIES_HEIGHT = "Höhe";
     public static final String CEILING_PROPERTIES_HEIGHT_FROM_TO = "{0} bis {1}";
+    public static final String CEILING_REMOVE_CORNER_CHANGE = "Decken-Ecke entfernen";
+    public static final String CEILING_ADD_CHANGE = "Decke hinzufügen";
+
+    public static final String COVERING_ADD_CHANGE = "Abdeckung hinzufügen";
 
     public static final String DIMENSIONING_PROPERTIES_LENGTH = "Länge";
+    public static final String DIMENSIONING_PROPERTIES_LABEL = "Beschriftung";
+    public static final String DIMENSIONING_ADD_CHANGE = "Bemaßung hinzufügen";
+    public static final String DIMENSIONING_SET_PROPERTY_CHANGE = "Eigenschaft von Bemaßung ändern";
 
     public static final String FLOOR_PROPERTIES_LEVEL = "Etage";
     public static final String FLOOR_PROPERTIES_HEIGHT = "Höhe";
@@ -172,22 +200,31 @@ public class Strings {
     public static final String FLOOR_PROPERTIES_THICKNESS = "Dicke";
     public static final String FLOOR_PROPERTIES_SET_THICKNESS_OPERATION_NAME = "Fußbodendicke setzen";
     public static final String FLOOR_PROPERTIES_AREA = "Fläche";
+    public static final String FLOOR_CREATE_CORNER_CHANGE = "Fußboden-Ecke hinzufügen";
+    public static final String FLOOR_REMOVE_CORNER_CHANGE = "Fußboden-Ecke entfernen";
+    public static final String FLOOR_SET_PROPERTY_CHANGE = "Fußboden-Eigenschaft ändern";
+    public static final String FLOOR_ADD_CHANGE = "Fußboden hinzufügen";
 
     public static final String GUIDELINE_PROPERTIES_POSITION = "Position";
 
     public static final String OBJECTS_GROUP_PROPERTIES_NUM_OBJECTS = "# Objekte";
 
-    public static final String SUPPORT_OBJECT_PROPERTIES_DESCRIPTOR = "Deskriptor";
+    public static final String SUPPORT_OBJECT_PROPERTIES_MODEL = "Modell";
     public static final String SUPPORT_OBJECT_PROPERTIES_POSITION = "Position";
     public static final String SUPPORT_OBJECT_PROPERTIES_SIZE = "Größe X/Y";
     public static final String SUPPORT_OBJECT_PROPERTIES_ROTATION_DEGREES = "Drehung (Grad)";
     public static final String SUPPORT_OBJECT_PROPERTIES_HEIGHT = "Höhe";
     public static final String SUPPORT_OBJECT_PROPERTIES_ELEVATION = "Vertikaler Versatz";
+    public static final String SUPPORT_OBJECT_SET_PROPERTY_CHANGE = "Hilfsobjekt-Eigenschaft(en) ändern";
+    public static final String SUPPORT_OBJECT_CREATE_CHANGE = "Hilfsobjekt erstellen";
+    public static final String SUPPORT_OBJECT_MOVE_CHANGE = "Hilfsobjekt(e) verschieben";
 
     public static final String WALL_HOLE_PROPERTIES_DIMENSIONS = "Maße";
     public static final String WALL_HOLE_PROPERTIES_PARAPET_HEIGHT = "Brüstungshöhe";
     public static final String WALL_HOLE_PROPERTIES_DISTANCE_FROM_WALL_END = "Abstand von Wandende";
     public static final String WALL_HOLE_PROPERTIES_DOCK_END = "Bezugs-Wandende";
+    public static final String WALL_HOLE_SET_PROPERTY_CHANGE = "Wandöffnungs-Eigenschaft ändern";
+    public static final String WALL_HOHE_ADD_CHANGE = "Wandöffnung einfügen";
 
     public static final String WALL_PROPERTIES_THICKNESS = "Wanddicke";
     public static final String WALL_PROPERTIES_BEVEL_TYPE_A = "Wandverbinder Ende A";
@@ -199,6 +236,10 @@ public class Strings {
     public static final String WALL_PROPERTIES_BASE_LENGTH = "Basis-Wandlänge";
     public static final String WALL_PROPERTIES_LENGTH_SIDE_1 = "Wandlänge Seite 1";
     public static final String WALL_PROPERTIES_LENGTH_SIDE_2 = "Wandlänge Seite 2";
+    public static final String WALL_ADD_CHANGE = "Wand hinzufügen";
+    public static final String WALL_SET_PROPERTY_CHANGE = "Wand-Eigenschaft ändern";
+    public static final String WALL_DIVIDE_CHANGE = "Wand teilen";
+    public static final String WALL_STRAIGHTEN_BENDPOINT_CHANGE = "Wandecke entfernen/begradigen";
 
     public static final String SUPPORT_OBJECT_CONTROL_WIDTH_X_0 = "Breite (X): {0}";
     public static final String SUPPORT_OBJECT_CONTROL_HEIGHT_Y_0 = "Höhe (Y): {0}";
@@ -217,6 +258,12 @@ public class Strings {
 
     // Object tree
     public static final String OBJECT_TREE_VIEW_TITLE = "Objekte";
+
+    // Script console
+    public static final String SCRIPT_CONSOLE_VIEW_TITLE = "Skript-Konsole";
+
+    // Log output
+    public static final String LOG_OUTPUT_VIEW_TITLE = "Log-Ausgabe";
 
     // Ground plan
     public static final String BEHAVIORS_OBJ_NAME = "{0}";
@@ -315,6 +362,7 @@ public class Strings {
     public static final String GROUND_PLAN_ADD_FLOOR_BEHAVIOR_DEFAULT_USER_HINT = "Platziere die Eckpunkte des Fußbodens";
     public static final String GROUND_PLAN_ADD_FLOOR_BEHAVIOR_ANCHOR_AIMED = "Boden anschließen an {0}";
     public static final String GROUND_PLAN_ADD_FLOOR_BEHAVIOR_POSITION_AIMED = "Boden-Eckpunkt setzen bei {0}";
+    public static final String GROUND_PLAN_ADD_FLOOR_BEHAVIOR_TOO_FEW_POSITIONS = "Zu wenige Eckpunkte ausgewählt, um Fußboden zu erstellen";
 
     // Add Ceiling
     public static final String ACTION_GROUND_PLAN_ADD_CEILING_TITLE = "Decke einfügen";
@@ -487,4 +535,15 @@ public class Strings {
     public static final String LIBRARY_MANAGER_EDIT_SUPPORT_OBJECT_TAKE_SNAPSHOT_DIALOG_TITLE = "Bilder für Bibliothek aufnehmen";
     public static final String LIBRARY_MANAGER_EDIT_SUPPORT_OBJECT_TAKE_SNAPSHOT_ICON_IMAGE_SAVED = "Icon gespeichert";
     public static final String LIBRARY_MANAGER_EDIT_SUPPORT_OBJECT_TAKE_SNAPSHOT_PLAN_VIEW_IMAGE_SAVED = "Grundriss-Bild gespeichert";
+
+    public static final String WINDOW_MENU_ITEM_CONSTRUCTION_VIEW = "Grundrissplan";
+    public static final String WINDOW_MENU_ITEM_3D_VIEW = "3D-Ansicht";
+    public static final String WINDOW_MENU_ITEM_PROPERTIES_VIEW = "Objekteigenschaften";
+    public static final String WINDOW_MENU_ITEM_OBJECTS_VIEW = "Objektbaum";
+    public static final String WINDOW_MENU_ITEM_SCRIPT_CONSOLE_VIEW = "Skript-Konsole";
+    public static final String WINDOW_MENU_ITEM_LOG_OUTPUT_VIEW = "Log-Ausgabe";
+
+    public static final String INFO_DIALOG_TITLE_TEXT = "Info";
+    public static final String INFO_DIALOG_HEADER_TEXT = "Architect (c) by Daniel Höh";
+    public static final String INFO_DIALOG_CONTENT_TEXT = "Grundriss- und Raumgestaltungsprogramm, möge es nützlich sein! Danksagungen, Spenden und Verbesserungsvorschläge an Daniel Höh, Freiburg, Germany";
 }

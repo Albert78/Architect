@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -18,12 +18,14 @@
 package de.dh.cad.architect.model.wallmodel;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.AnchorTarget;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.objects.BaseObject;
@@ -80,8 +82,8 @@ public class AdaptedModelWall implements IWall {
     }
 
     @Override
-    public void setWallBevelA(WallBevelType value) {
-        mWall.setWallBevelA(value);
+    public void setWallBevelA(WallBevelType value, List<IModelChange> changeTrace) {
+        mWall.setWallBevelA(value, changeTrace);
     }
 
     @Override
@@ -90,8 +92,8 @@ public class AdaptedModelWall implements IWall {
     }
 
     @Override
-    public void setWallBevelB(WallBevelType value) {
-        mWall.setWallBevelB(value);
+    public void setWallBevelB(WallBevelType value, List<IModelChange> changeTrace) {
+        mWall.setWallBevelB(value, changeTrace);
     }
 
     @Override

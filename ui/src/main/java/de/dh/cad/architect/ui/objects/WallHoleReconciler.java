@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,9 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.objects;
 
-import de.dh.cad.architect.model.ChangeSet;
+import java.util.List;
+
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.objects.Wall;
 import de.dh.cad.architect.model.objects.WallHole;
@@ -31,39 +33,21 @@ public class WallHoleReconciler extends DefaultObjectReconciler {
      * Updates the anchors connected to the given {@code wallHole} after a change of the wall hole's parameters.
      * Internally, this method uses an anchor move operation to update the wall hole's anchors and connected objects.
      */
-    public static void updateWallHoleAnchors(WallHole wallHole, UiController uiController) {
-        ChangeSet changeSet = new ChangeSet();
-        doUpdateWallHoleAnchors(wallHole, uiController, changeSet);
-        uiController.notifyChanges(changeSet);
-    }
-
-    /**
-     * Updates the anchors connected to the given {@code wallHole} after a change of the wall hole's parameters.
-     * Internally, this method uses an anchor move operation to update the wall hole's anchors and connected objects.
-     */
-    public static void doUpdateWallHoleAnchors(WallHole wallHole, UiController uiController, ChangeSet changeSet) {
-        changeSet.changed(wallHole);
+    public static void doUpdateWallHoleAnchors(WallHole wallHole, UiController uiController, List<IModelChange> changeTrace) {
         ObjectReconcileOperation omo = new ObjectReconcileOperation("Update Wall Hole Anchors");
         omo.tryAddObjectToProcess(wallHole);
-        uiController.doReconcileObjects(omo, changeSet);
+        uiController.doReconcileObjects(omo, changeTrace);
     }
 
-    public static void swapWallHoleDockEnd(WallHole wallHole, UiController uiController) {
-        ChangeSet changeSet = new ChangeSet();
-        doSwapWallHoleDockEnd(wallHole, uiController, changeSet);
-        uiController.notifyChanges(changeSet);
-    }
-
-    public static void doSwapWallHoleDockEnd(WallHole wallHole, UiController uiController, ChangeSet changeSet) {
-        changeSet.changed(wallHole);
+    public static void doSwapWallHoleDockEnd(WallHole wallHole, UiController uiController, List<IModelChange> changeTrace) {
         WallDockEnd currentDockEnd = wallHole.getDockEnd();
         Wall wall = wallHole.getWall();
         Length wallSideLength = wall.calculateBaseLength();
         Length distanceFromOtherWallEnd = wallSideLength
                         .minus(wallHole.getDimensions().getX())
                         .minus(wallHole.getDistanceFromWallEnd());
-        wallHole.setDockEnd(currentDockEnd.opposite());
-        wallHole.setDistanceFromWallEnd(distanceFromOtherWallEnd);
-        doUpdateWallHoleAnchors(wallHole, uiController, changeSet);
+        wallHole.setDockEnd(currentDockEnd.opposite(), changeTrace);
+        wallHole.setDistanceFromWallEnd(distanceFromOtherWallEnd, changeTrace);
+        doUpdateWallHoleAnchors(wallHole, uiController, changeTrace);
     }
 }

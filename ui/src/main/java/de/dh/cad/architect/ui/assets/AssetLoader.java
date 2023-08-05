@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -47,13 +47,13 @@ import de.dh.cad.architect.ui.assets.AssetManager.AssetCollection;
 import de.dh.cad.architect.ui.assets.AssetManager.AssetLocation;
 import de.dh.cad.architect.utils.vfs.IDirectoryLocator;
 import de.dh.cad.architect.utils.vfs.IResourceLocator;
+import de.dh.utils.Vector2D;
 import de.dh.utils.fx.BoxMesh;
-import de.dh.utils.fx.Vector2D;
-import de.dh.utils.fx.io.formats.obj.FxMeshBuilder;
-import de.dh.utils.fx.io.formats.obj.MtlLibraryIO;
-import de.dh.utils.fx.io.formats.obj.ObjData;
-import de.dh.utils.fx.io.formats.obj.ObjReader;
-import de.dh.utils.fx.io.formats.obj.RawMaterialData;
+import de.dh.utils.io.ObjData;
+import de.dh.utils.io.fx.FxMeshBuilder;
+import de.dh.utils.io.obj.MtlLibraryIO;
+import de.dh.utils.io.obj.ObjReader;
+import de.dh.utils.io.obj.RawMaterialData;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
@@ -194,7 +194,13 @@ public class AssetLoader {
         Collection<MeshView> meshes;
         if (model instanceof ObjModelResource) {
             try {
-                meshes = loadObjModelMeshes(assetLocation, (ObjModelResource) model, oOverriddenMaterials, true);
+                ObjData objData = loadObjModelData(assetLocation, (ObjModelResource) model);
+
+                Map<String, RawMaterialData> defaultMeshIdsToMaterials = objData.getMeshIdsToMaterials();
+                Map<String, RawMaterialData> meshIdsToMaterials = oOverriddenMaterials
+                                .map(om -> mergeMaterials(defaultMeshIdsToMaterials, om))
+                                .orElse(defaultMeshIdsToMaterials);
+                meshes = FxMeshBuilder.buildMeshViews(objData.getMeshes(), meshIdsToMaterials, true);
             } catch (IOException e) {
                 String msg = "Unable to load 3D model for support object descriptor <" + soDescriptor + ">";
                 throw new IOException(msg, e);
@@ -371,20 +377,13 @@ public class AssetLoader {
         mAssetManager.saveMaterialSetDescriptor(descriptor);
     }
 
-    protected Collection<MeshView> loadObjModelMeshes(AssetLocation assetLocation, ObjModelResource model, Optional<Map<String, RawMaterialData>> oOverriddenMaterials,
-        boolean failOnError) throws IOException {
+    protected ObjData loadObjModelData(AssetLocation assetLocation, ObjModelResource model) throws IOException {
         IResourceLocator resourceLocator = AssetManager.resolveResourcesModel(assetLocation, model);
-        return loadObjModelMeshes(resourceLocator, oOverriddenMaterials, failOnError);
+        return loadObjModelData(resourceLocator);
     }
 
-    public Collection<MeshView> loadObjModelMeshes(IResourceLocator resourceLocator, Optional<Map<String, RawMaterialData>> oOverriddenMaterials,
-        boolean failOnError) throws IOException {
-        ObjData objData = ObjReader.readObj(resourceLocator, mAssetManager.getDefaultMaterials());
-        Map<String, RawMaterialData> defaultMeshIdsToMaterials = objData.getMeshIdsToMaterials();
-        Map<String, RawMaterialData> meshIdsToMaterials = oOverriddenMaterials
-                        .map(om -> mergeMaterials(defaultMeshIdsToMaterials, om))
-                        .orElse(defaultMeshIdsToMaterials);
-        return FxMeshBuilder.buildMeshViews(objData.getMeshes(), meshIdsToMaterials, failOnError);
+    public ObjData loadObjModelData(IResourceLocator resourceLocator) throws IOException {
+        return ObjReader.readObj(resourceLocator, mAssetManager.getDefaultMaterials());
     }
 
     public Map<String, RawMaterialData> loadMaterialData(Map<String, AssetRefPath> materialRefs) throws IOException {

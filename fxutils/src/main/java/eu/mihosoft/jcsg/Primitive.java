@@ -26,7 +26,7 @@
  * The views and conclusions contained in the software and documentation are those of the
  * authors and should not be interpreted as representing official policies, either expressed
  * or implied, of Michael Hoffer <info@michaelhoffer.de>.
- */ 
+ */
 
 package eu.mihosoft.jcsg;
 
@@ -51,16 +51,13 @@ public interface Primitive {
 
     /**
      * Returns this primitive as {@link CSG}.
-     *
-     * @return this primitive as {@link CSG}
      */
     public default CSG toCSG() {
-        return CSG.fromPolygons(getProperties(),toPolygons());
+        return CSG.fromPolygons(getProperties(), toPolygons());
     }
-    
+
     /**
      * Returns the property storage of this primitive.
-     * @return the property storage of this primitive
      */
     public PropertyStorage getProperties();
 }

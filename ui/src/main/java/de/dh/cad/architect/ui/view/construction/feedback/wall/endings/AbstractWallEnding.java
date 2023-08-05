@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -21,10 +21,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import de.dh.cad.architect.model.ChangeSet;
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.Angle;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.coords.Position2D;
@@ -36,6 +37,7 @@ import de.dh.cad.architect.model.wallmodel.IWallAnchor;
 import de.dh.cad.architect.model.wallmodel.WallBevelType;
 import de.dh.cad.architect.model.wallmodel.WallDockEnd;
 import de.dh.cad.architect.ui.controller.UiController;
+import de.dh.cad.architect.ui.controller.UiController.DockConflictStrategy;
 import de.dh.cad.architect.ui.view.construction.feedback.wall.AncillaryWallAnchor;
 import de.dh.cad.architect.ui.view.construction.feedback.wall.PrincipalWallAncillaryWallsModel;
 
@@ -109,9 +111,9 @@ public abstract class AbstractWallEnding {
             endHandle.setPosition(pos);
         }
 
-        public void configureFinalWall(Wall wall, Anchor wallEndHandle, UiController uiController, ChangeSet changeSet) {
-            uiController.doSetWallBevelTypeOfAnchorDock(wallEndHandle, mWallBevel, changeSet);
-            mWallEnding.configureFinalWall(this, wall, wallEndHandle, uiController, changeSet);
+        public void configureFinalWall(Wall wall, Anchor wallEndHandle, UiController uiController, DockConflictStrategy dockConflictStrategy, List<IModelChange> changeTrace) {
+            uiController.doSetWallBevelTypeOfAnchorDock(wallEndHandle, mWallBevel, changeTrace);
+            mWallEnding.configureFinalWall(this, wall, wallEndHandle, uiController, dockConflictStrategy, changeTrace);
         }
     }
 
@@ -141,7 +143,7 @@ public abstract class AbstractWallEnding {
     public abstract boolean tryUpdateWallEnd(AbstractWallEndConfiguration wallEndConfiguration, Position2D wallStartPosition);
 
     protected abstract void configureFinalWall(AbstractWallEndConfiguration abstractWallEndConfiguration,
-        Wall wall, Anchor wallEndHandle, UiController uiController, ChangeSet changeSet);
+        Wall wall, Anchor wallEndHandle, UiController uiController, DockConflictStrategy dockConflictStrategy, List<IModelChange> changeTrace);
 
     protected static WallDirection getWallDirection(IWallAnchor startHandle) {
         // Calculate the direction of the wall

@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import de.dh.cad.architect.model.ChangeSet;
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.objects.Anchor;
 import de.dh.cad.architect.model.objects.BaseAnchoredObject;
 import de.dh.cad.architect.model.objects.BaseObject;
@@ -111,7 +111,7 @@ public class EditSelectedAnchorBehavior extends AbstractConstructionBehavior {
             actions.add(createPermanentDockBehaviorAction(selectedAnchor));
             actions.add(createSoftDockBehaviorAction(selectedAnchor));
 
-            if (selectedAnchor.getODockMaster().isPresent() || !selectedAnchor.getDockSlaves().isEmpty()) {
+            if (selectedAnchor.getDockMaster().isPresent() || !selectedAnchor.getDockSlaves().isEmpty()) {
                 actions.add(createUndockBehaviorAction(selectedAnchor));
             }
         }
@@ -142,10 +142,10 @@ public class EditSelectedAnchorBehavior extends AbstractConstructionBehavior {
 
             @Override
             public void execute() {
-                ChangeSet changeSet = new ChangeSet();
+                List<IModelChange> changeTrace = new ArrayList<>();
                 UiController uiController = getUiController();
-                FloorReconciler.removeFloorCorner(anchor, uiController, changeSet);
-                uiController.notifyChanges(changeSet);
+                FloorReconciler.removeFloorCorner(anchor, uiController, changeTrace);
+                uiController.notifyChange(changeTrace, Strings.FLOOR_REMOVE_CORNER_CHANGE);
             }
         };
     }
@@ -159,10 +159,10 @@ public class EditSelectedAnchorBehavior extends AbstractConstructionBehavior {
 
             @Override
             public void execute() {
-                ChangeSet changeSet = new ChangeSet();
+                List<IModelChange> changeTrace = new ArrayList<>();
                 UiController uiController = getUiController();
-                CeilingReconciler.removeCeilingCorner(anchor, uiController, changeSet);
-                uiController.notifyChanges(changeSet);
+                CeilingReconciler.removeCeilingCorner(anchor, uiController, changeTrace);
+                uiController.notifyChange(changeTrace, Strings.CEILING_REMOVE_CORNER_CHANGE);
             }
         };
     }

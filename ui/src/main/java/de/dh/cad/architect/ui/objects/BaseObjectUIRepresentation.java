@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.collections4.OrderedMap;
@@ -28,6 +29,7 @@ import org.apache.commons.collections4.map.LinkedMap;
 import org.apache.commons.lang3.StringUtils;
 
 import de.dh.cad.architect.model.assets.AssetRefPath;
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.objects.Anchor;
 import de.dh.cad.architect.model.objects.BaseAnchoredObject;
 import de.dh.cad.architect.model.objects.BaseObject;
@@ -70,8 +72,9 @@ public abstract class BaseObjectUIRepresentation extends AbstractObjectUIReprese
 
                     @Override
                     public void setValue(Object value) {
-                        bo.setName((String) value);
-                        uiController.notifyObjectsChanged(bo);
+                        List<IModelChange> changeTrace = new ArrayList<>();
+                        bo.setName((String) value, changeTrace);
+                        uiController.notifyChange(changeTrace, Strings.SET_OBJECT_NAME_CHANGE);
                     }
                 }
         ));

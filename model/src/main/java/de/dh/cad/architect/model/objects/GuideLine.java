@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -17,12 +17,17 @@
  *******************************************************************************/
 package de.dh.cad.architect.model.objects;
 
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-import de.dh.cad.architect.model.ChangeSet;
+import de.dh.cad.architect.model.changes.IModelChange;
+import de.dh.cad.architect.model.changes.ObjectModificationChange;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.jaxb.LengthJavaTypeAdapter;
+import de.dh.cad.architect.utils.IdGenerator;
 
 public class GuideLine extends BaseObject {
     public enum GuideLineDirection {
@@ -44,29 +49,66 @@ public class GuideLine extends BaseObject {
         // For JAXB
     }
 
-    public GuideLine(String id, String name, GuideLineDirection direction, Length position, IObjectsContainer ownerContainer, ChangeSet changeSet) {
+    public GuideLine(String id, String name, GuideLineDirection direction, Length position) {
         super(id, name);
-        ownerContainer.addOwnedChild_Internal(this, changeSet);
         mDirection = direction;
         mPosition = position;
     }
 
-    @XmlElement(name = "Direction")
+    public static GuideLine create(String name, GuideLineDirection direction, Length position, IObjectsContainer ownerContainer, List<IModelChange> changeTrace) {
+        GuideLine result = new GuideLine(IdGenerator.generateUniqueId(GuideLine.class), name, direction, position);
+        ownerContainer.addOwnedChild_Internal(result, changeTrace);
+        return result;
+    }
+
+    @XmlTransient
     public GuideLineDirection getDirection() {
         return mDirection;
     }
 
-    public void setDirection(GuideLineDirection value) {
+    public void setDirection(GuideLineDirection value, List<IModelChange> changeTrace) {
+        GuideLineDirection oldDirection = mDirection;
+        mDirection = value;
+        changeTrace.add(new ObjectModificationChange(this) {
+            @Override
+            public void undo(List<IModelChange> undoChangeTrace) {
+                setDirection(oldDirection, undoChangeTrace);
+            }
+        });
+    }
+
+    @XmlTransient
+    public Length getPosition() {
+        return mPosition;
+    }
+
+    public void setPosition(Length value, List<IModelChange> changeTrace) {
+        Length oldPosition = mPosition;
+        mPosition = value;
+        changeTrace.add(new ObjectModificationChange(this) {
+            @Override
+            public void undo(List<IModelChange> undoChangeTrace) {
+                setPosition(oldPosition, undoChangeTrace);
+            }
+        });
+    }
+
+    @XmlElement(name = "Direction")
+    public GuideLineDirection getDirection_JAXB() {
+        return mDirection;
+    }
+
+    public void setDirection_JAXB(GuideLineDirection value) {
         mDirection = value;
     }
 
     @XmlJavaTypeAdapter(LengthJavaTypeAdapter.class)
     @XmlElement(name = "Position")
-    public Length getPosition() {
+    public Length getPosition_JAXB() {
         return mPosition;
     }
 
-    public void setPosition(Length value) {
+    public void setPosition_JAXB(Length value) {
         mPosition = value;
     }
 }

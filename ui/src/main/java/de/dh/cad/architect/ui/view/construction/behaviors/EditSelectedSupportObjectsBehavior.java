@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -26,8 +26,8 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
 
-import de.dh.cad.architect.model.ChangeSet;
 import de.dh.cad.architect.model.Plan;
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.Dimensions2D;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.coords.Position2D;
@@ -56,24 +56,25 @@ import de.dh.cad.architect.ui.view.construction.feedback.supportobjects.EditSupp
  */
 public class EditSelectedSupportObjectsBehavior extends AbstractConstructionBehavior {
     protected Collection<SupportObjectConstructionRepresentation> mInstalledSupportObjectReprs = new ArrayList<>();
-    protected IMoveHandler mMoveHandler = delta -> {
+    protected IMoveHandler mMoveHandler = (delta, firstMoveEvent) -> {
         UiController uiController = getUiController();
-        ChangeSet changeSet = new ChangeSet();
+        List<IModelChange> changeTrace = new ArrayList<>();
+        // TODO: Create own mergeable model change for moving this collection of support objects,
+        // that change must override the here generated changes, like it is done in class UiController#MergeableSetAnchorDockPositionChange
         for (SupportObjectConstructionRepresentation repr : mInstalledSupportObjectReprs) {
             SupportObject so = repr.getSupportObject();
             Anchor handleAnchor = so.getHandleAnchor();
             Position2D targetPosition = handleAnchor.getPosition().projectionXY().plus(delta);
-            uiController.doSetHandleAnchorPosition(handleAnchor, targetPosition, changeSet);
+            uiController.doSetHandleAnchorPosition(handleAnchor, targetPosition, changeTrace);
         }
-        uiController.notifyChanges(changeSet);
+        uiController.notifyChange(changeTrace, Strings.SUPPORT_OBJECT_MOVE_CHANGE, !firstMoveEvent);
     };
 
     protected EditSupportObjectsVisualFeedbackManager mFeedbackManager = null; // Lives from install() to uninstall()
-    protected final SupportObjectInfoControl mSOInfo;
+    protected final SupportObjectInfoControl mSOInfo = new SupportObjectInfoControl();
 
     public EditSelectedSupportObjectsBehavior(AbstractUiMode<Abstract2DRepresentation, Abstract2DAncillaryObject> parentMode) {
         super(parentMode);
-        mSOInfo = new SupportObjectInfoControl();
         setUIElementFilter(new SupportObjectsUIElementFilter());
     }
 
@@ -236,44 +237,40 @@ public class EditSelectedSupportObjectsBehavior extends AbstractConstructionBeha
         Plan plan = uiController.getPlan();
         mFeedbackManager = new EditSupportObjectsVisualFeedbackManager((ConstructionView) view,
             newLocationData -> {
-                ChangeSet changeSet = new ChangeSet();
+                List<IModelChange> changeTrace = new ArrayList<>();
                 Collection<SupportObject> positionChangedObjects = new ArrayList<>();
                 for (SupportObjectLocationData locationData : newLocationData) {
                     SupportObject supportObject = (SupportObject) plan.getObjectById(locationData.getModelId());
                     Position2D newCenterPoint = locationData.getCenterPoint();
                     if (!newCenterPoint.equals(supportObject.getCenterPoint())) {
                         Anchor handleAnchor = supportObject.getHandleAnchor();
-                        handleAnchor.setPosition(handleAnchor.getPosition().withXY(newCenterPoint));
+                        handleAnchor.setPosition(handleAnchor.getPosition().withXY(newCenterPoint), changeTrace);
                         positionChangedObjects.add(supportObject);
                     }
 
                     Dimensions2D newSize = locationData.getSize();
                     if (!newSize.equals(supportObject.getSize())) {
-                        supportObject.setSize(newSize);
-                        changeSet.changed(supportObject);
+                        supportObject.setSize(newSize, changeTrace);
                     }
 
                     float newRotation = locationData.getRotationDeg();
                     if (newRotation != supportObject.getRotationDeg()) {
-                        supportObject.setRotationDeg(newRotation);
-                        changeSet.changed(supportObject);
+                        supportObject.setRotationDeg(newRotation, changeTrace);
                     }
 
                     Length newHeight = locationData.getHeight();
                     if (!newHeight.equals(supportObject.getHeight())) {
-                        supportObject.setHeight(newHeight);
-                        changeSet.changed(supportObject);
+                        supportObject.setHeight(newHeight, changeTrace);
                     }
 
                     Length newElevation = locationData.getElevation();
                     if (!newElevation.equals(supportObject.getElevation())) {
-                        supportObject.setElevation(newElevation);
-                        changeSet.changed(supportObject);
+                        supportObject.setElevation(newElevation, changeTrace);
                     }
                 }
                 ObjectReconcileOperation oro = new ObjectReconcileOperation("Change support objects", positionChangedObjects);
-                uiController.doReconcileObjects(oro, changeSet);
-                uiController.notifyChanges(changeSet);
+                uiController.doReconcileObjects(oro, changeTrace);
+                uiController.notifyChange(changeTrace, Strings.SUPPORT_OBJECT_SET_PROPERTY_CHANGE, true);
             });
         mFeedbackManager.install();
         setDefaultUserHint();

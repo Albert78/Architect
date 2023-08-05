@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -23,9 +23,11 @@ import java.util.stream.Collectors;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-import de.dh.cad.architect.model.ChangeSet;
+import de.dh.cad.architect.model.changes.IModelChange;
+import de.dh.cad.architect.model.changes.ObjectModificationChange;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.model.jaxb.LengthJavaTypeAdapter;
@@ -53,17 +55,18 @@ public class Floor extends BaseLimitedPlane {
     }
 
     @Override
-    public void initializeSurfaces() {
-        clearSurfaces();
-        createSurface(SURFACE_TYPE);
+    protected void initializeSurfaces(List<IModelChange> changeTrace) {
+        clearSurfaces(changeTrace);
+        createSurface(SURFACE_TYPE, changeTrace);
     }
 
-    public static Floor create(int level, Length height, String name, List<Position2D> anchorPositions, IObjectsContainer ownerContainer, ChangeSet changeSet) {
+    public static Floor create(int level, Length height, String name, List<Position2D> anchorPositions, IObjectsContainer ownerContainer, List<IModelChange> changeTrace) {
         Floor result = new Floor(IdGenerator.generateUniqueId(Floor.class), level, height, name);
-        ownerContainer.addOwnedChild_Internal(result, changeSet);
+        ownerContainer.addOwnedChild_Internal(result, changeTrace);
         for (Position2D pos : anchorPositions) {
-            result.createEdgeAnchor(null, pos, changeSet);
+            result.createEdgeAnchor(null, pos, changeTrace);
         }
+        result.initializeSurfaces(changeTrace);
         return result;
     }
 
@@ -101,39 +104,58 @@ public class Floor extends BaseLimitedPlane {
         return Math.abs(a / 2);
     }
 
-    @XmlAttribute(name = "level")
+    @XmlTransient
     public int getLevel() {
         return mLevel;
     }
 
-    public void setLevel(int value) {
+    public void setLevel(int value, List<IModelChange> changeTrace) {
+        int oldLevel = mLevel;
         mLevel = value;
+        changeTrace.add(new ObjectModificationChange(this) {
+            @Override
+            public void undo(List<IModelChange> undoChangeTrace) {
+                setLevel(oldLevel, undoChangeTrace);
+            }
+        });
     }
 
     /**
      * Gets the height of this floor above the {@link #getLevel() level}'s height.
      */
-    @XmlElement(name = "Height")
-    @XmlJavaTypeAdapter(LengthJavaTypeAdapter.class)
+    @XmlTransient
     public Length getHeight() {
         return mHeight;
     }
 
-    public void setHeight(Length value) {
+    public void setHeight(Length value, List<IModelChange> changeTrace) {
+        Length oldHeight = mHeight;
         mHeight = value;
+        changeTrace.add(new ObjectModificationChange(this) {
+            @Override
+            public void undo(List<IModelChange> undoChangeTrace) {
+                setHeight(oldHeight, undoChangeTrace);
+            }
+        });
     }
 
     /**
      * Gets the thickness of this floor.
      */
-    @XmlElement(name = "Thickness")
-    @XmlJavaTypeAdapter(LengthJavaTypeAdapter.class)
+    @XmlTransient
     public Length getThickness() {
         return mThickness;
     }
 
-    public void setThickness(Length value) {
+    public void setThickness(Length value, List<IModelChange> changeTrace) {
+        Length oldThickness = mThickness;
         mThickness = value;
+        changeTrace.add(new ObjectModificationChange(this) {
+            @Override
+            public void undo(List<IModelChange> undoChangeTrace) {
+                setThickness(oldThickness, undoChangeTrace);
+            }
+        });
     }
 
     @Override
@@ -149,5 +171,34 @@ public class Floor extends BaseLimitedPlane {
     public String getAreaString() {
         double area = calculateAreaM2();
         return MessageFormat.format("{0,number,#.##} m²", area);
+    }
+
+    @XmlAttribute(name = "level")
+    public int getLevel_JAXB() {
+        return mLevel;
+    }
+
+    public void setLevel_JAXB(int value) {
+        mLevel = value;
+    }
+
+    @XmlElement(name = "Height")
+    @XmlJavaTypeAdapter(LengthJavaTypeAdapter.class)
+    public Length getHeight_JAXB() {
+        return mHeight;
+    }
+
+    public void setHeight_JAXB(Length value) {
+        mHeight = value;
+    }
+
+    @XmlElement(name = "Thickness")
+    @XmlJavaTypeAdapter(LengthJavaTypeAdapter.class)
+    public Length getThickness_JAXB() {
+        return mThickness;
+    }
+
+    public void setThickness(Length value) {
+        mThickness = value;
     }
 }

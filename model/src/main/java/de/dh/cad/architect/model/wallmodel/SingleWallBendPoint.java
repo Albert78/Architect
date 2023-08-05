@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ public class SingleWallBendPoint {
                 dockedWallAnchors.add(dockedAnchor);
             }
         }
-        if (dockedWallAnchors.size() != 2) {
+        if (dockedWallAnchors.size() != 2) { // Given anchor is no bend point anchor connecting two walls or more than 2 walls are docked
             return Optional.empty();
         }
         return Optional.of(new SingleWallBendPoint(dockedWallAnchors.get(0), dockedWallAnchors.get(1)));

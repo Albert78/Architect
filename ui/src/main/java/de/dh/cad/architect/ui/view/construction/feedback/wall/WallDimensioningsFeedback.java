@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -32,10 +32,10 @@ import de.dh.cad.architect.model.wallmodel.WallOutlineConnection;
 import de.dh.cad.architect.model.wallmodel.WallSurface;
 import de.dh.cad.architect.ui.objects.DimensioningAncillary;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
-import de.dh.cad.architect.ui.utils.MathUtils;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
 import de.dh.cad.architect.ui.view.construction.feedback.IVisualObjectFeedback;
 import de.dh.cad.architect.utils.IdGenerator;
+import de.dh.utils.fx.MathUtils;
 
 public class WallDimensioningsFeedback implements IVisualObjectFeedback<IWall> {
     protected static final double SIDE_DIMENSIONING_LABEL_DISTANCE = 30;

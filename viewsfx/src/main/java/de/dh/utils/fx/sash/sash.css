@@ -1,0 +1,13 @@
+.sash > .split-pane-divider {
+    -fx-padding: 0 0.25em 0 0.25em; /* 0 3 0 3 */
+}
+/* horizontal: the two nodes are placed to the left/right of each other. */
+.horizontal-split-pane-divider {
+   -fx-background-color: -fx-box-border, -fx-inner-border-horizontal;
+   -fx-background-insets: 0, 0 1 0 1;
+}
+/* vertical: the two nodes are placed on top of each other. */
+.vertical-split-pane-divider {
+   -fx-background-color: -fx-box-border, -fx-inner-border;
+   -fx-background-insets: 0, 1 0 1 0;
+}

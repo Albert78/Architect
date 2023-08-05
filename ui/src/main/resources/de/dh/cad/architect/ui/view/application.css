@@ -1,9 +1,13 @@
 .copyable-label, .copyable-label:focused {
-    -fx-background-color: transparent ;
+    -fx-background-color: transparent;
     -fx-background-insets: 0px ;
 }
 
-.focusable-view:focused {
+.focusable-view {
 	-fx-border-width: 2;
+	-fx-border-color: transparent;
+}
+
+.focusable-view:focused {
 	-fx-border-color: #0093ff;
 }

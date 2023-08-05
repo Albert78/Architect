@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -17,6 +17,9 @@
  *******************************************************************************/
 package de.dh.cad.architect.model.wallmodel;
 
+import java.util.List;
+
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.Length;
 
 /**
@@ -40,9 +43,9 @@ public interface IWall extends Comparable<IWall> {
     }
 
     WallBevelType getWallBevelA();
-    void setWallBevelA(WallBevelType value);
+    void setWallBevelA(WallBevelType value, List<IModelChange> changeTrace);
     WallBevelType getWallBevelB();
-    void setWallBevelB(WallBevelType value);
+    void setWallBevelB(WallBevelType value, List<IModelChange> changeTrace);
 
     default WallBevelType getAnchorWallBevelType(WallDockEnd dockEnd) {
         if (dockEnd == WallDockEnd.A) {

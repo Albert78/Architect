@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -202,7 +202,7 @@ public class RootTreeItem extends TreeItem<ITreeItemData> {
             return res;
         }
 
-        // Item doesn't exist yet, create item under all of its position in the tree EXCLUSIVE grouping tree.
+        // Item doesn't exist yet, create item under all of its positions in the tree EXCEPT grouping tree.
         // The grouping tree is managed separately by method checkGroups which is called with the complete collection of
         // changed/added/removed objects to avoid redundant checks
 
@@ -212,9 +212,11 @@ public class RootTreeItem extends TreeItem<ITreeItemData> {
             // Add under owner
             BaseAnchoredObject owner = a.getAnchorOwner();
             String ownerId = owner.getId();
+            // Object addition changes arrive in an undefined order - thus we can get additions of anchors before we
+            // are called for their owner object. So we try to create the owner object, if it is not present yet.
+            getOrCreateTreeItems(owner);
             Optional<TreeItem<ITreeItemData>> oOwnerItem = getMainTreeItemByObjectId(ownerId);
             if (!oOwnerItem.isPresent()) {
-                result.addAll(getOrCreateTreeItems(owner));
                 oOwnerItem = getMainTreeItemByObjectId(ownerId);
             }
             oOwnerItem.ifPresent(ownerItem -> {
@@ -236,6 +238,9 @@ public class RootTreeItem extends TreeItem<ITreeItemData> {
             mWallsItem.getChildren().add(item);
         } else if (obj instanceof WallHole hole) {
             Wall wall = hole.getWall();
+            // Object addition changes arrive in an undefined order - thus we could potentially get additions of wall holes
+            // before we are called for their owner wall. So we try to create the owner wall, if it is not present yet.
+            getOrCreateTreeItems(wall);
             getMainTreeItemByObjectId(wall.getId()).ifPresent(wallItem -> {
                 TreeItem<ITreeItemData> item = new TreeItem<>(new BaseObjectTreeItemData(obj, false));
                 result.add(item);

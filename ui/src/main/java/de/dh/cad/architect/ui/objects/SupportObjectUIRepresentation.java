@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -20,8 +20,10 @@ package de.dh.cad.architect.ui.objects;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.Dimensions2D;
 import de.dh.cad.architect.model.coords.IPosition;
 import de.dh.cad.architect.model.coords.Length;
@@ -37,7 +39,7 @@ import de.dh.cad.architect.ui.view.construction.Abstract2DView;
 import de.dh.cad.architect.ui.view.threed.Abstract3DView;
 
 public class SupportObjectUIRepresentation extends BaseObjectUIRepresentation {
-    public static final String KEY_PROPERTY_DESCRIPTOR = "descriptor";
+    public static final String KEY_PROPERTY_MODEL = "model";
     public static final String KEY_PROPERTY_POSITION = "position";
     public static final String KEY_PROPERTY_SIZE = "size";
     public static final String KEY_PROPERTY_ROTATION = "rotation";
@@ -60,7 +62,7 @@ public class SupportObjectUIRepresentation extends BaseObjectUIRepresentation {
         SupportObject supportObject = (SupportObject) bo;
         Collection<UiProperty<?>> properties = result.computeIfAbsent(getTypeName(Cardinality.Singular), cat -> new ArrayList<>());
         properties.addAll(Arrays.<UiProperty<?>>asList(
-            new ConstantUiProperty<>(bo, KEY_PROPERTY_DESCRIPTOR, Strings.SUPPORT_OBJECT_PROPERTIES_DESCRIPTOR, PropertyType.String, supportObject.getSupportObjectDescriptorRef()),
+            new ConstantUiProperty<>(bo, KEY_PROPERTY_MODEL, Strings.SUPPORT_OBJECT_PROPERTIES_MODEL, PropertyType.String, supportObject.getSupportObjectDescriptorRef()),
             new UiProperty<IPosition>(bo, KEY_PROPERTY_POSITION, Strings.SUPPORT_OBJECT_PROPERTIES_POSITION, PropertyType.IPosition, true) {
                 @Override
                 public IPosition getValue() {
@@ -70,7 +72,7 @@ public class SupportObjectUIRepresentation extends BaseObjectUIRepresentation {
                 @Override
                 public void setValue(Object value) {
                     IPosition position = (IPosition) value;
-                    uiController.setHandleAnchorPosition(supportObject.getHandleAnchor(), position.projectionXY());
+                    uiController.setHandleAnchorPosition(supportObject.getHandleAnchor(), position.projectionXY(), false);
                 }
             },
             new UiProperty<Dimensions2D>(bo, KEY_PROPERTY_SIZE, Strings.SUPPORT_OBJECT_PROPERTIES_SIZE, PropertyType.Dimensions2DXY, true) {
@@ -81,9 +83,10 @@ public class SupportObjectUIRepresentation extends BaseObjectUIRepresentation {
 
                 @Override
                 public void setValue(Object value) {
+                    List<IModelChange> changeTrace = new ArrayList<>();
                     Dimensions2D size = (Dimensions2D) value;
-                    supportObject.setSize(size);
-                    uiController.notifyObjectsChanged(supportObject);
+                    supportObject.setSize(size, changeTrace);
+                    uiController.notifyChange(changeTrace, Strings.SUPPORT_OBJECT_SET_PROPERTY_CHANGE);
                 }
             },
             new UiProperty<Integer>(bo, KEY_PROPERTY_ROTATION, Strings.SUPPORT_OBJECT_PROPERTIES_ROTATION_DEGREES, PropertyType.Integer, true) {
@@ -94,9 +97,10 @@ public class SupportObjectUIRepresentation extends BaseObjectUIRepresentation {
 
                 @Override
                 public void setValue(Object value) {
+                    List<IModelChange> changeTrace = new ArrayList<>();
                     Integer rotation = (Integer) value;
-                    supportObject.setRotationDeg(rotation);
-                    uiController.notifyObjectsChanged(supportObject);
+                    supportObject.setRotationDeg(rotation, changeTrace);
+                    uiController.notifyChange(changeTrace, Strings.SUPPORT_OBJECT_SET_PROPERTY_CHANGE);
                 }
             },
             new UiProperty<Length>(bo, KEY_PROPERTY_HEIGHT, Strings.SUPPORT_OBJECT_PROPERTIES_HEIGHT, PropertyType.Length, true) {
@@ -107,9 +111,10 @@ public class SupportObjectUIRepresentation extends BaseObjectUIRepresentation {
 
                 @Override
                 public void setValue(Object value) {
+                    List<IModelChange> changeTrace = new ArrayList<>();
                     Length height = (Length) value;
-                    supportObject.setHeight(height);
-                    uiController.notifyObjectsChanged(supportObject);
+                    supportObject.setHeight(height, changeTrace);
+                    uiController.notifyChange(changeTrace, Strings.SUPPORT_OBJECT_SET_PROPERTY_CHANGE);
                 }
             },
             new UiProperty<Length>(bo, KEY_PROPERTY_ELEVATION, Strings.SUPPORT_OBJECT_PROPERTIES_ELEVATION, PropertyType.Length, true) {
@@ -120,9 +125,10 @@ public class SupportObjectUIRepresentation extends BaseObjectUIRepresentation {
 
                 @Override
                 public void setValue(Object value) {
+                    List<IModelChange> changeTrace = new ArrayList<>();
                     Length elevation = (Length) value;
-                    supportObject.setElevation(elevation);
-                    uiController.notifyObjectsChanged(supportObject);
+                    supportObject.setElevation(elevation, changeTrace);
+                    uiController.notifyChange(changeTrace, Strings.SUPPORT_OBJECT_SET_PROPERTY_CHANGE);
                 }
             }
         ));

@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@ package de.dh.cad.architect.ui.objects;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -41,14 +40,13 @@ import de.dh.cad.architect.model.wallmodel.WallOutlineCorner;
 import de.dh.cad.architect.model.wallmodel.WallSurface;
 import de.dh.cad.architect.ui.assets.AssetLoader;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
-import de.dh.cad.architect.ui.utils.SurfaceAwareCSG;
-import de.dh.cad.architect.ui.utils.SurfaceAwareCSG.ExtrusionSurfaceDataProvider;
-import de.dh.cad.architect.ui.utils.SurfaceAwareCSG.ShapeSurfaceData;
-import de.dh.cad.architect.ui.utils.SurfaceAwareCSG.SurfacePart;
-import de.dh.cad.architect.ui.utils.TextureProjection;
 import de.dh.cad.architect.ui.view.threed.Abstract3DView;
 import de.dh.cad.architect.ui.view.threed.ThreeDView;
-import de.dh.utils.fx.Vector2D;
+import de.dh.utils.Vector2D;
+import de.dh.utils.csg.SurfaceAwareCSG;
+import de.dh.utils.csg.SurfaceAwareCSG.ExtrusionSurfaceDataProvider;
+import de.dh.utils.io.MeshData;
+import de.dh.utils.io.fx.FxMeshBuilder;
 import eu.mihosoft.vvecmath.Vector3d;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -66,6 +64,8 @@ public class Wall3DRepresentation extends Abstract3DRepresentation {
             String surfaceTypeId = surfaceConfig.getSurfaceTypeId();
             SurfaceData sd = new SurfaceData(surfaceTypeId);
             mSurfaces.put(surfaceTypeId, sd);
+            // 3D wall model consists of multiple MeshViews, one for each surface type. This allows us to assign
+            // different materials and to match mouse clicks to a surface.
             MeshView meshView = sd.getMeshView();
             add(meshView);
             markSurfaceNode(meshView, new ObjectSurface(this, surfaceTypeId) {
@@ -76,8 +76,7 @@ public class Wall3DRepresentation extends Abstract3DRepresentation {
 
                 @Override
                 public boolean assignMaterial(AssetRefPath materialRef) {
-                    surfaceConfig.setMaterialAssignment(materialRef);
-                    mParentView.getUiController().notifyObjectsChanged(wall);
+                    setObjectSurface(wall, mSurfaceTypeId, materialRef);
                     return true;
                 }
             });
@@ -361,28 +360,21 @@ public class Wall3DRepresentation extends Abstract3DRepresentation {
                 csg = csg.difference(holeCSG);
             }
 
-            Map<WallSurface, ShapeSurfaceData<WallSurface>> meshes = csg.createJavaFXTrinagleMeshes();
+            Map<WallSurface, MeshData> meshes = csg.createMeshes(Optional.empty());
             for (SurfaceData surfaceData : mSurfaces.values()) {
                 // One surface of the wall, e.g. A or One
                 String surfaceTypeId = surfaceData.getSurfaceTypeId();
                 WallSurface wallSurface = WallSurface.ofWallSurfaceType(surfaceTypeId);
-                ShapeSurfaceData<WallSurface> shapeSurfaceData = meshes.computeIfAbsent(wallSurface, s -> ShapeSurfaceData.empty());
-                MeshView meshView = surfaceData.getMeshView();
-                // The surface can potentially consist of several parts, e.g. a wall side might consist of the main part an a part of the bevel.
-                Iterator<SurfacePart<WallSurface>> si = shapeSurfaceData.getSurfaceParts().iterator();
-                if (!si.hasNext()) { // E.g. wall contains no embrasures
-                    meshView.setMesh(null);
+                MeshData meshData = meshes.get(wallSurface);
+                if (meshData == null) { // E.g. wall contains no embrasures
                     continue;
                 }
-                SurfacePart<WallSurface> firstSurfacePart = si.next();
-                TextureProjection firstTextureProjection = firstSurfacePart.getTextureProjection();
-                // The CSG builder tells us how big the "flattened" texture range for this surface is in the texture projection range:
-                Vector2D surfaceSize = firstTextureProjection.getRangeTxy();
-                // The CSG builder has generated the mesh in a way that the texture coordinates of the surface parts map to their part of the overall surface texture.
+                MeshView meshView = surfaceData.getMeshView();
+                // The CSG builder has generated the mesh in a way that the texture coordinates of the surface parts map
+                // to their corresponding part of the overall surface texture, as if the texture would be a wallpaper.
                 // E.g. if wall side 1 extends over two surface parts, the main side 1 surface and the corner bevel apex, the algorithm places the texture coords
                 // to cover both surface parts, i.e. texture coords (0; 0) at the beginning of part 1 and texture coords (1; 1) at the end of part 2.
-                surfaceData.setSurfaceSize(surfaceSize);
-                Mesh mesh = shapeSurfaceData.getMesh();
+                Mesh mesh = FxMeshBuilder.buildMesh(meshData);
                 meshView.setMesh(mesh);
             }
         } else {

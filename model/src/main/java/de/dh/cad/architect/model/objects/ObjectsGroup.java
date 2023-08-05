@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@ package de.dh.cad.architect.model.objects;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -30,7 +31,8 @@ import javax.xml.bind.annotation.XmlTransient;
 
 import org.apache.commons.lang3.StringUtils;
 
-import de.dh.cad.architect.model.ChangeSet;
+import de.dh.cad.architect.model.changes.IModelChange;
+import de.dh.cad.architect.model.changes.ObjectModificationChange;
 import de.dh.cad.architect.utils.jaxb.IDeserializationHandler;
 
 public class ObjectsGroup extends BaseObject implements IDeserializationHandler {
@@ -40,9 +42,9 @@ public class ObjectsGroup extends BaseObject implements IDeserializationHandler 
         // For JAXB
     }
 
-    public ObjectsGroup(String id, String name, IObjectsContainer ownerContainer, ChangeSet changeSet) {
+    public ObjectsGroup(String id, String name, IObjectsContainer ownerContainer, List<IModelChange> changeTrace) {
         super(id, name);
-        ownerContainer.addOwnedChild_Internal(this, changeSet);
+        ownerContainer.addOwnedChild_Internal(this, changeTrace);
     }
 
     @Override
@@ -62,30 +64,38 @@ public class ObjectsGroup extends BaseObject implements IDeserializationHandler 
     /**
      * Adds the given object to this group.
      */
-    public void addObject(BaseObject bo, ChangeSet changeSet) {
-        changeSet.changed(this);
-        changeSet.changed(bo);
+    public void addObject(BaseObject bo, List<IModelChange> changeTrace) {
         mGroupedObjects.add(bo);
         bo.addToGroup_Internal(this);
+        changeTrace.add(new ObjectModificationChange(this, bo) {
+            @Override
+            public void undo(List<IModelChange> undoChangeTrace) {
+                removeObject(bo, undoChangeTrace);
+            }
+        });
     }
 
-    public void removeObject(BaseObject bo, ChangeSet changeSet) {
-        changeSet.changed(this);
-        changeSet.changed(bo);
+    public void removeObject(BaseObject bo, List<IModelChange> changeTrace) {
         mGroupedObjects.remove(bo);
         bo.removeFromGroup_Internal(this);
+        changeTrace.add(new ObjectModificationChange(this, bo) {
+            @Override
+            public void undo(List<IModelChange> undoChangeTrace) {
+                addObject(bo, undoChangeTrace);
+            }
+        });
     }
 
-    public void removeAllGroupedObjects(ChangeSet changeSet) {
+    public void removeAllGroupedObjects(List<IModelChange> changeTrace) {
         for (BaseObject object : new ArrayList<>(mGroupedObjects)) {
-            removeObject(object, changeSet);
+            removeObject(object, changeTrace);
         }
     }
 
     @Override
-    public Collection<? extends BaseObject> delete(ChangeSet changeSet) {
-        removeAllGroupedObjects(changeSet);
-        return super.delete(changeSet);
+    public Collection<? extends BaseObject> delete(List<IModelChange> changeTrace) {
+        removeAllGroupedObjects(changeTrace);
+        return super.delete(changeTrace);
     }
 
     @XmlTransient

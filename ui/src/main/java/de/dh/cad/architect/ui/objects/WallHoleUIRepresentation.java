@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -20,13 +20,13 @@ package de.dh.cad.architect.ui.objects;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
-import de.dh.cad.architect.model.ChangeSet;
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.Dimensions2D;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.objects.BaseObject;
-import de.dh.cad.architect.model.objects.Wall;
 import de.dh.cad.architect.model.objects.WallHole;
 import de.dh.cad.architect.model.wallmodel.WallDockEnd;
 import de.dh.cad.architect.ui.Strings;
@@ -55,7 +55,6 @@ public class WallHoleUIRepresentation extends BaseObjectUIRepresentation {
     protected void addProperties(Map<String, Collection<UiProperty<?>>> result, BaseObject bo, UiController uiController) {
         super.addProperties(result, bo, uiController);
         WallHole wallHole = (WallHole) bo;
-        Wall wall = wallHole.getWall();
         Collection<UiProperty<?>> properties = result.computeIfAbsent(getTypeName(Cardinality.Singular), cat -> new ArrayList<>());
         properties.addAll(Arrays.<UiProperty<?>>asList(
             new UiProperty<Dimensions2D>(bo, KEY_PROPERTY_DIMENSIONS, Strings.WALL_HOLE_PROPERTIES_DIMENSIONS, PropertyType.Dimensions2DXZ, true) {
@@ -68,8 +67,10 @@ public class WallHoleUIRepresentation extends BaseObjectUIRepresentation {
                 public void setValue(Object value) {
                     Dimensions2D dimensions = (Dimensions2D) value;
                     // TODO: Limit dimensions by owner wall extends
-                    wallHole.setDimensions(dimensions);
-                    WallHoleReconciler.updateWallHoleAnchors(wallHole, uiController);
+                    List<IModelChange> changeTrace = new ArrayList<>();
+                    wallHole.setDimensions(dimensions, changeTrace);
+                    WallHoleReconciler.doUpdateWallHoleAnchors(wallHole, uiController, changeTrace);
+                    uiController.notifyChange(changeTrace, Strings.WALL_HOLE_SET_PROPERTY_CHANGE);
                 }
             },
             new UiProperty<Length>(bo, KEY_PROPERTY_PARAPET_HEIGHT, Strings.WALL_HOLE_PROPERTIES_PARAPET_HEIGHT, PropertyType.Length, true) {
@@ -81,12 +82,10 @@ public class WallHoleUIRepresentation extends BaseObjectUIRepresentation {
                 @Override
                 public void setValue(Object value) {
                     Length parapetHeight = (Length) value;
-                    wallHole.setParapetHeight(parapetHeight);
-                    WallHoleReconciler.updateWallHoleAnchors(wallHole, uiController);
-                    ChangeSet changeSet = new ChangeSet();
-                    changeSet.changed(wallHole);
-                    changeSet.changed(wall);
-                    uiController.notifyChanges(changeSet);
+                    List<IModelChange> changeTrace = new ArrayList<>();
+                    wallHole.setParapetHeight(parapetHeight, changeTrace);
+                    WallHoleReconciler.doUpdateWallHoleAnchors(wallHole, uiController, changeTrace);
+                    uiController.notifyChange(changeTrace, Strings.WALL_HOLE_SET_PROPERTY_CHANGE);
                 }
             },
             new UiProperty<Length>(bo, KEY_PROPERTY_DISTANCE_FROM_WALL_END, Strings.WALL_HOLE_PROPERTIES_DISTANCE_FROM_WALL_END, PropertyType.Length, true) {
@@ -98,12 +97,10 @@ public class WallHoleUIRepresentation extends BaseObjectUIRepresentation {
                 @Override
                 public void setValue(Object value) {
                     Length distanceFromWallEnd = (Length) value;
-                    wallHole.setDistanceFromWallEnd(distanceFromWallEnd);
-                    WallHoleReconciler.updateWallHoleAnchors(wallHole, uiController);
-                    ChangeSet changeSet = new ChangeSet();
-                    changeSet.changed(wallHole);
-                    changeSet.changed(wall);
-                    uiController.notifyChanges(changeSet);
+                    List<IModelChange> changeTrace = new ArrayList<>();
+                    wallHole.setDistanceFromWallEnd(distanceFromWallEnd, changeTrace);
+                    WallHoleReconciler.doUpdateWallHoleAnchors(wallHole, uiController, changeTrace);
+                    uiController.notifyChange(changeTrace, Strings.WALL_HOLE_SET_PROPERTY_CHANGE);
                 }
             },
             new UiProperty<WallDockEnd>(bo, KEY_PROPERTY_WALL_DOCK_END, Strings.WALL_HOLE_PROPERTIES_DOCK_END, PropertyType.WallDockEnd, true) {
@@ -118,11 +115,9 @@ public class WallHoleUIRepresentation extends BaseObjectUIRepresentation {
                     if (wallHole.getDockEnd().equals(dockEnd)) {
                         return;
                     }
-                    WallHoleReconciler.swapWallHoleDockEnd(wallHole, uiController);
-                    ChangeSet changeSet = new ChangeSet();
-                    changeSet.changed(wallHole);
-                    changeSet.changed(wall);
-                    uiController.notifyChanges(changeSet);
+                    List<IModelChange> changeTrace = new ArrayList<>();
+                    WallHoleReconciler.doSwapWallHoleDockEnd(wallHole, uiController, changeTrace);
+                    uiController.notifyChange(changeTrace, Strings.WALL_HOLE_SET_PROPERTY_CHANGE);
                 }
             }
         ));

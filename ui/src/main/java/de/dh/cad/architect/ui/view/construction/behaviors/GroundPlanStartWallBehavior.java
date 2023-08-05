@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -35,7 +35,6 @@ import de.dh.cad.architect.ui.view.AbstractPlanView;
 import de.dh.cad.architect.ui.view.AbstractUiMode;
 import de.dh.cad.architect.ui.view.InteractionsControl;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
-import de.dh.cad.architect.ui.view.construction.GroundPlanUIElementFilter;
 import de.dh.cad.architect.ui.view.construction.feedback.wall.ChangeWallsVisualFeedbackManager;
 import de.dh.cad.architect.ui.view.construction.feedback.wall.PrincipalWallAncillaryWallsModel;
 import de.dh.cad.architect.ui.view.construction.feedback.wall.endings.AbstractWallEnding;
@@ -104,11 +103,6 @@ public class GroundPlanStartWallBehavior extends AbstractGroundPlanCreateWallBeh
     protected void initializeActions() {
         // Cancel add wall
         mActionsList.add(createCancelBehaviorAction(Strings.ACTION_GROUND_PLAN_CANCEL_CREATE_WALL_TITLE));
-    }
-
-    @Override
-    protected void initializeUiElementFilter() {
-        setUIElementFilter(new GroundPlanUIElementFilter());
     }
 
     @Override

@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -18,9 +18,10 @@
 package de.dh.cad.architect.ui.objects;
 
 import java.io.IOException;
+import java.util.List;
 
-import de.dh.cad.architect.model.ChangeSet;
 import de.dh.cad.architect.model.assets.SupportObjectDescriptor;
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.Dimensions2D;
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.model.coords.Vector2D;
@@ -41,7 +42,7 @@ public abstract class SupportObjectTemplate {
         return 0;
     }
 
-    public abstract SupportObject createSupportObject(Position2D pos, UiController uiController) throws IOException;
+    public abstract SupportObject createSupportObject(Position2D pos, UiController uiController, List<IModelChange> changeTrace) throws IOException;
 
     public static SupportObjectTemplate createNew(SupportObjectDescriptor descriptor) {
         return new SupportObjectTemplate() {
@@ -56,8 +57,8 @@ public abstract class SupportObjectTemplate {
             }
 
             @Override
-            public SupportObject createSupportObject(Position2D pos, UiController uiController) throws IOException {
-                return uiController.createNewSupportObject(descriptor, pos.plus(getPositionOffset()));
+            public SupportObject createSupportObject(Position2D pos, UiController uiController, List<IModelChange> changeTrace) throws IOException {
+                return uiController.doCreateNewSupportObject(descriptor, pos.plus(getPositionOffset()), changeTrace);
             }
         };
     }
@@ -91,19 +92,17 @@ public abstract class SupportObjectTemplate {
             }
 
             @Override
-            public SupportObject createSupportObject(Position2D pos, UiController uiController) throws IOException {
-                ChangeSet changeSet = new ChangeSet();
-                SupportObject result = uiController.doCreateNewSupportObject(descriptor, pos.plus(getPositionOffset()), changeSet);
-                copyValues(result);
-                uiController.notifyChanges(changeSet);
+            public SupportObject createSupportObject(Position2D pos, UiController uiController, List<IModelChange> changeTrace) throws IOException {
+                SupportObject result = uiController.doCreateNewSupportObject(descriptor, pos.plus(getPositionOffset()), changeTrace);
+                copyValues(result, changeTrace);
                 return result;
             }
 
-            protected void copyValues(SupportObject targetSupportObject) {
-                targetSupportObject.setSize(origSO.getSize());
-                targetSupportObject.setRotationDeg(origSO.getRotationDeg());
-                targetSupportObject.setHeight(origSO.getHeight());
-                targetSupportObject.setElevation(origSO.getElevation());
+            protected void copyValues(SupportObject targetSupportObject, List<IModelChange> changeTrace) {
+                targetSupportObject.setSize(origSO.getSize(), changeTrace);
+                targetSupportObject.setRotationDeg(origSO.getRotationDeg(), changeTrace);
+                targetSupportObject.setHeight(origSO.getHeight(), changeTrace);
+                targetSupportObject.setElevation(origSO.getElevation(), changeTrace);
             }
         };
     }

@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -20,11 +20,14 @@ package de.dh.cad.architect.model;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Consumer;
 
-import de.dh.cad.architect.model.coords.Position2D;
+import de.dh.cad.architect.model.changes.IModelChange;
+import de.dh.cad.architect.model.changes.ObjectAdditionChange;
+import de.dh.cad.architect.model.changes.ObjectRemovalChange;
 import de.dh.cad.architect.model.objects.Anchor;
 import de.dh.cad.architect.model.objects.BaseObject;
 import de.dh.cad.architect.model.objects.Ceiling;
@@ -148,12 +151,6 @@ public class Plan implements IRootContainer, IAnchorContainer {
         return this;
     }
 
-    public Dimensioning createDimensioning(String id, String name, Position2D pos1, Position2D pos2, double viewDistance, ChangeSet changeSet) {
-        Dimensioning result = Dimensioning.create(name, pos1, pos2, viewDistance, this, changeSet);
-        changeSet.added(result);
-        return result;
-    }
-
     public boolean isRootObject(BaseObject obj) {
         return obj instanceof Dimensioning
             || obj instanceof Floor
@@ -221,62 +218,64 @@ public class Plan implements IRootContainer, IAnchorContainer {
     }
 
     @Override
-    public void addAnchor_Internal(Anchor anchor, ChangeSet changeSet) {
+    public void addAnchor_Internal(Anchor anchor, List<IModelChange> changeTrace) {
         mAnchors.put(anchor.getId(), anchor);
-        changeSet.added(anchor);
+        changeTrace.add(new ObjectAdditionChange(anchor) {
+            @Override
+            public void undo(List<IModelChange> undoChangeTrace) {
+                removeAnchor_Internal(anchor, undoChangeTrace);
+            }
+        });
     }
 
     @Override
-    public void removeAnchor_Internal(Anchor anchor, ChangeSet changeSet) {
+    public void removeAnchor_Internal(Anchor anchor, List<IModelChange> changeTrace) {
         mAnchors.remove(anchor.getId());
-        changeSet.removed(anchor);
+        changeTrace.add(new ObjectRemovalChange(anchor) {
+            @Override
+            public void undo(List<IModelChange> undoChangeTrace) {
+                addAnchor_Internal(anchor, undoChangeTrace);
+            }
+        });
+    }
+
+    protected <T extends BaseObject> void addOwnedChild_Internal(T object, Map<String, T> dataStructure, List<IModelChange> changeTrace) {
+        String id = object.getId();
+        object.setOwnerContainer_Internal(this);
+        dataStructure.put(id, object);
+        changeTrace.add(new ObjectAdditionChange(object) {
+            @Override
+            public void undo(List<IModelChange> undoChangeTrace) {
+                removeOwnedChild_Internal(object, undoChangeTrace);
+            }
+        });
     }
 
     @Override
-    public void addOwnedChild_Internal(BaseObject obj, ChangeSet changeSet) {
+    public void addOwnedChild_Internal(BaseObject obj, List<IModelChange> changeTrace) {
         if (obj instanceof Dimensioning o) {
-            addObject_Internal(o, mDimensionings, changeSet);
+            addOwnedChild_Internal(o, mDimensionings, changeTrace);
         } else if (obj instanceof Floor o) {
-            addObject_Internal(o, mFloors, changeSet);
+            addOwnedChild_Internal(o, mFloors, changeTrace);
         } else if (obj instanceof Wall o) {
-            addObject_Internal(o, mWalls, changeSet);
+            addOwnedChild_Internal(o, mWalls, changeTrace);
         } else if (obj instanceof Ceiling o) {
-            addObject_Internal(o, mCeilings, changeSet);
+            addOwnedChild_Internal(o, mCeilings, changeTrace);
         } else if (obj instanceof Covering o) {
-            addObject_Internal(o, mCoverings, changeSet);
+            addOwnedChild_Internal(o, mCoverings, changeTrace);
         } else if (obj instanceof SupportObject o) {
-            addObject_Internal(o, mSupportObjects, changeSet);
+            addOwnedChild_Internal(o, mSupportObjects, changeTrace);
         } else if (obj instanceof GuideLine o) {
-            addObject_Internal(o, mGuideLines, changeSet);
+            addOwnedChild_Internal(o, mGuideLines, changeTrace);
         } else if (obj instanceof ObjectsGroup o) {
-            addObject_Internal(o, mGroups, changeSet);
+            addOwnedChild_Internal(o, mGroups, changeTrace);
         } else {
             throw new IllegalArgumentException("Object '" + obj + "' of unsupported type cannot be added");
         }
     }
 
-    protected <T extends BaseObject> void addObject_Internal(T object, Map<String, T> dataStructure, ChangeSet changeSet) {
-        String id = object.getId();
-        object.setOwnerContainer_Internal(this);
-        dataStructure.put(id, object);
-        changeSet.added(object);
-    }
-
-    public Collection<BaseObject> removeObjects_Internal(ChangeSet changeSet, BaseObject... objs) {
-        return removeObjects_Internal(Arrays.asList(objs), changeSet);
-    }
-
-    public Collection<BaseObject> removeObjects_Internal(Collection<? extends BaseObject> objs, ChangeSet changeSet) {
-        Collection<BaseObject> result = new ArrayList<>();
-        for (BaseObject obj : objs) {
-            result.addAll(removeOwnedChild_Internal(obj, changeSet));
-        }
-        return result;
-    }
-
     @Override
-    public Collection<BaseObject> removeOwnedChild_Internal(BaseObject object, ChangeSet changeSet) {
-        Collection<BaseObject> result = new ArrayList<>();
+    public void removeOwnedChild_Internal(BaseObject object, List<IModelChange> changeTrace) {
         String id = object.getId();
         if (object instanceof Anchor) {
             mAnchors.remove(id);
@@ -299,9 +298,23 @@ public class Plan implements IRootContainer, IAnchorContainer {
         } else {
             throw new IllegalArgumentException("Object '" + object + "' of unknown type cannot be removed");
         }
-        result.add(object);
-        changeSet.removed(result);
-        return result;
+        object.setOwnerContainer_Internal(null);
+        changeTrace.add(new ObjectRemovalChange(object) {
+            @Override
+            public void undo(List<IModelChange> undoChangeTrace) {
+                addOwnedChild_Internal(object, undoChangeTrace);
+            }
+        });
+    }
+
+    public void removeObjects_Internal(List<IModelChange> changeTrace, BaseObject... objs) {
+        removeObjects_Internal(Arrays.asList(objs), changeTrace);
+    }
+
+    public void removeObjects_Internal(Collection<? extends BaseObject> objs, List<IModelChange> changeTrace) {
+        for (BaseObject obj : objs) {
+            removeOwnedChild_Internal(obj, changeTrace);
+        }
     }
 
     @Override

@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -25,14 +25,16 @@ import javafx.scene.control.TreeTableView.TreeTableViewSelectionModel;
 
 public class TreeViewUtils {
     public static void expandTreeItem(TreeItem<?> item) {
-        TreeItem<?> ti = item;
-        while (ti != null) {
-            TreeItem<?> parent = ti.getParent();
-            if (parent == null) {
-                break;
-            }
-            parent.setExpanded(true);
-            ti = parent;
+        // Attention: There is a bug in JavaFX 20 which lets the current selection be shifted
+        // when a tree item, which is not visible because one of its parents is collapsed,
+        // gets expanded. We workaround that problem by expanding the items from the root
+        // down to the given item.
+        TreeItem<?> parent = item.getParent();
+        if (parent != null) {
+            expandTreeItem(parent);
+        }
+        if (!item.isExpanded()) {
+            item.setExpanded(true);
         }
     }
 

@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@ import de.dh.cad.architect.ui.controller.ObjectsChangeHandler;
 import de.dh.cad.architect.ui.controller.UiController;
 import de.dh.cad.architect.ui.objects.IModelBasedObject;
 import de.dh.cad.architect.ui.persistence.ViewState;
+import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
@@ -82,7 +83,11 @@ public abstract class AbstractPlanView<TRepr extends IModelBasedObject, TAnc ext
                     // objects without interfering the argument
                     addedSelectionIds = new ArrayList<>(c.getAddedSubList());
                 }
-                AbstractPlanView.this.handleObjectsSelectionChanged(removedSelectionIds, addedSelectionIds);
+                List<String> removedSelectionIdsf = removedSelectionIds;
+                List<String> addedSelectionIdsf = addedSelectionIds;
+                Platform.runLater(() -> {
+                    AbstractPlanView.this.handleObjectsSelectionChanged(removedSelectionIdsf, addedSelectionIdsf);
+                });
             }
         }
     };

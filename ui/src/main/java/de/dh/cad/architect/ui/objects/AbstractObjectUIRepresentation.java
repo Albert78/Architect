@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ public abstract class AbstractObjectUIRepresentation {
         return mReconciler;
     }
 
-    public abstract String getTypeName(Cardinality singular);
+    public abstract String getTypeName(Cardinality cardinality);
     public abstract ObjectProperties getProperties(BaseObject modelObject, UiController uiController);
     public abstract Abstract2DRepresentation create2DRepresentation(BaseObject modelObject, Abstract2DView parentView);
     public abstract Abstract3DRepresentation create3DRepresentation(BaseObject modelObject, Abstract3DView parentView);

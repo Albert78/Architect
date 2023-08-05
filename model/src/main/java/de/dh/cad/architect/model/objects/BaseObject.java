@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -19,6 +19,8 @@ package de.dh.cad.architect.model.objects;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
@@ -29,7 +31,8 @@ import javax.xml.bind.annotation.XmlID;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlTransient;
 
-import de.dh.cad.architect.model.ChangeSet;
+import de.dh.cad.architect.model.changes.IModelChange;
+import de.dh.cad.architect.model.changes.ObjectModificationChange;
 
 /**
  * An object in a plan, visible like a wall or invisible like a group.
@@ -55,17 +58,14 @@ public abstract class BaseObject implements Comparable<BaseObject> {
         mName = name;
     }
 
-    public Collection<? extends BaseObject> delete(ChangeSet changeSet) {
-        Collection<BaseObject> result = new ArrayList<>();
+    public Collection<? extends BaseObject> delete(List<IModelChange> changeTrace) {
         for (ObjectsGroup group : new ArrayList<>(mGroups)) {
-            group.removeObject(this, changeSet);
+            group.removeObject(this, changeTrace);
         }
-        result.add(this);
-        changeSet.removed(this);
         if (mOwnerContainer != null) {
-            mOwnerContainer.removeOwnedChild_Internal(this, changeSet);
+            mOwnerContainer.removeOwnedChild_Internal(this, changeTrace);
         }
-        return result;
+        return Collections.singleton(this);
     }
 
     @XmlTransient
@@ -92,8 +92,15 @@ public abstract class BaseObject implements Comparable<BaseObject> {
         return mName;
     }
 
-    public void setName(String value) {
+    public void setName(String value, List<IModelChange> changeTrace) {
+        String oldName = mName;
         mName = value;
+        changeTrace.add(new ObjectModificationChange(this) {
+            @Override
+            public void undo(List<IModelChange> undoChangeTrace) {
+                setName(oldName, changeTrace);
+            }
+        });
     }
 
     /**
@@ -105,8 +112,15 @@ public abstract class BaseObject implements Comparable<BaseObject> {
         return mHidden;
     }
 
-    public void setHidden(boolean value) {
+    public void setHidden(boolean value, List<IModelChange> changeTrace) {
+        boolean oldHidden = mHidden;
         mHidden = value;
+        changeTrace.add(new ObjectModificationChange(this) {
+            @Override
+            public void undo(List<IModelChange> undoChangeTrace) {
+                setHidden(oldHidden, changeTrace);
+            }
+        });
     }
 
 
@@ -114,7 +128,7 @@ public abstract class BaseObject implements Comparable<BaseObject> {
      * Internal method to be used in model module.
      * Clients should call {@link ObjectsGroup#addObject(BaseObject, ChangeSet)}.
      */
-    public void addToGroup_Internal(ObjectsGroup group) {
+    protected void addToGroup_Internal(ObjectsGroup group) {
         mGroups.add(group);
     }
 
@@ -122,7 +136,7 @@ public abstract class BaseObject implements Comparable<BaseObject> {
      * Internal method to be used in model module.
      * Clients should call {@link ObjectsGroup#removeObject(BaseObject, ChangeSet)}.
      */
-    public void removeFromGroup_Internal(ObjectsGroup group) {
+    protected void removeFromGroup_Internal(ObjectsGroup group) {
         mGroups.remove(group);
     }
 
@@ -137,7 +151,7 @@ public abstract class BaseObject implements Comparable<BaseObject> {
     }
 
     protected String attrsToString() {
-        return "Id=" + mId + ", Name=" + (mName == null ? "<Empty>" : ("'" + mName + "'")) + ", Owner=" + (mOwnerContainer == null ? "<Empty>" : mOwnerContainer)
+        return "Id=" + mId + ", Name=" + (mName == null ? "<Empty>" : ("'" + mName + "'")) + ", OwnerContainer=" + (mOwnerContainer == null ? "<Empty>" : mOwnerContainer)
                 + ", #Groups=" + mGroups.size();
     }
 

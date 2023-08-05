@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
 package de.dh.cad.architect.ui.view;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -30,7 +31,7 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.dh.cad.architect.model.ChangeSet;
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.AnchorTarget;
 import de.dh.cad.architect.model.coords.IPosition;
 import de.dh.cad.architect.model.coords.Length;
@@ -119,14 +120,12 @@ public class ObjectReconcileOperation {
         tryAddObjectToProcess(owner);
     }
 
-    protected void tryAddDependentAnchorChanges(Collection<Anchor> changedDependentAnchors, ChangeSet changeSet) {
+    protected void tryAddDependentAnchorChanges(Collection<Anchor> changedDependentAnchors, List<IModelChange> changeTrace) {
         for (Anchor changedAnchor : changedDependentAnchors) {
-            changeSet.changed(changedAnchor);
             IPosition position = changedAnchor.getPosition();
             for (Anchor dockedAnchor : changedAnchor.getAllDockedAnchors()) {
                 if (!dockedAnchor.equals(changedAnchor)) {
-                    dockedAnchor.setPosition(calculateTargetPositionForAnchor(dockedAnchor, position));
-                    changeSet.changed(dockedAnchor);
+                    dockedAnchor.setPosition(calculateTargetPositionForAnchor(dockedAnchor, position), changeTrace);
                     tryAddHandleAnchorChange(dockedAnchor);
                 }
             }
@@ -153,7 +152,7 @@ public class ObjectReconcileOperation {
         }
     }
 
-    public void reconcileObjects(ChangeSet changeSet) {
+    public void reconcileObjects(List<IModelChange> changeTrace) {
         // Each scheduled object will be propagated to its UI reconciler.
         // This can generate more anchor moves, which means the set of anchors to be moved in the reconcile operation structure
         // will grow during the operation. Furthermore, more object properties might become invalid during that process
@@ -168,20 +167,25 @@ public class ObjectReconcileOperation {
                 mUnprocessedObjects.remove(object);
                 AbstractObjectUIRepresentation uiRepresentation = ObjectTypesRegistry.getUIRepresentation(object.getClass());
                 IObjectReconciler reconciler = uiRepresentation.getReconciler();
-                ReconcileResult reconcileResult = reconciler.reconcileObjectChange(object, changeSet);
-                changeSet.changed(object);
+                ReconcileResult reconcileResult = reconciler.reconcileObjectChange(object, changeTrace);
                 // Remember positions of processed anchors to be able to determine further changes
                 mProcessedHandleAnchorPositions.putAll(AnchorTarget.mapAnchorIdToTargetFromAnchors(object.getHandleAnchors()));
+                // Remember processed objects to be able to break infinite loops
                 mProcessedObjects.add(object);
+
+                // Get the anchors of the processed object which have been changed during the reconcile operation and
+                // propagate their new position to docked anchors, potentially cascading the reconcile process to their owner objects.
                 Collection<Anchor> dependentAnchors = reconcileResult.getDependentAnchors();
-                tryAddDependentAnchorChanges(dependentAnchors, changeSet); // Propagate movements of dependent anchors
+                tryAddDependentAnchorChanges(dependentAnchors, changeTrace); // Propagate movements of dependent anchors
+
+                // Schedule objects to heal later
                 addObjectsToHeal(reconcileResult.getHealObjects());
             }
 
             // Step 2: Heal objects
             for (Entry<BaseAnchoredObject, Collection<ObjectHealReason>> entry : mObjectsToHeal.asMap().entrySet()) {
                 BaseAnchoredObject object = entry.getKey();
-                object.healObject(entry.getValue(), changeSet);
+                object.healObject(entry.getValue(), changeTrace);
             }
         } catch (Exception e) {
             log.debug("Could not execute object reconcile operation '" + mDescription + "'", e);

@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -20,9 +20,10 @@ package de.dh.cad.architect.ui.view.construction.behaviors;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
-import de.dh.cad.architect.model.ChangeSet;
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.Dimensions2D;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.objects.Anchor;
@@ -34,6 +35,7 @@ import de.dh.cad.architect.model.wallmodel.WallDockEnd;
 import de.dh.cad.architect.ui.Constants;
 import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.controller.UiController;
+import de.dh.cad.architect.ui.controller.UiController.DockConflictStrategy;
 import de.dh.cad.architect.ui.dialogs.DivideWallLengthDialog;
 import de.dh.cad.architect.ui.objects.Abstract2DAncillaryObject;
 import de.dh.cad.architect.ui.objects.Abstract2DRepresentation;
@@ -138,15 +140,15 @@ public abstract class AbstractConstructionBehavior extends AbstractViewBehavior<
     @Override
     protected void configureDefaultObjectHandlers(Abstract2DRepresentation repr) {
         repr.enableMouseOverSpot();
-        repr.objectSpottedProperty().removeListener(OBJECT_SPOTTED_LISTENER_UPDATE_USER_HINT);
-        repr.objectSpottedProperty().addListener(OBJECT_SPOTTED_LISTENER_UPDATE_USER_HINT);
+        repr.objectSpottedProperty().removeListener(OBJECT_SPOTTED_LISTENER);
+        repr.objectSpottedProperty().addListener(OBJECT_SPOTTED_LISTENER);
         repr.setOnMouseClicked(MOUSE_CLICK_HANDLER_SELECT_OBJECT);
     }
 
     @Override
     protected void unconfigureDefaultObjectHandlers(Abstract2DRepresentation repr) {
         repr.disableMouseOverSpot();
-        repr.objectSpottedProperty().removeListener(OBJECT_SPOTTED_LISTENER_UPDATE_USER_HINT);
+        repr.objectSpottedProperty().removeListener(OBJECT_SPOTTED_LISTENER);
         repr.setOnMouseClicked(null);
     }
 
@@ -344,14 +346,17 @@ public abstract class AbstractConstructionBehavior extends AbstractViewBehavior<
 
             @Override
             public void execute() {
-                ChangeSet changeSet = new ChangeSet();
+                List<IModelChange> changeTrace = new ArrayList<>();
                 Ceiling ceiling = Ceiling.create(null,
-                    anchor3D1.requirePosition3D(), anchor3D2.requirePosition3D(), anchor3D3.requirePosition3D(), getPlan(), changeSet);
+                    anchor3D1.getPosition3D(Length.ZERO),
+                    anchor3D2.getPosition3D(Length.ZERO),
+                    anchor3D3.getPosition3D(Length.ZERO),
+                    getPlan(), changeTrace);
                 UiController uiController = getUiController();
-                uiController.doDock(ceiling.getAnchorA(), anchor3D1, changeSet);
-                uiController.doDock(ceiling.getAnchorB(), anchor3D2, changeSet);
-                uiController.doDock(ceiling.getAnchorC(), anchor3D3, changeSet);
-                uiController.notifyChanges(changeSet);
+                uiController.doDock(ceiling.getAnchorA(), anchor3D1, DockConflictStrategy.SkipDock, changeTrace);
+                uiController.doDock(ceiling.getAnchorB(), anchor3D2, DockConflictStrategy.SkipDock, changeTrace);
+                uiController.doDock(ceiling.getAnchorC(), anchor3D3, DockConflictStrategy.SkipDock, changeTrace);
+                uiController.notifyChange(changeTrace, Strings.CEILING_ADD_CHANGE);
 
                 uiController.setSelectedObjectId(ceiling.getId());
             }
@@ -370,14 +375,17 @@ public abstract class AbstractConstructionBehavior extends AbstractViewBehavior<
 
             @Override
             public void execute() {
-                ChangeSet changeSet = new ChangeSet();
+                List<IModelChange> changeTrace = new ArrayList<>();
                 Covering covering = Covering.create(null,
-                    anchor3D1.requirePosition3D(), anchor3D2.requirePosition3D(), anchor3D3.requirePosition3D(), getPlan(), changeSet);
+                    anchor3D1.requirePosition3D(),
+                    anchor3D2.requirePosition3D(),
+                    anchor3D3.requirePosition3D(),
+                    getPlan(), changeTrace);
                 UiController uiController = getUiController();
-                uiController.doDock(covering.getAnchorA(), anchor3D1, changeSet);
-                uiController.doDock(covering.getAnchorB(), anchor3D2, changeSet);
-                uiController.doDock(covering.getAnchorC(), anchor3D3, changeSet);
-                uiController.notifyChanges(changeSet);
+                uiController.doDock(covering.getAnchorA(), anchor3D1, DockConflictStrategy.SkipDock, changeTrace);
+                uiController.doDock(covering.getAnchorB(), anchor3D2, DockConflictStrategy.SkipDock, changeTrace);
+                uiController.doDock(covering.getAnchorC(), anchor3D3, DockConflictStrategy.SkipDock, changeTrace);
+                uiController.notifyChange(changeTrace, Strings.COVERING_ADD_CHANGE);
 
                 uiController.setSelectedObjectId(covering.getId());
             }
@@ -420,11 +428,11 @@ public abstract class AbstractConstructionBehavior extends AbstractViewBehavior<
                     windowWidth = wallSideLength.minus(Length.ofCM(20));
                     distanceFromEnd = Length.ofCM(10);
                 }
-                ChangeSet changeSet = new ChangeSet();
+                List<IModelChange> changeTrace = new ArrayList<>();
                 WallHole wallHole = WallHole.createFromParameters(null,
                     Length.ofCM(100), new Dimensions2D(windowWidth, windowHeight),
-                    WallDockEnd.A, distanceFromEnd, ownerWall, changeSet);
-                uiController.notifyChanges(changeSet);
+                    WallDockEnd.A, distanceFromEnd, ownerWall, changeTrace);
+                uiController.notifyChange(changeTrace, Strings.WALL_HOHE_ADD_CHANGE);
                 uiController.setSelectedObjectId(wallHole.getId());
             }
         };
@@ -473,9 +481,6 @@ public abstract class AbstractConstructionBehavior extends AbstractViewBehavior<
     }
 
     protected void tryStraightenWallBendPoint(Anchor joiningAnchor) {
-        ChangeSet changeSet = new ChangeSet();
-        UiController uiController = getUiController();
-
         /* Find anchors of the wall bend point which are docked - notify the user to avoid losing important docks?
         SingleWallBendPoint.fromAnchorDock(joiningAnchor).map(wd -> {
             Collection<Anchor> cornerAnchors = new ArrayList<>();
@@ -503,8 +508,8 @@ public abstract class AbstractConstructionBehavior extends AbstractViewBehavior<
         });
         */
 
-        WallReconciler.straightenWallBendPoint(joiningAnchor, uiController, changeSet);
-        uiController.notifyChanges(changeSet);
+        UiController uiController = getUiController();
+        WallReconciler.straightenWallBendPoint(joiningAnchor, uiController);
     }
 
     protected IContextAction createJoinWallsAction(Wall wall1, Wall wall2) {

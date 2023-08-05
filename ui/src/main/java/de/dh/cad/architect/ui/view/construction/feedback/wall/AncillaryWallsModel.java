@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.model.objects.Anchor;
 import de.dh.cad.architect.model.objects.BaseAnchoredObject;
@@ -67,7 +68,8 @@ public class AncillaryWallsModel {
 
         anchorWallHandle.setPosition(position);
 
-        WallAnchorPositions.setWallBevelTypeOfAnchorDock(anchorWallHandle, wallBevel);
+        List<IModelChange> unusedChangeTrace = new ArrayList<>();
+        WallAnchorPositions.setWallBevelTypeOfAnchorDock(anchorWallHandle, wallBevel, unusedChangeTrace);
     }
 
     public List<IWallAnchor> addDockParticipants(Anchor dockAnchor) {

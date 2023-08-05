@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -19,12 +19,14 @@ module de.dh.cad.architect.model {
     exports de.dh.cad.architect.model.jaxb;
     exports de.dh.cad.architect.model;
     exports de.dh.cad.architect.model.objects;
+    exports de.dh.cad.architect.model.changes;
     exports de.dh.cad.architect.model.wallmodel;
     exports de.dh.cad.architect.model.assets;
     exports de.dh.cad.architect.model.coords;
 
     opens de.dh.cad.architect.model.jaxb;
     opens de.dh.cad.architect.model.objects;
+    opens de.dh.cad.architect.model.changes;
     opens de.dh.cad.architect.model.assets;
     opens de.dh.cad.architect.model.coords;
 

@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -17,11 +17,12 @@
  *******************************************************************************/
 package de.dh.cad.architect.model.objects;
 
+import java.util.List;
 import java.util.Optional;
 
 import javax.xml.bind.annotation.XmlTransient;
 
-import de.dh.cad.architect.model.ChangeSet;
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.coords.LengthUnit;
 import de.dh.cad.architect.model.coords.MathUtils;
@@ -63,29 +64,30 @@ public class Ceiling extends BaseLimitedPlane {
     }
 
     @Override
-    public void initializeSurfaces() {
-        clearSurfaces();
-        createSurface(SURFACE_TYPE);
+    public void initializeSurfaces(List<IModelChange> changeTrace) {
+        clearSurfaces(changeTrace);
+        createSurface(SURFACE_TYPE, changeTrace);
     }
 
     /**
      * Creates a new ceiling with the given ceiling anchors; the ceiling anchors will also limit the ceiling's plane.
      */
-    public static Ceiling create(String name, Position3D posA, Position3D posB, Position3D posC, IObjectsContainer ownerContainer, ChangeSet changeSet) {
+    public static Ceiling create(String name, Position3D posA, Position3D posB, Position3D posC, IObjectsContainer ownerContainer, List<IModelChange> changeTrace) {
         Ceiling result = new Ceiling(IdGenerator.generateUniqueId(Ceiling.class), name);
-        ownerContainer.addOwnedChild_Internal(result, changeSet);
-        result.createAnchor(AP_CEILING_A, posA, changeSet);
-        result.createAnchor(AP_CEILING_B, posB, changeSet);
-        result.createAnchor(AP_CEILING_C, posC, changeSet);
+        ownerContainer.addOwnedChild_Internal(result, changeTrace);
+        result.createAnchor(AP_CEILING_A, posA, changeTrace);
+        result.createAnchor(AP_CEILING_B, posB, changeTrace);
+        result.createAnchor(AP_CEILING_C, posC, changeTrace);
 
-        result.createEdgeAnchor(null, posA.projectionXY(), changeSet);
-        result.createEdgeAnchor(null, posB.projectionXY(), changeSet);
-        result.createEdgeAnchor(null, posC.projectionXY(), changeSet);
+        result.createEdgeAnchor(null, posA.projectionXY(), changeTrace);
+        result.createEdgeAnchor(null, posB.projectionXY(), changeTrace);
+        result.createEdgeAnchor(null, posC.projectionXY(), changeTrace);
+        result.initializeSurfaces(changeTrace);
         return result;
     }
 
     /**
-     * Calculates the Z coordinate in this ceiling for the given {@code xyPosition}.
+     * Calculates the Z coordinate in this ceiling's plane for the given {@code xyPosition}.
      */
     public static Optional<Length> getPlaneHeight(Position3D ceilingA, Position3D ceilingB, Position3D ceilingC, Position2D xyPosition) {
         // Ceiling plane

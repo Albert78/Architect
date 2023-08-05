@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -24,9 +24,7 @@ import org.slf4j.LoggerFactory;
 import de.dh.cad.architect.ui.ApplicationController;
 import de.dh.cad.architect.ui.Configuration;
 import javafx.application.Application;
-import javafx.event.EventHandler;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
 
 public class ArchitectApplication extends Application {
     private org.slf4j.Logger log = LoggerFactory.getLogger(ArchitectApplication.class);
@@ -39,12 +37,9 @@ public class ArchitectApplication extends Application {
             Configuration config = Configuration.from(Preferences.userNodeForPackage(ArchitectApplication.class));
             mApplicationController = ApplicationController.create(config, primaryStage);
 
-            primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
-                @Override
-                public void handle(WindowEvent event) {
-                    if (!mApplicationController.queryQuitApplication(primaryStage)) {
-                        event.consume();
-                    }
+            primaryStage.setOnCloseRequest(event -> {
+                if (!mApplicationController.queryQuitApplication(primaryStage)) {
+                    event.consume();
                 }
             });
 

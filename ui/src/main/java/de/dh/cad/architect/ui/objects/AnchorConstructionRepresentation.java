@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@ import java.util.Optional;
 
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.model.objects.Anchor;
+import de.dh.cad.architect.model.objects.BaseAnchoredObject;
 import de.dh.cad.architect.ui.Constants;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.DragControl;
@@ -83,7 +84,8 @@ public class AnchorConstructionRepresentation extends Abstract2DRepresentation {
     }
 
     public Abstract2DRepresentation getAnchorOwnerRepresentation() {
-        return mParentView.getRepresentationByModelId(getAnchor().getAnchorOwner().getId());
+        BaseAnchoredObject anchorOwner = getAnchor().getAnchorOwner();
+        return anchorOwner == null ? null : mParentView.getRepresentationByModelId(anchorOwner.getId());
     }
 
     public Anchor getAnchor() {
@@ -155,7 +157,9 @@ public class AnchorConstructionRepresentation extends Abstract2DRepresentation {
 
     // Could be moved ot Abstract2DUiObject, if needed
     protected void installDragHandlers() {
-        DragControl dragControl = new DragControl();
+        var dragControl = new DragControl() {
+            boolean FirstMoveEvent = true;
+        };
         Pane transformedRoot = mParentView.getTransformedRoot();
 
         setOnMousePressed(mouseEvent -> {
@@ -167,6 +171,7 @@ public class AnchorConstructionRepresentation extends Abstract2DRepresentation {
             }
             Point2D localPoint = transformedRoot.sceneToLocal(mouseEvent.getSceneX(), mouseEvent.getSceneY());
             dragControl.setPoint(localPoint);
+            dragControl.FirstMoveEvent = true;
             getScene().setCursor(Cursor.MOVE);
             dragStart(localPoint);
         });
@@ -188,7 +193,8 @@ public class AnchorConstructionRepresentation extends Abstract2DRepresentation {
             // Is it because of the Group objects around? I don't know.
             // ---> So we use root.sceneToLocal(), which gives us always the correct values
             Point2D localPoint = transformedRoot.sceneToLocal(mouseEvent.getSceneX(), mouseEvent.getSceneY());
-            drag(dragControl.getPoint(), localPoint, mouseEvent.isShiftDown(), mouseEvent.isAltDown(), mouseEvent.isControlDown());
+            drag(dragControl.getPoint(), localPoint, dragControl.FirstMoveEvent, mouseEvent.isShiftDown(), mouseEvent.isAltDown(), mouseEvent.isControlDown());
+            dragControl.FirstMoveEvent = false;
         });
         setOnMouseEntered(mouseEvent -> {
             if (!isDragSupported()) {
@@ -228,18 +234,10 @@ public class AnchorConstructionRepresentation extends Abstract2DRepresentation {
         }
     }
 
-    protected void drag(Point2D dragStartPos, Point2D currentPos, boolean shiftDown, boolean altDown, boolean controlDown) {
+    protected void drag(Point2D dragStartPos, Point2D currentPos, boolean firstMoveEvent, boolean shiftDown, boolean altDown, boolean controlDown) {
         Abstract2DRepresentation repr = getAnchorOwnerRepresentation();
         if (repr != null) {
-            repr.dragAnchor(getAnchor(), dragStartPos, currentPos, CoordinateUtils.point2DToPosition2D(currentPos), shiftDown, altDown, controlDown);
-        }
-    }
-
-    @Override
-    protected void updateVisibility() {
-        Abstract2DRepresentation repr = getAnchorOwnerRepresentation();
-        if (repr != null) {
-            setVisible(repr.isAnchorVisible(getAnchor()));
+            repr.dragAnchor(getAnchor(), dragStartPos, currentPos, CoordinateUtils.point2DToPosition2D(currentPos), firstMoveEvent, shiftDown, altDown, controlDown);
         }
     }
 

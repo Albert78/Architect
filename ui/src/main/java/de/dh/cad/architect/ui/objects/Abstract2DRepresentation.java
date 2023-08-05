@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -85,22 +85,9 @@ public abstract class Abstract2DRepresentation extends Abstract2DUiObject implem
         addEventHandler(MouseEvent.MOUSE_EXITED, MOUSE_EXITED_MOUSE_OVER_LISTENER);
     }
 
-    /**
-     * Called after this view was removed from the plan.
-     * Can remove event handlers etc.
-     */
-    public void dispose() {
-        // To be overridden
-    }
-
-    // Visibility is handled differently in sub classes, e.g. Anchors are visible dependent on their owner
-    protected void updateVisibility() {
-        setVisible(!mModelObject.isHidden());
-    }
-
     @Override
     public void updateToModel() {
-        updateVisibility();
+        // To be overridden
     }
 
     public void enableMouseOverSpot() {
@@ -198,10 +185,6 @@ public abstract class Abstract2DRepresentation extends Abstract2DUiObject implem
         }
     }
 
-    public boolean isAnchorVisible(Anchor anchor) {
-        return true;
-    }
-
     public boolean isAnchorDragSupported(Anchor anchor) {
         return false;
     }
@@ -238,20 +221,20 @@ public abstract class Abstract2DRepresentation extends Abstract2DUiObject implem
      * @param controlDown True if the control key is pressed.
      */
     public void dragAnchor(Anchor anchor,
-        Point2D startDragPoint, Point2D currentDragPoint, Position2D targetPosition,
+        Point2D startDragPoint, Point2D currentDragPoint, Position2D targetPosition, boolean firstMoveEvent,
         boolean shiftDown, boolean altDown, boolean controlDown) {
         // Override if drag behavior should be different
-        dragAnchorDock(anchor, targetPosition, shiftDown, altDown, controlDown);
+        dragAnchorDock(anchor, targetPosition, firstMoveEvent, shiftDown, altDown, controlDown);
     }
 
-    public void dragAnchorDock(Anchor anchor, Position2D targetPosition,
+    public void dragAnchorDock(Anchor anchor, Position2D targetPosition, boolean firstMoveEvent,
         boolean shiftDown, boolean altDown, boolean controlDown) {
         Anchor masterOfDock = anchor.getRootMasterOfAnchorDock();
         if (!masterOfDock.isHandle()) {
             return;
         }
         UiController uiController = getUiController();
-        uiController.setHandleAnchorPosition(masterOfDock, targetPosition);
+        uiController.setHandleAnchorPosition(masterOfDock, targetPosition, !firstMoveEvent);
     }
 
     protected Optional<Shape> getShapeForIntersectionCheck() {

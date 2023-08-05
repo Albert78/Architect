@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -17,11 +17,14 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.objects;
 
+import java.text.MessageFormat;
+import java.util.Optional;
+
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.DragControl;
-import de.dh.utils.fx.Vector2D;
+import de.dh.utils.Vector2D;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
@@ -185,7 +188,7 @@ public class DimensioningVisual {
         mBorderLine2.getStrokeDashArray().setAll(20d, 5d, 7d, 5d);
     }
 
-    protected void updateShape(Position2D position1, Position2D position2, double scaleCompensation) {
+    protected void updateShape(Position2D position1, Position2D position2, Optional<String> oLabel, double scaleCompensation) {
         double labelDistance = getLabelDistance();
 
         // Points
@@ -237,7 +240,12 @@ public class DimensioningVisual {
         mBorderLine2.strokeWidthProperty().bind(strokeWidth);
 
         Length length = CoordinateUtils.coordsToLength(distance);
-        mText.setText(length.toNormalPlanString());
+        String lengthStr = length.toNormalPlanString();
+        if (oLabel.isPresent()) {
+            mText.setText(MessageFormat.format(oLabel.get(), lengthStr));
+        } else {
+            mText.setText(lengthStr);
+        }
         double textWidth = mText.getLayoutBounds().getWidth(); // Text is unscaled!
         double acrossLineLength = (distance - (textWidth + 20) * scaleCompensation) / 2;
         Vector2D mp = dp1.plus(v.times(0.5));

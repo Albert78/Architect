@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -117,7 +117,7 @@ public class ObjectTreeControl extends BorderPane {
         return mTreeTableView;
     }
 
-    protected boolean mSuppressSelectionChanges = false;
+    protected int mSuppressSelectionChanges = 0;
 
     protected void initialize() {
         TreeTableViewSelectionModel<ITreeItemData> ttvSelectionModel = mTreeTableView.getSelectionModel();
@@ -252,16 +252,7 @@ public class ObjectTreeControl extends BorderPane {
         selectedItems.addListener(new ListChangeListener<>() {
             @Override
             public void onChanged(Change<? extends TreeItem<ITreeItemData>> c) {
-                if (mSuppressSelectionChanges) {
-                    // Break the chain of recursive change handler calls objects tree -> mSelectedObjectIds -> objects tree -> ...
-                    return;
-                }
-                mSuppressSelectionChanges = true;
-                try {
-                    mSelectedObjectIds.setAll(getObjectIds(selectedItems));
-                } finally {
-                    mSuppressSelectionChanges = false;
-                }
+                updateSelectedObjectIdsFromTreeViewSelection();
             }
         });
 
@@ -269,30 +260,48 @@ public class ObjectTreeControl extends BorderPane {
         mSelectedObjectIds.addListener(new ListChangeListener<>() {
             @Override
             public void onChanged(Change<? extends String> c) {
-                if (mSuppressSelectionChanges) {
-                    // Break the chain of recursive change handler calls objects tree -> mSelectedObjectIds -> objects tree -> ...
-                    return;
-                }
-                mSuppressSelectionChanges = true;
-                try {
-                    // setAll method is not supported on the selected items list:
-                    //selectedItems.setAll(getTreeItems(mSelectedObjectIdsList));
-                    ttvSelectionModel.clearSelection();
-                    mSelectedObjectIds
-                        .stream()
-                        .flatMap(id -> mRootTreeItem.getTreeItemsByObjectId(id).stream())
-                        .forEach(item -> {
-                            if (mSelectedObjectIds.size() > 1) {
-                                TreeViewUtils.addSelection(mTreeTableView, item);
-                            } else {
-                                TreeViewUtils.showAndAddSelection(mTreeTableView, item);
-                            }
-                        });
-                } finally {
-                    mSuppressSelectionChanges = false;
-                }
+                updateTreeViewSelectionFromSelectedObjectIds();
             }
         });
+    }
+
+    protected void updateTreeViewSelectionFromSelectedObjectIds() {
+        if (mSuppressSelectionChanges > 0) {
+            // Break the chain of recursive change handler calls objects tree -> mSelectedObjectIds -> objects tree -> ...
+            return;
+        }
+        mSuppressSelectionChanges++;
+        try {
+            // setAll method is not supported on the selected items list:
+            //selectedItems.setAll(getTreeItems(mSelectedObjectIdsList));
+            mTreeTableView.getSelectionModel().clearSelection();
+            mSelectedObjectIds
+                .stream()
+                .flatMap(id -> mRootTreeItem.getTreeItemsByObjectId(id).stream())
+                .forEach(item -> {
+                    if (mSelectedObjectIds.size() > 1) {
+                        TreeViewUtils.addSelection(mTreeTableView, item);
+                    } else {
+                        TreeViewUtils.showAndAddSelection(mTreeTableView, item);
+                    }
+                });
+        } finally {
+            mSuppressSelectionChanges--;
+        }
+    }
+
+    protected void updateSelectedObjectIdsFromTreeViewSelection() {
+        if (mSuppressSelectionChanges > 0) {
+            // Break the chain of recursive change handler calls objects tree -> mSelectedObjectIds -> objects tree -> ...
+            return;
+        }
+        mSuppressSelectionChanges++;
+        try {
+            ObservableList<TreeItem<ITreeItemData>> selectedItems = mTreeTableView.getSelectionModel().getSelectedItems();
+            mSelectedObjectIds.setAll(getObjectIds(selectedItems));
+        } finally {
+            mSuppressSelectionChanges--;
+        }
     }
 
     protected void setVisibility(Collection<? extends BaseObject> objects, boolean hidden) {
@@ -314,6 +323,8 @@ public class ObjectTreeControl extends BorderPane {
                         .map(ti -> ti.getValue())
                         .filter(d -> d instanceof IIdObjectTreeItemData)
                         .map(d -> ((IIdObjectTreeItemData) d).getId())
+                        .sorted()
+                        .distinct()
                         .collect(Collectors.toSet());
     }
 
@@ -340,15 +351,33 @@ public class ObjectTreeControl extends BorderPane {
     }
 
     public void objectsRemoved(Collection<BaseObject> removedObjects) {
-        mRootTreeItem.objectsRemoved(removedObjects);
+        mSuppressSelectionChanges++;
+        try {
+            mRootTreeItem.objectsRemoved(removedObjects);
+        } finally {
+            mSuppressSelectionChanges--;
+        }
+        updateSelectedObjectIdsFromTreeViewSelection();
     }
 
     public void objectsChanged(Collection<BaseObject> changedObjects) {
-        mRootTreeItem.objectsChanged(changedObjects);
+        mSuppressSelectionChanges++;
+        try {
+            mRootTreeItem.objectsChanged(changedObjects);
+        } finally {
+            mSuppressSelectionChanges--;
+        }
+        updateSelectedObjectIdsFromTreeViewSelection();
     }
 
     public void objectsAdded(Collection<BaseObject> addedObjects) {
-        mRootTreeItem.objectsAdded(addedObjects);
+        mSuppressSelectionChanges++;
+        try {
+            mRootTreeItem.objectsAdded(addedObjects);
+        } finally {
+            mSuppressSelectionChanges--;
+        }
+        updateSelectedObjectIdsFromTreeViewSelection();
     }
 
     public void setContextMenuProviders(List<IObjectContextMenuProvider> contextMenuProviders) {

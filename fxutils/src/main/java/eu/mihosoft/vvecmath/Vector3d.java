@@ -37,7 +37,6 @@ package eu.mihosoft.vvecmath;
 import static java.lang.Math.acos;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
-import java.util.Random;
 
 /**
  *
@@ -297,7 +296,7 @@ public interface Vector3d {
      *
      * @param v the vector to add
      *
-     * <b>Note:</b> this vector is not modified.
+     * <b>Note:</b> This vector is not modified.
      *
      * @return the sum of this vector and the specified vector
      */
@@ -312,7 +311,7 @@ public interface Vector3d {
      * @param y y coordinate of the vector to add
      * @param z z coordinate of the vector to add
      *
-     * <b>Note:</b> this vector is not modified.
+     * <b>Note:</b> This vector is not modified.
      *
      * @return the sum of this vector and the specified vector
      */
@@ -325,7 +324,7 @@ public interface Vector3d {
      *
      * @param v the vector to add
      *
-     * <b>Note:</b> this vector is not modified.
+     * <b>Note:</b> This vector is not modified.
      *
      * @return the sum of this vector and the specified vector
      */
@@ -339,7 +338,7 @@ public interface Vector3d {
      *
      * @param v the vector to subtract
      *
-     * <b>Note:</b> this vector is not modified.
+     * <b>Note:</b> This vector is not modified.
      *
      * @return the difference of this vector and the specified vector
      */
@@ -354,7 +353,7 @@ public interface Vector3d {
      * @param y y coordinate of the vector to subtract
      * @param z z coordinate of the vector to subtract
      *
-     * <b>Note:</b> this vector is not modified.
+     * <b>Note:</b> This vector is not modified.
      *
      * @return the difference of this vector and the specified vector
      */
@@ -367,7 +366,7 @@ public interface Vector3d {
      *
      * @param v the vector to subtract
      *
-     * <b>Note:</b> this vector is not modified.
+     * <b>Note:</b> This vector is not modified.
      *
      * @return the difference of this vector and the specified vector
      */
@@ -386,7 +385,7 @@ public interface Vector3d {
      *
      * @param a the value
      *
-     * <b>Note:</b> this vector is not modified.
+     * <b>Note:</b> This vector is not modified.
      *
      * @return the product of this vector and the specified value
      */
@@ -399,7 +398,7 @@ public interface Vector3d {
      *
      * @param a the value
      *
-     * <b>Note:</b> this vector is not modified.
+     * <b>Note:</b> This vector is not modified.
      *
      * @return the product of this vector and the specified value
      */
@@ -412,7 +411,7 @@ public interface Vector3d {
      *
      * @param a the value
      *
-     * <b>Note:</b> this vector is not modified.
+     * <b>Note:</b> This vector is not modified.
      *
      * @return this vector divided by the specified value
      */
@@ -430,7 +429,7 @@ public interface Vector3d {
      *
      * @param a the vector
      *
-     * <b>Note:</b> this vector is not modified.
+     * <b>Note:</b> This vector is not modified.
      *
      * @return the product of this vector and the specified vector
      */
@@ -445,7 +444,7 @@ public interface Vector3d {
      * @param y y coordinate of the vector to multiply
      * @param z z coordinate of the vector to multiply
      *
-     * <b>Note:</b> this vector is not modified.
+     * <b>Note:</b> This vector is not modified.
      *
      * @return the product of this vector and the specified vector
      */
@@ -459,7 +458,7 @@ public interface Vector3d {
      *
      * @param a the vector
      *
-     * <b>Note:</b> this vector is not modified.
+     * <b>Note:</b> This vector is not modified.
      *
      * @return the product of this vector and the specified vector
      */
@@ -475,7 +474,7 @@ public interface Vector3d {
     /**
      * Returns the dot product of this vector and the specified vector.
      *
-     * <b>Note:</b> this vector is not modified.
+     * <b>Note:</b> This vector is not modified.
      *
      * @param a the second vector
      *
@@ -492,7 +491,7 @@ public interface Vector3d {
     /**
      * Returns the cross product of this vector and the specified vector.
      *
-     * <b>Note:</b> this vector is not modified.
+     * <b>Note:</b> This vector is not modified.
      *
      * @param a the vector
      *
@@ -512,33 +511,27 @@ public interface Vector3d {
     //////////////////////////////////
 
     /**
-     * Returns the magnitude of this vector.
+     * Calculates the magnitude of this vector. If the squared magnitude of this vector is
+     * needed, use {@link #magnitudeSq()}.
      *
-     * <b>Note:</b> this vector is not modified.
-     *
-     * @return the magnitude of this vector
+     * <b>Note:</b> This vector is not modified.
      */
     default double magnitude() {
         return Math.sqrt(this.dot(this));
     }
 
     /**
-     * Returns the squared magnitude of this vector
+     * Calculates the squared magnitude of this vector
      * (<code>this.dot(this)</code>).
      *
-     * <b>Note:</b> this vector is not modified.
-     *
-     * @return the squared magnitude of this vector
+     * <b>Note:</b> This vector is not modified.
      */
     default double magnitudeSq() {
         return this.dot(this);
     }
 
     /**
-     * Returns the angle between this and the specified vector.
-     *
-     * @param v vector
-     * @return angle in degrees
+     * Returns the angle between this and the specified vector in degrees.
      */
     default double angle(Vector3d v) {
         double val = this.dot(v) / (this.magnitude() * v.magnitude());
@@ -547,27 +540,22 @@ public interface Vector3d {
 
     /**
      * Returns the distance between the specified point and this point.
-     *
-     * @param p point
-     * @return the distance between the specified point and this point
      */
     default double distance(Vector3d p) {
         return minus(p).magnitude();
     }
+
     /**
      * Returns a new vector which is orthogonal to this vector.
-     * @return a new vector which is orthogonal to this vector
      */
     default Vector3d orthogonal() {
         return  Math.abs(z()) < Math.abs(x())  ? Vector3d.xy(y(),-x()) : Vector3d.yz(-z(),y());
-      }
-  
+    }
+
     /**
      * Returns a normalized copy of this vector with length {@code 1}.
      *
-     * <b>Note:</b> this vector is not modified.
-     *
-     * @return a normalized copy of this vector with length {@code 1}
+     * <b>Note:</b> This vector is not modified.
      */
     default Vector3d normalized() {
         return this.divided(this.magnitude());
@@ -576,9 +564,7 @@ public interface Vector3d {
     /**
      * Returns a negated copy of this vector.
      *
-     * <b>Note:</b> this vector is not modified.
-     *
-     * @return a negated copy of this vector
+     * <b>Note:</b> This vector is not modified.
      */
     default Vector3d negated() {
         return new Vector3dImpl(-x(), -y(), -z());
@@ -587,12 +573,12 @@ public interface Vector3d {
     /**
      * Linearly interpolates between this and the specified vector.
      *
-     * <b>Note:</b> this vector is not modified.
+     * <b>Note:</b> This vector is not modified.
      *
-     * @param a vector
-     * @param t interpolation value
+     * @param a Second vector.
+     * @param t Interpolation value.
      *
-     * @return copy of this vector if {@code t = 0}; copy of a if {@code t = 1};
+     * @return Copy of this vector if {@code t = 0}; copy of a if {@code t = 1};
      * the point midway between this and the specified vector if {@code t = 0.5}
      */
     default Vector3d lerp(Vector3d a, double t) {
@@ -603,8 +589,8 @@ public interface Vector3d {
     /**
      * Projects the specified vector onto this vector.
      *
-     * @param v vector to project onto this vector
-     * @return the projection of the specified vector onto this vector
+     * @param v Vector to project onto this vector.
+     * @return The projection of the specified vector onto this vector.
      */
     public default Vector3d project(Vector3d v) {
 
@@ -614,19 +600,18 @@ public interface Vector3d {
     }
 
     /**
-     * Indicates whether the two given points are collinear with this 
-     * vector/point. 
-     * 
-     * @param p2 second point
-     * @param p3 third point
-     * 
-     * @return {@code true} if all three points are collinear;
-     *         {@code false} otherwise
+     * Indicates whether the two given points are collinear with this
+     * vector/point.
+     *
+     * @param p2 Second point.
+     * @param p3 Third point.
+     *
+     * @return {@code true} if all three points are collinear; {@code false} otherwise.
      */
-     default boolean collinear(Vector3d p2, Vector3d p3) {  
+     default boolean collinear(Vector3d p2, Vector3d p3) {
 
         // The points p1, p2, p3 are collinear (are on the same line segment)
-        // if and only if the largest of the lenghts of 
+        // if and only if the largest of the lenghts of
         //
         //   a = P1P2,
         //   b = P1P2
@@ -634,7 +619,7 @@ public interface Vector3d {
         //
         // is equal to the sum of the other two.
         //
-        // Explanation: 
+        // Explanation:
         //
         // If p1, p2 and p3 are on the same line then the point in the 'middle'
         // cuts the line segment into two smaller pieces. That is the sum of the
@@ -691,11 +676,11 @@ public interface Vector3d {
     /**
      * Returns a transformed copy of this vector.
      *
-     * @param transform the transform to apply
+     * @param transform The transform to apply.
      *
-     * <b>Note:</b> this vector is not modified.
+     * <b>Note:</b> This vector is not modified.
      *
-     * @return a transformed copy of this vector
+     * @return A transformed copy of this vector.
      */
     default Vector3d transformed(Transform transform) {
         return transform.transform(this.asModifiable());
@@ -704,13 +689,13 @@ public interface Vector3d {
     /**
      * Returns a transformed copy of this vector.
      *
-     * @param transform the transform to apply
+     * @param transform The transform to apply.
      *
-     * <b>Note:</b> this vector is not modified.
-     * 
-     * @param amount 
+     * <b>Note:</b> This vector is not modified.
      *
-     * @return a transformed copy of this vector
+     * @param amount Transformation amount (0 = 0%, 1 = 100%).
+     *
+     * @return A transformed copy of this vector.
      */
     default Vector3d transformed(Transform transform, double amount) {
         return transform.transform(this.asModifiable(), amount);
@@ -763,5 +748,4 @@ public interface Vector3d {
                 append(this.y()).append(" ").
                 append(this.z());
     }
-
 }

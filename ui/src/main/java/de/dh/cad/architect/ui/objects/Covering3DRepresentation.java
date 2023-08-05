@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -31,16 +31,17 @@ import de.dh.cad.architect.model.objects.Covering;
 import de.dh.cad.architect.model.objects.SurfaceConfiguration;
 import de.dh.cad.architect.ui.assets.AssetLoader;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
-import de.dh.cad.architect.ui.utils.MathUtils;
-import de.dh.cad.architect.ui.utils.MathUtils.RotationData;
-import de.dh.cad.architect.ui.utils.SurfaceAwareCSG;
-import de.dh.cad.architect.ui.utils.SurfaceAwareCSG.ExtrusionSurfaceDataProvider;
-import de.dh.cad.architect.ui.utils.SurfaceAwareCSG.ShapeSurfaceData;
-import de.dh.cad.architect.ui.utils.TextureCoordinateSystem;
-import de.dh.cad.architect.ui.utils.TextureProjection;
 import de.dh.cad.architect.ui.view.threed.Abstract3DView;
 import de.dh.cad.architect.ui.view.threed.ThreeDView;
-import de.dh.utils.fx.Vector3D;
+import de.dh.utils.Vector3D;
+import de.dh.utils.csg.SurfaceAwareCSG;
+import de.dh.utils.csg.SurfaceAwareCSG.ExtrusionSurfaceDataProvider;
+import de.dh.utils.csg.TextureCoordinateSystem;
+import de.dh.utils.csg.TextureProjection;
+import de.dh.utils.fx.MathUtils;
+import de.dh.utils.fx.MathUtils.RotationData;
+import de.dh.utils.io.MeshData;
+import de.dh.utils.io.fx.FxMeshBuilder;
 import eu.mihosoft.vvecmath.Transform;
 import eu.mihosoft.vvecmath.Vector3d;
 import javafx.geometry.Point3D;
@@ -70,8 +71,7 @@ public class Covering3DRepresentation extends Abstract3DRepresentation {
 
                 @Override
                 public boolean assignMaterial(AssetRefPath materialRef) {
-                    surfaceConfiguration.setMaterialAssignment(materialRef);
-                    mParentView.getUiController().notifyObjectsChanged(covering);
+                    setObjectSurface(covering, mSurfaceTypeId, materialRef);
                     return true;
                 }
             });
@@ -204,14 +204,12 @@ public class Covering3DRepresentation extends Abstract3DRepresentation {
         }, 0, false);
         TextureCoordinateSystem tcs = TextureCoordinateSystem.create(Vector3d.Z_ONE, textureDirectionX);
         TextureProjection tp = TextureProjection.fromPointsBorder(tcs, bottomPoints);
-        Map<Surface, ShapeSurfaceData<Surface>> meshes = csg.createJavaFXTrinagleMeshes();
+        Map<Surface, MeshData> meshes = csg.createMeshes(Optional.empty());
         for (Surface surface : Surface.values()) {
-            ShapeSurfaceData<Surface> shapeSurfaceData = meshes.computeIfAbsent(surface, s -> ShapeSurfaceData.empty());
+            MeshData meshData = meshes.get(surface);
             SurfaceData surfaceData = mSurfaces.get(surface);
             MeshView meshView = surfaceData.getMeshView();
-            // TODO: Support multiple surface parts
-            // See hint in Wall3DRepresentation
-            Mesh mesh = shapeSurfaceData.getMesh();
+            Mesh mesh = FxMeshBuilder.buildMesh(meshData);
             meshView.setMesh(mesh);
             Point3D axisP3D = new Point3D(axis.getX(), axis.getY(), axis.getZ());
             mRotation.setAngle(-angle);

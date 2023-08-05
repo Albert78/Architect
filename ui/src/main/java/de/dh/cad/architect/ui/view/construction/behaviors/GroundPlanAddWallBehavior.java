@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-import de.dh.cad.architect.model.ChangeSet;
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.model.objects.Anchor;
@@ -34,6 +34,7 @@ import de.dh.cad.architect.model.wallmodel.WallEndView;
 import de.dh.cad.architect.ui.Constants;
 import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.controller.UiController;
+import de.dh.cad.architect.ui.controller.UiController.DockConflictStrategy;
 import de.dh.cad.architect.ui.objects.Abstract2DAncillaryObject;
 import de.dh.cad.architect.ui.objects.Abstract2DRepresentation;
 import de.dh.cad.architect.ui.objects.AbstractAnchoredObjectConstructionRepresentation;
@@ -43,7 +44,6 @@ import de.dh.cad.architect.ui.view.AbstractPlanView;
 import de.dh.cad.architect.ui.view.AbstractUiMode;
 import de.dh.cad.architect.ui.view.InteractionsControl;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
-import de.dh.cad.architect.ui.view.construction.GroundPlanUIElementFilter;
 import de.dh.cad.architect.ui.view.construction.feedback.wall.AncillaryWallsModel;
 import de.dh.cad.architect.ui.view.construction.feedback.wall.ChangeWallsVisualFeedbackManager;
 import de.dh.cad.architect.ui.view.construction.feedback.wall.PrincipalWallAncillaryWallsModel;
@@ -332,11 +332,6 @@ public class GroundPlanAddWallBehavior extends AbstractGroundPlanCreateWallBehav
     }
 
     @Override
-    protected void initializeUiElementFilter() {
-        setUIElementFilter(new GroundPlanUIElementFilter());
-    }
-
-    @Override
     protected void setDefaultUserHint() {
         setUserHint(Strings.GROUND_PLAN_ADD_WALL_BEHAVIOR_DEFAULT_USER_HINT);
     }
@@ -381,15 +376,16 @@ public class GroundPlanAddWallBehavior extends AbstractGroundPlanCreateWallBehav
         Length thickness = getThickness();
         Length heightA = getHeightA();
         Length heightB = getHeightB();
-        ChangeSet addChangeSet = new ChangeSet();
-        Wall wall = Wall.createFromHandlePositions(null, thickness, heightA, heightB, Position2D.zero(), Position2D.zero(), getPlan(), addChangeSet);
-        UiController uiController = getUiController();
-        uiController.notifyChanges(addChangeSet); // Need to notify creation before docking
+        List<IModelChange> changeTrace = new ArrayList<>();
+        Wall wall = Wall.createFromHandlePositions(null, thickness, heightA, heightB,
+            Position2D.zero(),
+            Position2D.zero().movedX(Length.ofM(1)),
+            getPlan(), changeTrace);
 
-        ChangeSet changeSet = new ChangeSet();
-        mWallStartConfig.configureFinalWall(wall, wall.getAnchorWallHandleA(), uiController, changeSet);
-        mWallEndConfig.configureFinalWall(wall, wall.getAnchorWallHandleB(), uiController, changeSet);
-        uiController.notifyChanges(changeSet);
+        UiController uiController = getUiController();
+        mWallStartConfig.configureFinalWall(wall, wall.getAnchorWallHandleA(), uiController, DockConflictStrategy.SkipDock, changeTrace);
+        mWallEndConfig.configureFinalWall(wall, wall.getAnchorWallHandleB(), uiController, DockConflictStrategy.SkipDock, changeTrace);
+        uiController.notifyChange(changeTrace, Strings.WALL_ADD_CHANGE);
 
         // Automatically continue next wall
         GroundPlanAddWallBehavior nextWallBehavior = startingWithStartWallEnding(new DockedWallEnding(wall.getAnchorWallHandleB()), getThickness(), mParentMode);

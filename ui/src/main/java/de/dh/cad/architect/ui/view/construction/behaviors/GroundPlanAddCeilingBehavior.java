@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -23,16 +23,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import de.dh.cad.architect.model.ChangeSet;
-import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.model.objects.Anchor;
 import de.dh.cad.architect.model.objects.BaseObject;
-import de.dh.cad.architect.model.objects.Ceiling;
 import de.dh.cad.architect.model.objects.Floor;
 import de.dh.cad.architect.model.objects.Wall;
 import de.dh.cad.architect.ui.Strings;
-import de.dh.cad.architect.ui.controller.UiController;
 import de.dh.cad.architect.ui.objects.Abstract2DAncillaryObject;
 import de.dh.cad.architect.ui.objects.Abstract2DRepresentation;
 import de.dh.cad.architect.ui.objects.AbstractAnchoredObjectConstructionRepresentation;
@@ -42,6 +38,7 @@ import de.dh.cad.architect.ui.objects.FloorConstructionRepresentation;
 import de.dh.cad.architect.ui.objects.WallConstructionRepresentation;
 import de.dh.cad.architect.ui.view.AbstractPlanView;
 import de.dh.cad.architect.ui.view.AbstractUiMode;
+import de.dh.cad.architect.ui.view.IContextAction;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
 import de.dh.cad.architect.ui.view.construction.GroundPlanUIElementFilter;
 import de.dh.cad.architect.ui.view.construction.feedback.AncillaryPosition;
@@ -111,16 +108,8 @@ public class GroundPlanAddCeilingBehavior extends AbstractConstructionSelectAnch
     }
 
     protected void commitCeiling(Anchor anchor1, Anchor anchor2, Anchor anchor3) {
-        ChangeSet addChangeSet = new ChangeSet();
-        Ceiling ceiling = Ceiling.create(null, anchor1.getPosition3D(Length.ZERO), anchor2.getPosition3D(Length.ZERO), anchor3.getPosition3D(Length.ZERO),
-            getPlan(), addChangeSet);
-        UiController uiController = getUiController();
-        uiController.notifyChanges(addChangeSet);
-        ChangeSet changeSet = new ChangeSet();
-        uiController.doDock(ceiling.getAnchorA(), anchor1, changeSet);
-        uiController.doDock(ceiling.getAnchorB(), anchor2, changeSet);
-        uiController.doDock(ceiling.getAnchorC(), anchor3, changeSet);
-        uiController.notifyChanges(changeSet);
+        IContextAction addCeilingAction = createAddCeilingAction(anchor1, anchor2, anchor3);
+        addCeilingAction.execute();
         mParentMode.resetBehavior();
     }
 

@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,9 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.view;
 
-import de.dh.cad.architect.model.ChangeSet;
+import java.util.List;
+
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.objects.BaseAnchoredObject;
 import de.dh.cad.architect.model.objects.ReconcileResult;
 
@@ -26,7 +28,7 @@ import de.dh.cad.architect.model.objects.ReconcileResult;
  */
 public class DefaultObjectReconciler implements IObjectReconciler {
     @Override
-    public ReconcileResult reconcileObjectChange(BaseAnchoredObject changedObject, ChangeSet changeSet) {
-        return changedObject.reconcileAfterHandleChange(changeSet);
+    public ReconcileResult reconcileObjectChange(BaseAnchoredObject changedObject, List<IModelChange> changeTrace) {
+        return changedObject.reconcileAfterHandleChange(changeTrace);
     }
 }

@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import de.dh.cad.architect.model.ChangeSet;
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.coords.LengthUnit;
 import de.dh.cad.architect.model.coords.Position2D;
@@ -36,6 +36,7 @@ import de.dh.cad.architect.model.wallmodel.IWallAnchor;
 import de.dh.cad.architect.model.wallmodel.WallAnchorPositions;
 import de.dh.cad.architect.model.wallmodel.WallBevelType;
 import de.dh.cad.architect.ui.controller.UiController;
+import de.dh.cad.architect.ui.controller.UiController.DockConflictStrategy;
 import de.dh.cad.architect.ui.objects.WallReconciler;
 import de.dh.cad.architect.ui.objects.WallReconciler.DividedWallParts;
 import de.dh.cad.architect.ui.view.construction.feedback.wall.AncillaryWall;
@@ -248,7 +249,7 @@ public class WallBreakPointWallEnding extends AbstractWallEnding {
         Collection<AncillaryWallAnchor> anchors = new ArrayList<>(Arrays.asList(wallEndABreakPointHandle, wallEndBBreakPointHandle, ancillaryWallBreakPointHandle));
         oOppositeAncillaryWallBreakPointHandle.ifPresent(a -> anchors.add(a));
         dockAnchors(anchors);
-        WallAnchorPositions.setWallBevelTypeOfAnchorDock(ancillaryWallBreakPointHandle, wallBevel);
+        WallAnchorPositions.setWallBevelTypeOfAnchorDock(ancillaryWallBreakPointHandle, wallBevel, null);
         return new  BreakWallEndConfiguration(this, ancillaryWallsModel,
             wallEndABreakPointHandle, wallEndAOuterHandle,
             wallEndBBreakPointHandle, wallEndBOuterHandle,
@@ -340,8 +341,8 @@ public class WallBreakPointWallEnding extends AbstractWallEnding {
 
     @Override
     protected void configureFinalWall(AbstractWallEndConfiguration wallEndConfiguration, Wall wall, Anchor wallEndHandle,
-        UiController uiController, ChangeSet changeSet) {
+        UiController uiController, DockConflictStrategy dockConflictStrategy, List<IModelChange> changeTrace) {
         DividedWallParts wallParts = WallReconciler.divideWall(mConnectWall, getPosition(), uiController);
-        uiController.doDock(wallEndHandle, wallParts.getWallPartEndA().getAnchorWallHandleB(), changeSet);
+        uiController.doDock(wallEndHandle, wallParts.getWallPartEndA().getAnchorWallHandleB(), dockConflictStrategy, changeTrace);
     }
 }

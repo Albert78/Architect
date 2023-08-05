@@ -5,13 +5,12 @@
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
-<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.control.SeparatorMenuItem?>
 <?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane fx:id="mRoot" prefHeight="713.0" prefWidth="867.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+<BorderPane fx:id="mRoot" prefHeight="713.0" prefWidth="867.0" xmlns="http://javafx.com/javafx/20" xmlns:fx="http://javafx.com/fxml/1">
 	<top>
 		<VBox fx:id="mMenuArea" BorderPane.alignment="CENTER">
 			<children>
@@ -27,14 +26,26 @@
 								<MenuItem fx:id="mFileQuitMenuItem" text="Be_enden" />
 							</items>
 						</Menu>
+                        <Menu text="_Bearbeiten">
+                            <items>
+                                <MenuItem fx:id="mUndoMenuItem" text="_Rückgängig" />
+                                <MenuItem fx:id="mRedoMenuItem" text="_Wiederherstellen" />
+                            </items>
+                        </Menu>
 						<Menu text="_Assets">
 							<items>
 								<MenuItem fx:id="mOpenLibraryManagerMenuItem" text="_Library Manager" />
 							</items>
 						</Menu>
+                  <Menu fx:id="mWindowMenu" mnemonicParsing="false" text="_Fenster">
+                     <items>
+                        <MenuItem fx:id="mInvisibleWindowMenuItem" mnemonicParsing="false" text="-" visible="false" />
+                        <SeparatorMenuItem mnemonicParsing="false" />
+                        <MenuItem fx:id="mResetPerspectiveMenuItem" text="Fensterlayout _zurücksetzen" />
+                     </items></Menu>
 						<Menu text="_Hilfe">
 							<items>
-								<MenuItem text="_Info" />
+								<MenuItem fx:id="mInfoMenuItem" text="_Info" />
 							</items>
 						</Menu>
 					</menus>

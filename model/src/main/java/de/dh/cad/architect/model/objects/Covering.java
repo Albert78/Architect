@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,9 @@
  *******************************************************************************/
 package de.dh.cad.architect.model.objects;
 
-import de.dh.cad.architect.model.ChangeSet;
+import java.util.List;
+
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.Position3D;
 import de.dh.cad.architect.utils.IdGenerator;
 
@@ -53,21 +55,22 @@ public class Covering extends BaseSolidObject {
     }
 
     @Override
-    public void initializeSurfaces() {
-        clearSurfaces();
-        createSurface(SURFACE_TYPE_1);
-        createSurface(SURFACE_TYPE_2);
+    protected void initializeSurfaces(List<IModelChange> changeTrace) {
+        clearSurfaces(changeTrace);
+        createSurface(SURFACE_TYPE_1, changeTrace);
+        createSurface(SURFACE_TYPE_2, changeTrace);
     }
 
     /**
      * Creates a new covering with the given covering anchors; the covering anchors will determine the covering's plane and also limit it.
      */
-    public static Covering create(String name, Position3D posA, Position3D posB, Position3D posC, IObjectsContainer ownerContainer, ChangeSet changeSet) {
+    public static Covering create(String name, Position3D posA, Position3D posB, Position3D posC, IObjectsContainer ownerContainer, List<IModelChange> changeTrace) {
         Covering result = new Covering(IdGenerator.generateUniqueId(Covering.class), name);
-        ownerContainer.addOwnedChild_Internal(result, changeSet);
-        result.createAnchor(AP_COVERING_A, posA, changeSet);
-        result.createAnchor(AP_COVERING_B, posB, changeSet);
-        result.createAnchor(AP_COVERING_C, posC, changeSet);
+        ownerContainer.addOwnedChild_Internal(result, changeTrace);
+        result.createAnchor(AP_COVERING_A, posA, changeTrace);
+        result.createAnchor(AP_COVERING_B, posB, changeTrace);
+        result.createAnchor(AP_COVERING_C, posC, changeTrace);
+        result.initializeSurfaces(changeTrace);
         return result;
     }
 

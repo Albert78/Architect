@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -18,9 +18,12 @@
 package de.dh.cad.architect.ui.objects;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.coords.LengthUnit;
 import de.dh.cad.architect.model.coords.Position2D;
@@ -38,6 +41,7 @@ import de.dh.cad.architect.ui.view.threed.Abstract3DView;
 
 public class DimensioningUIRepresentation extends BaseObjectUIRepresentation {
     public static final String KEY_PROPERTY_LENGTH = "length";
+    public static final String KEY_PROPERTY_LABEL = "label";
 
     public DimensioningUIRepresentation() {
         super(new DefaultObjectReconciler());
@@ -55,7 +59,7 @@ public class DimensioningUIRepresentation extends BaseObjectUIRepresentation {
         Anchor anchor1 = dimensioning.getAnchor1();
         Anchor anchor2 = dimensioning.getAnchor2();
         Collection<UiProperty<?>> properties = result.computeIfAbsent(getTypeName(Cardinality.Singular), cat -> new ArrayList<>());
-        properties.add(
+        properties.addAll(Arrays.<UiProperty<?>>asList(
                 new UiProperty<Length>(bo, KEY_PROPERTY_LENGTH, Strings.DIMENSIONING_PROPERTIES_LENGTH, PropertyType.Length, anchor2.isHandle()) {
                     protected Length calculateLength() {
                         Position2D p1 = dimensioning.getAnchor1().getPosition().projectionXY();
@@ -75,10 +79,23 @@ public class DimensioningUIRepresentation extends BaseObjectUIRepresentation {
                         Position2D p2 = anchor2.getPosition().projectionXY();
                         Vector2D v = p2.minus(p1);
                         Position2D newP2 = p1.plus(v.toUnitVector(LengthUnit.MM).times(newLength.inMM()));
-                        uiController.setHandleAnchorPosition(anchor2, newP2.upscale());
+                        uiController.setHandleAnchorPosition(anchor2, newP2.upscale(), false);
+                    }
+                },
+                new UiProperty<String>(bo, KEY_PROPERTY_LABEL, Strings.DIMENSIONING_PROPERTIES_LABEL, PropertyType.String, true) {
+                    @Override
+                    public String getValue() {
+                        return dimensioning.getLabel();
+                    }
+
+                    @Override
+                    public void setValue(Object value) {
+                        List<IModelChange> changeTrace = new ArrayList<>();
+                        dimensioning.setLabel((String) value, changeTrace);
+                        uiController.notifyChange(changeTrace, Strings.DIMENSIONING_SET_PROPERTY_CHANGE);
                     }
                 }
-        );
+        ));
     }
 
     @Override

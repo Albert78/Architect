@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -34,6 +34,7 @@ import de.dh.cad.architect.ui.objects.BaseObjectUIRepresentation;
 import de.dh.cad.architect.ui.objects.FloorConstructionRepresentation;
 import de.dh.cad.architect.ui.objects.WallConstructionRepresentation;
 import de.dh.cad.architect.ui.view.AbstractUiMode;
+import de.dh.cad.architect.ui.view.construction.GroundPlanLowerUIElementFilter;
 import de.dh.cad.architect.ui.view.construction.feedback.wall.endings.AbstractWallEnding;
 import de.dh.cad.architect.ui.view.construction.feedback.wall.endings.AbstractWallEnding.AbstractWallEndConfiguration;
 import de.dh.cad.architect.ui.view.construction.feedback.wall.endings.DockedWallEnding;
@@ -56,6 +57,11 @@ public abstract class AbstractGroundPlanCreateWallBehavior extends AbstractConst
     @Override
     protected void secondaryButtonClicked() {
         mParentMode.resetBehavior();
+    }
+
+    @Override
+    protected void initializeUiElementFilter() {
+        setUIElementFilter(new GroundPlanLowerUIElementFilter());
     }
 
     protected UnconnectedWallEnding createUnconnectedWallEnd(Position2D position, boolean isStart) {

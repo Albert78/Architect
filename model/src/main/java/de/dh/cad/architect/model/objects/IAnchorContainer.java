@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -17,12 +17,14 @@
  *******************************************************************************/
 package de.dh.cad.architect.model.objects;
 
-import de.dh.cad.architect.model.ChangeSet;
+import java.util.List;
+
+import de.dh.cad.architect.model.changes.IModelChange;
 
 /**
  * Container object which manages the anchor objects of an object hierarchy.
  */
 public interface IAnchorContainer {
-    void addAnchor_Internal(Anchor anchor, ChangeSet changeSet);
-    void removeAnchor_Internal(Anchor anchor, ChangeSet changeSet);
+    void addAnchor_Internal(Anchor anchor, List<IModelChange> changeTrace);
+    void removeAnchor_Internal(Anchor anchor, List<IModelChange> changeTrace);
 }

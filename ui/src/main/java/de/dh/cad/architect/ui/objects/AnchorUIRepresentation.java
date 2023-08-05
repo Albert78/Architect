@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ public class AnchorUIRepresentation extends BaseObjectUIRepresentation {
         Anchor anchor = (Anchor) bo;
         Collection<UiProperty<?>> properties = result.computeIfAbsent(getTypeName(Cardinality.Singular), cat -> new ArrayList<>());
         properties.addAll(Arrays.<UiProperty<?>>asList(
-            new UiProperty<IPosition>(anchor, KEY_PROPERTY_POSITION, Strings.ANCHOR_PROPERTIES_POSITION, PropertyType.IPosition, anchor.isHandle() && anchor.getODockMaster().isEmpty()) {
+            new UiProperty<IPosition>(anchor, KEY_PROPERTY_POSITION, Strings.ANCHOR_PROPERTIES_POSITION, PropertyType.IPosition, anchor.isHandle() && anchor.getDockMaster().isEmpty()) {
                 @Override
                 public IPosition getValue() {
                     return anchor.getPosition();
@@ -66,10 +66,10 @@ public class AnchorUIRepresentation extends BaseObjectUIRepresentation {
 
                 @Override
                 public void setValue(Object value) {
-                    uiController.setHandleAnchorPosition(anchor, (IPosition) value);
+                    uiController.setHandleAnchorPosition(anchor, (IPosition) value, false);
                 }
             },
-            new ConstantUiProperty<>(anchor, KEY_PROPERTY_DOCKED, Strings.ANCHOR_PROPERTIES_DOCKED, PropertyType.YesNo, anchor.getODockMaster().isPresent()),
+            new ConstantUiProperty<>(anchor, KEY_PROPERTY_DOCKED, Strings.ANCHOR_PROPERTIES_DOCKED, PropertyType.YesNo, anchor.getDockMaster().isPresent()),
             new ConstantUiProperty<>(anchor, KEY_PROPERTY_IS_HANDLE, Strings.ANCHOR_PROPERTIES_IS_HANDLE, PropertyType.YesNo, anchor.isHandle()),
             new ConstantUiProperty<>(anchor, KEY_PROPERTY_OWNER, Strings.ANCHOR_PROPERTIES_OWNER, PropertyType.String, getObjName(anchor.getAnchorOwner())),
             new ConstantUiProperty<>(anchor, KEY_PROPERTY_ANCHOR_TYPE, Strings.ANCHOR_PROPERTIES_ANCHOR_TYPE, PropertyType.String, anchor.getAnchorType())

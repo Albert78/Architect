@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -17,11 +17,18 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.objects;
 
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import de.dh.cad.architect.model.assets.AssetRefPath;
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.objects.BaseObject;
+import de.dh.cad.architect.model.objects.BaseSolidObject;
+import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.assets.AssetLoader;
+import de.dh.cad.architect.ui.objects.AbstractObjectUIRepresentation.Cardinality;
 import de.dh.cad.architect.ui.view.threed.Abstract3DView;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
@@ -195,6 +202,12 @@ public abstract class Abstract3DRepresentation extends Group implements IModelBa
         mouseOverProperty().removeListener(MOUSE_OVER_SPOT_LISTENER);
     }
 
+    /**
+     * Assigns the given surface to the given 3D node object for the {@link #mouseOverSurfaceProperty()} to work.
+     * This will attach a {@link MouseEvent#MOUSE_ENTERED} and a {@link MouseEvent#MOUSE_EXITED} event handler which is
+     * currently not revertible, i.e. the given node may be {@link #remove(Node) removed} for some reasons but
+     * must not be reused after that.
+     */
     protected void markSurfaceNode(Node node, ObjectSurface surface) {
         node.addEventHandler(MouseEvent.MOUSE_ENTERED, event -> {
             mMouseOverSurfaceProperty.set(surface);
@@ -205,7 +218,8 @@ public abstract class Abstract3DRepresentation extends Group implements IModelBa
     }
 
     /**
-     * Adds the given 3D node as a part of this model object representation.
+     * Adds the given 3D node as a part of this (composite) model object representation. After adding a node,
+     * the node could be {@link #markSurfaceNode(Node, ObjectSurface) marked as surface node}.
      * @param node Node which is part of this model object representation. The node will be added to displayed objects,
      * all gestures like selection, dragging etc. will be available for the given node.
      */
@@ -231,6 +245,14 @@ public abstract class Abstract3DRepresentation extends Group implements IModelBa
 
     public AssetLoader getAssetLoader() {
         return mParentView.getAssetLoader();
+    }
+
+    public void setObjectSurface(BaseSolidObject bo, String surfaceTypeId, AssetRefPath materialRef) {
+        List<IModelChange> changeTrace = new ArrayList<>();
+        bo.setSurfaceMaterial(surfaceTypeId, materialRef, changeTrace);
+        mParentView.getUiController().notifyChange(changeTrace,
+            MessageFormat.format(Strings.SET_OBJECT_MATERIAL_CHANGE,
+                ObjectTypesRegistry.getUIRepresentation(bo.getClass()).getTypeName(Cardinality.Singular)));
     }
 
     @Override

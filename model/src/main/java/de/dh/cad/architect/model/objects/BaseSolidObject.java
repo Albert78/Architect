@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@ package de.dh.cad.architect.model.objects;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -28,6 +29,8 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlTransient;
 
 import de.dh.cad.architect.model.assets.AssetRefPath;
+import de.dh.cad.architect.model.changes.IModelChange;
+import de.dh.cad.architect.model.changes.ObjectModificationChange;
 
 public abstract class BaseSolidObject extends BaseAnchoredObject {
     protected Map<String, SurfaceConfiguration> mSurfaceTypeIdsToSurfaceConfigurations = new TreeMap<>();
@@ -39,10 +42,12 @@ public abstract class BaseSolidObject extends BaseAnchoredObject {
 
     public BaseSolidObject(String id, String name) {
         super(id, name);
-        initializeSurfaces();
     }
 
-    public abstract void initializeSurfaces();
+    /**
+     * Should be overridden and called in each concrete sub classes factory methods.
+     */
+    protected abstract void initializeSurfaces(List<IModelChange> changeTrace);
 
     @Override
     public void afterDeserialize(Object parent) {
@@ -69,24 +74,71 @@ public abstract class BaseSolidObject extends BaseAnchoredObject {
         return mSurfaceTypeIdsToSurfaceConfigurations;
     }
 
-    public void clearSurfaces() {
-        mSurfaceConfigurations.clear();
-        mSurfaceTypeIdsToSurfaceConfigurations.clear();
+    protected void addSurfaceConfiguration_Internal(SurfaceConfiguration surfaceConfiguration, List<IModelChange> changeTrace) {
+        mSurfaceConfigurations.add(surfaceConfiguration);
+        String surfaceTypeId = surfaceConfiguration.getSurfaceTypeId();
+        mSurfaceTypeIdsToSurfaceConfigurations.put(surfaceTypeId, surfaceConfiguration);
+        changeTrace.add(new ObjectModificationChange(this) {
+            @Override
+            public void undo(List<IModelChange> undoChangeTrace) {
+                removeSurfaceConfiguration_Internal(surfaceTypeId, undoChangeTrace);
+            }
+        });
+    }
+
+    protected void removeSurfaceConfiguration_Internal(String surfaceTypeId, List<IModelChange> changeTrace) {
+        SurfaceConfiguration surfaceConfiguration = mSurfaceTypeIdsToSurfaceConfigurations.get(surfaceTypeId);
+        if (surfaceConfiguration == null) {
+            throw new IllegalArgumentException("Surface type id '" + surfaceTypeId + "' is not present in <" + this + ">");
+        }
+        mSurfaceConfigurations.remove(surfaceConfiguration);
+        mSurfaceTypeIdsToSurfaceConfigurations.remove(surfaceTypeId);
+        changeTrace.add(new ObjectModificationChange(this) {
+            @Override
+            public void undo(List<IModelChange> undoChangeTrace) {
+                addSurfaceConfiguration_Internal(surfaceConfiguration, undoChangeTrace);
+            }
+        });
+    }
+
+    protected void clearSurfaces(List<IModelChange> changeTrace) {
+        if (!mSurfaceConfigurations.isEmpty() || !mSurfaceTypeIdsToSurfaceConfigurations.isEmpty()) {
+            for (String surfaceTypeId : new ArrayList<>(mSurfaceTypeIdsToSurfaceConfigurations.keySet())) {
+                removeSurfaceConfiguration_Internal(surfaceTypeId, changeTrace);
+            }
+        }
     }
 
     /**
      * Generates and adds a new (object specific) surface.
      * @return The generated surface id.
      */
-    protected SurfaceConfiguration createSurface(String typeId) {
-        SurfaceConfiguration result = new SurfaceConfiguration(typeId);
-        mSurfaceConfigurations.add(result);
-        mSurfaceTypeIdsToSurfaceConfigurations.put(typeId, result);
+    protected SurfaceConfiguration createSurface(String surfaceTypeId, List<IModelChange> changeTrace) {
+        if (mSurfaceTypeIdsToSurfaceConfigurations.containsKey(surfaceTypeId)) {
+            throw new IllegalArgumentException("Solid object <" + this + "> already contains a surface of type id '" + surfaceTypeId + "'");
+        }
+        SurfaceConfiguration result = new SurfaceConfiguration(surfaceTypeId);
+        addSurfaceConfiguration_Internal(result, changeTrace);
         return result;
     }
 
+    public void setSurfaceMaterial(String surfaceTypeId, AssetRefPath materialRefPath, List<IModelChange> changeTrace) {
+        SurfaceConfiguration surfaceConfiguration = mSurfaceTypeIdsToSurfaceConfigurations.get(surfaceTypeId);
+        if (surfaceConfiguration == null) {
+            throw new IllegalArgumentException("Solid object <" + this + "> already does not contain a surface of type id '" + surfaceTypeId + "'");
+        }
+        AssetRefPath oldMaterialRef = surfaceConfiguration.getMaterialAssignment();
+        surfaceConfiguration.setMaterialAssignment(materialRefPath);
+        changeTrace.add(new ObjectModificationChange(this) {
+            @Override
+            public void undo(List<IModelChange> undoChangeTrace) {
+                setSurfaceMaterial(surfaceTypeId, oldMaterialRef, undoChangeTrace);
+            }
+        });
+    }
+
     @XmlTransient
-    public Map<String, AssetRefPath> getOverriddenSurfaceMaterialRefs() {
+    public Map<String, AssetRefPath> getSurfaceMaterialRefs() {
         Map<String, AssetRefPath> result = new HashMap<>();
         for (SurfaceConfiguration sc : getSurfaceConfigurations()) {
             AssetRefPath materialRefPath = sc.getMaterialAssignment();
@@ -96,13 +148,5 @@ public abstract class BaseSolidObject extends BaseAnchoredObject {
             result.put(sc.getSurfaceTypeId(), materialRefPath);
         }
         return result;
-    }
-
-    public void setOverriddenSurfaceMaterialRefs(Map<String, AssetRefPath> value) {
-        for (SurfaceConfiguration sc : getSurfaceConfigurations()) {
-            String surfaceName = sc.getSurfaceTypeId();
-            AssetRefPath overriddenMaterialAssetRefPath = value.get(surfaceName);
-            sc.setMaterialAssignment(overriddenMaterialAssetRefPath);
-        }
     }
 }

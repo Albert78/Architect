@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -67,6 +67,14 @@ public abstract class Abstract2DUiObject extends Group {
 
     protected Abstract2DUiObject(Abstract2DView parentView) {
         mParentView = parentView;
+    }
+
+    /**
+     * Called after this view was removed from the plan.
+     * Can remove event handlers etc.
+     */
+    public void dispose() {
+        // To be overridden
     }
 
     public UiController getUiController() {

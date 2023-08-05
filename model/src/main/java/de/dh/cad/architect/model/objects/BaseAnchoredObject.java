@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -28,7 +28,8 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlIDREF;
 import javax.xml.bind.annotation.XmlSeeAlso;
 
-import de.dh.cad.architect.model.ChangeSet;
+import de.dh.cad.architect.model.changes.IModelChange;
+import de.dh.cad.architect.model.changes.ObjectChange;
 import de.dh.cad.architect.model.coords.AnchorTarget;
 import de.dh.cad.architect.model.coords.IPosition;
 import de.dh.cad.architect.utils.jaxb.IDeserializationHandler;
@@ -59,43 +60,71 @@ public abstract class BaseAnchoredObject extends BaseObject implements IDeserial
     @Override
     public void afterDeserialize(Object parent) {
         for (Anchor anchor : mAnchors) {
-            anchor.setAnchorOwner(this);
+            anchor.setAnchorOwner_Internal(this);
         }
     }
 
-    public Anchor createAnchor(String anchorType, IPosition position, ChangeSet changeSet) {
-        return Anchor.create(this, anchorType, position, changeSet);
+    public Anchor createAnchor(String anchorType, IPosition position, List<IModelChange> changeTrace) {
+        return Anchor.create(this, anchorType, position, changeTrace);
     }
 
     public IAnchorContainer getAnchorContainer() {
         return getOwnerContainer().getAnchorContainer();
     }
 
-    public void addAnchor_Internal(Anchor a) {
-        a.setAnchorOwner(this);
-        mAnchors.add(a);
+    public void addAnchor_Internal(Anchor a, List<IModelChange> changeTrace) {
+        addAnchor_Internal(mAnchors.size(), a, changeTrace);
     }
 
-    public void addAnchor_Internal(int index, Anchor a) {
-        a.setAnchorOwner(this);
+    public void addAnchor_Internal(int index, Anchor a, List<IModelChange> changeTrace) {
+        a.setAnchorOwner_Internal(this);
         mAnchors.add(index, a);
+        changeTrace.add(
+                new ObjectChange() {
+                    @Override
+                    public void undo(List<IModelChange> undoChangeTrace) {
+                        removeAnchor_Internal(a, undoChangeTrace);
+                    }
+                }
+                .objectAdded(a)
+                .objectModified(this));
     }
 
-    public Anchor removeAnchor_Internal(int index) {
-        return mAnchors.remove(index);
+    protected void doRemoveAnchorInternal(int index, Anchor anchor, List<IModelChange> changeTrace) {
+        anchor.setAnchorOwner_Internal(null);
+        mAnchors.remove(index);
+        changeTrace.add(
+                new ObjectChange() {
+                    @Override
+                    public void undo(List<IModelChange> undoChangeTrace) {
+                        addAnchor_Internal(index, anchor, undoChangeTrace);
+                    }
+                }
+                .objectRemoved(anchor)
+                .objectModified(this));
     }
 
-    public void removeAnchor_Internal(Anchor a) {
-        mAnchors.remove(a);
+    public Anchor removeAnchor_Internal(int index, List<IModelChange> changeTrace) {
+        Anchor result = mAnchors.get(index);
+        doRemoveAnchorInternal(index, result, changeTrace);
+        return result;
+    }
+
+    public void removeAnchor_Internal(Anchor a, List<IModelChange> changeTrace) {
+        int index = mAnchors.indexOf(a);
+        if (index == -1) {
+            return;
+        }
+        doRemoveAnchorInternal(index, a, changeTrace);
     }
 
     @Override
-    public Collection<? extends BaseObject> delete(ChangeSet changeSet) {
+    public Collection<? extends BaseObject> delete(List<IModelChange> changeTrace) {
         Collection<BaseObject> result = new ArrayList<>();
         for (BaseObject object : new ArrayList<>(mAnchors)) {
-            result.addAll(object.delete(changeSet));
+            result.addAll(object.delete(changeTrace));
         }
-        result.addAll(super.delete(changeSet));
+        result.addAll(super.delete(changeTrace));
         return result;
     }
 
@@ -113,8 +142,7 @@ public abstract class BaseAnchoredObject extends BaseObject implements IDeserial
      *
      * Object handle anchors can be moved by the user or automatically follow the dock master anchor, if docked.
      * For example a wall end is moved by the user or a docked ceiling handle anchor is moved as a result of a wall movement.
-     * After such a handle movement was executed, the object whose anchor was moved (called handle owner) is potentially in an
-     * inconsistent state.
+     * As result of such a handle movement, the object whose (handle) anchor was moved is potentially in an inconsistent state.
      * For example, the wall's corner anchors do not match the new wall end position any more after the wall end handle was repositioned.
      *
      * The reconcile step will correct the positions of dependent anchors, for example will update the wall corners to the new wall
@@ -127,13 +155,13 @@ public abstract class BaseAnchoredObject extends BaseObject implements IDeserial
      * walls. All potentially affected objects are added to the reconcile result.
      *
      * After the reconcile step, all objects which have become invalid ("objects to heal") must be healed by calling
-     * {@link #healObject(Collection, ChangeSet)}.
+     * {@link #healObject()}.
      *
      * @return Collection of changed dependent, non-handle anchors and objects to be healed after the operation.
      * @throws IllegalStateException If the intended anchor moves are not possible for this object.
      */
     // To be overridden by classes which have dependent anchors
-    public ReconcileResult reconcileAfterHandleChange(ChangeSet changeSet) throws IllegalStateException {
+    public ReconcileResult reconcileAfterHandleChange(List<IModelChange> changeTrace) throws IllegalStateException {
         return ReconcileResult.empty();
     }
 
@@ -142,21 +170,19 @@ public abstract class BaseAnchoredObject extends BaseObject implements IDeserial
      * @param healReasons Set of non-formalized healing reasons, can be used to transport hints about the defect
      * to limit the healing process to the defect parts.
      */
-    public void healObject(Collection<ObjectHealReason> healReasons, ChangeSet changeSet) {
+    public void healObject(Collection<ObjectHealReason> healReasons, List<IModelChange> changeTrace) {
         // Empty, can be overridden
     }
 
     /**
-     * Updates the given given anchor positions and other dependent object properties.
+     * Updates the given anchor positions and other object properties which depend on the anchor positions.
      */
     // To be overridden to do the actual position update
-    public void updateAnchorPositions(Collection<AnchorTarget> anchorTargets, ChangeSet changeSet) {
+    public static void updateAnchorPositions(Collection<AnchorTarget> anchorTargets, List<IModelChange> changeTrace) {
         for (AnchorTarget anchorTarget : anchorTargets) {
             Anchor anchor = anchorTarget.getAnchor();
             IPosition targetPosition = anchorTarget.getTargetPosition();
-            anchor.setPosition(targetPosition);
-            changeSet.changed(anchor);
-            changeSet.changed(anchor.getAnchorOwner());
+            anchor.setPosition(targetPosition, changeTrace);
         }
     }
 

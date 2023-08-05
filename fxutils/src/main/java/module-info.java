@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -18,13 +18,16 @@
 module de.dh.cad.architect.fxutils {
     exports de.dh.cad.architect.fx.nodes;
     exports de.dh.cad.architect.fx.nodes.objviewer;
+    exports de.dh.utils;
     exports de.dh.utils.fx;
-    exports de.dh.utils.fx.io.formats.obj;
-    exports de.dh.utils.fx.io.utils;
+    exports de.dh.utils.io;
+    exports de.dh.utils.io.obj;
+    exports de.dh.utils.io.fx;
     exports eu.mihosoft.vvecmath;
     exports eu.mihosoft.jcsg;
     exports eu.mihosoft.jcsg.ext.org.poly2tri;
     exports de.dh.utils.fx.dialogs;
+    exports de.dh.utils.csg;
     opens de.dh.cad.architect.fx.nodes.objviewer;
 
     requires transitive javafx.base;

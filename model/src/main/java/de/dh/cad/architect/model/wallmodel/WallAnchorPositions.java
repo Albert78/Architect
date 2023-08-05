@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -17,9 +17,10 @@
  *******************************************************************************/
 package de.dh.cad.architect.model.wallmodel;
 
+import java.util.List;
 import java.util.Optional;
 
-import de.dh.cad.architect.model.ChangeSet;
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.Angle;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.coords.LengthUnit;
@@ -293,29 +294,27 @@ public class WallAnchorPositions {
      * be set using this method.
      * Attention: After setting the wall bevel, the wall bevel apexes must be reconciled using an object reconcile operation.
      */
-    public static void setWallBevelTypeOfAnchorDock(Anchor wallHandleAnchor, WallBevelType bevelType, ChangeSet changeSet) {
+    public static void setWallBevelTypeOfAnchorDock(Anchor wallHandleAnchor, WallBevelType bevelType, List<IModelChange> changeTrace) {
         for (Anchor adjacentAnchor : wallHandleAnchor.getAllDockedAnchors()) {
             Wall dockedWall = (Wall) adjacentAnchor.getAnchorOwner();
             Anchor dockedHandleAnchorA = dockedWall.getAnchorWallHandleA();
             Anchor dockedHandleAnchorB = dockedWall.getAnchorWallHandleB();
             if (dockedHandleAnchorA.equals(adjacentAnchor)) {
-                dockedWall.setWallBevelA(bevelType);
-                changeSet.changed(dockedWall);
+                dockedWall.setWallBevelA(bevelType, changeTrace);
             } else if (dockedHandleAnchorB.equals(adjacentAnchor)) {
-                dockedWall.setWallBevelB(bevelType);
-                changeSet.changed(dockedWall);
+                dockedWall.setWallBevelB(bevelType, changeTrace);
             } // else docked wall is not docked at a handle so we don't recognize it as neighbour
         }
     }
 
-    public static void setWallBevelTypeOfAnchorDock(IWallAnchor wallHandleAnchor, WallBevelType bevelType) {
+    public static void setWallBevelTypeOfAnchorDock(IWallAnchor wallHandleAnchor, WallBevelType bevelType, List<IModelChange> changeTrace) {
         for (IWallAnchor adjacentAnchor : wallHandleAnchor.getAllDockedAnchors()) {
             adjacentAnchor.getHandleAnchorDockEnd().ifPresent(wallDockEnd -> {
                 IWall dockedWall = adjacentAnchor.getOwner();
                 if (wallDockEnd == WallDockEnd.A) {
-                    dockedWall.setWallBevelA(bevelType);
+                    dockedWall.setWallBevelA(bevelType, changeTrace);
                 } else if (wallDockEnd == WallDockEnd.B) {
-                    dockedWall.setWallBevelB(bevelType);
+                    dockedWall.setWallBevelB(bevelType, changeTrace);
                 }
             });
         }

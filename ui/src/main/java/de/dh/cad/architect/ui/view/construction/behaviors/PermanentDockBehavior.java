@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@ import java.util.List;
 import de.dh.cad.architect.model.objects.Anchor;
 import de.dh.cad.architect.model.objects.BaseObject;
 import de.dh.cad.architect.ui.Strings;
+import de.dh.cad.architect.ui.controller.UiController.DockConflictStrategy;
 import de.dh.cad.architect.ui.objects.Abstract2DAncillaryObject;
 import de.dh.cad.architect.ui.objects.Abstract2DRepresentation;
 import de.dh.cad.architect.ui.objects.AnchorConstructionRepresentation;
@@ -41,7 +42,7 @@ public class PermanentDockBehavior extends AbstractDockBehavior {
 
     @Override
     protected void executeDockToSelectedAnchorAction(Anchor anchor) {
-        mView.getUiController().dock(mHandleAnchor, anchor);
+        mView.getUiController().dock(mHandleAnchor, anchor, DockConflictStrategy.Exception);
     }
 
     @Override
@@ -51,7 +52,7 @@ public class PermanentDockBehavior extends AbstractDockBehavior {
 
     @Override
     protected boolean canDockToAnchor(Anchor anchor) {
-        return getUiController().canDock(mHandleAnchor, anchor);
+        return getUiController().checkDockConflicts(mHandleAnchor, anchor).isEmpty();
     }
 
     @Override

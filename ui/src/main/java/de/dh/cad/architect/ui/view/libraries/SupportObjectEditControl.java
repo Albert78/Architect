@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -249,14 +249,14 @@ public class SupportObjectEditControl extends AbstractAssetEditControl implement
         SupportObjectDescriptor descriptor = getDescriptor();
         try {
             ThreeDObject threeDObject = mAssetLoader.loadSupportObject3DResource(descriptor, Optional.empty());
-            children.addAll(threeDObject.getSurfaces());
+            children.addAll(threeDObject.getSurfaceMeshViews());
             Bounds boundsInParent = result.getBoundsInParent();
             result.getTransforms().add(0, new Translate(-boundsInParent.getCenterX(), -boundsInParent.getCenterY(), -boundsInParent.getCenterZ()));
         } catch (IOException e) {
             log.error("3D resource of support object <" + descriptor + "> could not be loaded", e);
         }
         if (children.isEmpty()) {
-            children.addAll(AssetLoader.loadBroken3DResource().getSurfaces());
+            children.addAll(AssetLoader.loadBroken3DResource().getSurfaceMeshViews());
         }
         return result;
     }

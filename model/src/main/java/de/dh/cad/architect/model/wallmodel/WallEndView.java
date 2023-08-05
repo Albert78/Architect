@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -20,7 +20,9 @@ package de.dh.cad.architect.model.wallmodel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.objects.Anchor;
 import de.dh.cad.architect.model.objects.Wall;
@@ -144,5 +146,13 @@ public class WallEndView {
         return mWallEnd == WallDockEnd.A
                         ? mWall.getHeightA()
                         : mWall.getHeightB();
+    }
+
+    public void setWallHeight(Length value, List<IModelChange> changeTrace) {
+        if (mWallEnd == WallDockEnd.A) {
+            mWall.setHeightA(value, changeTrace);
+        } else {
+            mWall.setHeightB(value, changeTrace);
+        }
     }
 }

@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -17,11 +17,15 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.objects;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.model.objects.Dimensioning;
 import de.dh.cad.architect.ui.Constants;
+import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.view.construction.Abstract2DView;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -50,9 +54,13 @@ public class DimensioningConstructionRepresentation extends AbstractAnchoredObje
         mVisual.labelDistanceProperty().addListener(new ChangeListener<Number>() {
             @Override
             public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-                dimensioning.setLabelDistance(newValue.doubleValue());
-                // TODO: Check this; I guess the indirect change of the distance property via UIController will interfere with the drag handler....?
-                mParentView.getUiController().notifyObjectsChanged(dimensioning);
+                if (Double.compare(dimensioning.getLabelDistance(), newValue.doubleValue()) == 0) {
+                    // Break loop if DimensioningConstructionRepresentation updated the visual's label distance from model
+                    return;
+                }
+                List<IModelChange> changeTrace = new ArrayList<>();
+                dimensioning.setLabelDistance(newValue.doubleValue(), changeTrace);
+                mParentView.getUiController().notifyChange(changeTrace, Strings.DIMENSIONING_SET_PROPERTY_CHANGE, true);
             }
         });
     }
@@ -100,7 +108,7 @@ public class DimensioningConstructionRepresentation extends AbstractAnchoredObje
         double labelDistance = dimensioning.getLabelDistance();
 
         mVisual.setLabelDistance(labelDistance);
-        mVisual.updateShape(position1, position2, getScaleCompensation());
+        mVisual.updateShape(position1, position2, Optional.ofNullable(dimensioning.getLabel()), getScaleCompensation());
     }
 
     @Override

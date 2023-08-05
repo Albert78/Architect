@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,9 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.objects;
 
-import de.dh.cad.architect.model.ChangeSet;
+import java.util.List;
+
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.objects.Anchor;
 import de.dh.cad.architect.model.objects.Ceiling;
 import de.dh.cad.architect.ui.controller.UiController;
@@ -39,7 +41,7 @@ public class CeilingReconciler extends DefaultObjectReconciler {
         return true;
     }
 
-    public static boolean removeCeilingCorner(Anchor bendPointHandleAnchor, UiController uiController, ChangeSet changeSet) {
+    public static boolean removeCeilingCorner(Anchor bendPointHandleAnchor, UiController uiController, List<IModelChange> changeTrace) {
         Ceiling ceiling = (Ceiling) bendPointHandleAnchor.getAnchorOwner();
         if (ceiling.getNumEdges() <= 3) {
             return false;
@@ -47,10 +49,10 @@ public class CeilingReconciler extends DefaultObjectReconciler {
 
         // Remove anchors from docks
         Anchor edgePositionAnchor = ceiling.getEdgePositionAnchorForConnectedEdgeHandleAnchor(bendPointHandleAnchor);
-        uiController.doRemoveAnchorFromDock(bendPointHandleAnchor, changeSet);
-        uiController.doRemoveAnchorFromDock(edgePositionAnchor, changeSet);
+        uiController.doRemoveAnchorFromDock(bendPointHandleAnchor, changeTrace);
+        uiController.doRemoveAnchorFromDock(edgePositionAnchor, changeTrace);
 
-        ceiling.removeEdge(bendPointHandleAnchor, changeSet);
+        ceiling.removeEdge(bendPointHandleAnchor, changeTrace);
 
         return true;
     }

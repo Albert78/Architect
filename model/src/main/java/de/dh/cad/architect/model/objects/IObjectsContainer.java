@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -18,8 +18,9 @@
 package de.dh.cad.architect.model.objects;
 
 import java.util.Collection;
+import java.util.List;
 
-import de.dh.cad.architect.model.ChangeSet;
+import de.dh.cad.architect.model.changes.IModelChange;
 
 /**
  * Class which is able to contain child objects.
@@ -40,16 +41,15 @@ public interface IObjectsContainer {
 
     /**
      * Internal method to be used in model module.
-     * Removes the given owned child object from this instance as part of a delete operation of a child object.
-     * @return Collection of directly and indirectly removed objects.
+     * Adds the given child object to this instance as part of a add operation.
      */
-    Collection<BaseObject> removeOwnedChild_Internal(BaseObject child, ChangeSet changeSet);
+    void addOwnedChild_Internal(BaseObject obj, List<IModelChange> changeTrace);
 
     /**
      * Internal method to be used in model module.
-     * Adds the given child object to this instance as part of a add operation.
+     * Removes the given owned child object from this instance as part of a delete operation of a child object.
      */
-    void addOwnedChild_Internal(BaseObject child, ChangeSet changeSet);
+    void removeOwnedChild_Internal(BaseObject obj, List<IModelChange> changeTrace);
 
     /**
      * Returns the container which holds the anchors.

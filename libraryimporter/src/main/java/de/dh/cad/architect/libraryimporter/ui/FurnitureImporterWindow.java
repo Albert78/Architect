@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -109,7 +109,7 @@ public class FurnitureImporterWindow implements Initializable {
 
     public static final String FXML = "SupportObjectsImporterWindow.fxml";
 
-    protected Stage mPrimaryStage = null;
+    protected Stage mStage = null;
     protected final AssetManager mAssetManager;
     protected SH3DFurnitureLibrary mCurrentLibrary = null;
     protected CatalogPieceOfFurnitureControl mCurrentSOControl = null;
@@ -323,15 +323,15 @@ public class FurnitureImporterWindow implements Initializable {
         column.setStyle("-fx-alignment: center;");
     }
 
-    public void show(Stage primaryStage) {
+    public void show(Stage stage) {
         Scene scene = new Scene(mRoot, WINDOW_SIZE_X, WINDOW_SIZE_Y);
-        mPrimaryStage = primaryStage;
+        mStage = stage;
 
-        primaryStage.setScene(scene);
-        primaryStage.setTitle("Architect SH3D-Möbelbibliotheks-Importer");
-        primaryStage.show();
+        stage.setScene(scene);
+        stage.setTitle("Architect SH3D-Möbelbibliotheks-Importer");
+        stage.show();
 
-        mPrimaryStage.onCloseRequestProperty().addListener(new ChangeListener<>() {
+        mStage.onCloseRequestProperty().addListener(new ChangeListener<>() {
             @Override
             public void changed(ObservableValue<? extends EventHandler<WindowEvent>> observable, EventHandler<WindowEvent> oldValue,
                 EventHandler<WindowEvent> newValue) {

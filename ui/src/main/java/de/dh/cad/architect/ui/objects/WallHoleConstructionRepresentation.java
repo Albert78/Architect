@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -17,20 +17,25 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.objects;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
+import de.dh.cad.architect.model.changes.IModelChange;
+import de.dh.cad.architect.model.changes.MacroChange;
+import de.dh.cad.architect.model.changes.ObjectChange;
 import de.dh.cad.architect.model.coords.Dimensions2D;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.objects.Wall;
 import de.dh.cad.architect.model.objects.WallHole;
 import de.dh.cad.architect.model.wallmodel.WallDockEnd;
 import de.dh.cad.architect.ui.Constants;
-import de.dh.cad.architect.ui.controller.UiController;
+import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.construction.Abstract2DView;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
+import de.dh.utils.Vector2D;
 import de.dh.utils.fx.MouseHandlerContext;
-import de.dh.utils.fx.Vector2D;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Point2D;
@@ -261,6 +266,61 @@ public class WallHoleConstructionRepresentation extends Abstract2DRepresentation
         return result;
     }
 
+    public class MergeableSetWallHoleExtendsChange extends ObjectChange {
+        protected final WallHole mWallHole;
+        protected final Length mOldDistanceFromWallEnd;
+        protected final Dimensions2D mOldDimensions;
+
+        public MergeableSetWallHoleExtendsChange(WallHole wallHole, Length oldDistanceFromWallEnd, Dimensions2D oldDimensions,
+                List<IModelChange> innerChanges) {
+            mWallHole = wallHole;
+            mOldDistanceFromWallEnd = oldDistanceFromWallEnd;
+            mOldDimensions = oldDimensions;
+
+            MacroChange consolidatedChange = MacroChange.create(innerChanges, false);
+            objectsAdded(consolidatedChange.getAdditions());
+            objectsModified(consolidatedChange.getModifications());
+            objectsRemoved(consolidatedChange.getRemovals());
+        }
+
+
+        @Override
+        public Optional<IModelChange> tryMerge(IModelChange oldChange) {
+            if (oldChange instanceof MergeableSetWallHoleExtendsChange swhec && swhec.mWallHole.equals(mWallHole)) {
+                return Optional.of(oldChange);
+            }
+            return Optional.empty();
+        }
+
+        @Override
+        public void undo(List<IModelChange> undoChangeTrace) {
+            doSetWallHoleExtends(mWallHole, mOldDistanceFromWallEnd, mOldDimensions, undoChangeTrace);
+        }
+    }
+
+    public void doSetWallHoleExtends(WallHole wallHole,
+            Length distanceFromWallEnd, Dimensions2D dimensions,
+            List<IModelChange> changeTrace) {
+        List<IModelChange> innerChangeTrace = new ArrayList<>();
+        Length oldDistanceFromWallEnd = wallHole.getDistanceFromWallEnd();
+        Dimensions2D oldDimensions = wallHole.getDimensions();
+
+        wallHole.setDistanceFromWallEnd(distanceFromWallEnd, innerChangeTrace);
+        wallHole.setDimensions(dimensions, innerChangeTrace);
+
+        WallHoleReconciler.doUpdateWallHoleAnchors(wallHole, getUiController(), innerChangeTrace);
+
+        changeTrace.add(new MergeableSetWallHoleExtendsChange(wallHole, oldDistanceFromWallEnd, oldDimensions, innerChangeTrace));
+    }
+
+    public void setWallHoleExtends(WallHole wallHole,
+            Length distanceFromWallEnd, Dimensions2D dimensions,
+            boolean tryMergeChange) {
+        List<IModelChange> changeTrace = new ArrayList<>();
+        doSetWallHoleExtends(wallHole, distanceFromWallEnd, dimensions, changeTrace);
+        getUiController().notifyChange(changeTrace, Strings.WALL_HOLE_SET_PROPERTY_CHANGE, tryMergeChange);
+    }
+
     public void dragWallHole(Vector2D moveDelta) {
         WallHole wallHole = getWallHole();
         Wall wall = wallHole.getWall();
@@ -275,9 +335,8 @@ public class WallHoleConstructionRepresentation extends Abstract2DRepresentation
         Length newDistanceFromWallEnd = wallHole.getDockEnd() == WallDockEnd.A
                         ? distanceFromWallEnd.plus(moveWidthL)
                         : distanceFromWallEnd.minus(moveWidthL);
-        wallHole.setDistanceFromWallEnd(newDistanceFromWallEnd);
-        UiController uiController = mParentView.getUiController();
-        WallHoleReconciler.updateWallHoleAnchors(wallHole, uiController);
+
+        setWallHoleExtends(wallHole, newDistanceFromWallEnd, wallHole.getDimensions(), true);
     }
 
     protected void dragWallHoleEnd(Vector2D moveDelta, WallDockEnd dragWallEnd) {
@@ -317,10 +376,9 @@ public class WallHoleConstructionRepresentation extends Abstract2DRepresentation
             newWidth = MIN_WALLHOLE_WIDTH;
         }
 
-        wallHole.setDistanceFromWallEnd(wallHole.getDistanceFromWallEnd().plus(deltaDistance));
-        wallHole.setDimensions(dimensions.withX(newWidth));
-        UiController uiController = mParentView.getUiController();
-        WallHoleReconciler.updateWallHoleAnchors(wallHole, uiController);
+        setWallHoleExtends(wallHole,
+                wallHole.getDistanceFromWallEnd().plus(deltaDistance),
+                dimensions.withX(newWidth), true);
     }
 
     public WallHole getWallHole() {

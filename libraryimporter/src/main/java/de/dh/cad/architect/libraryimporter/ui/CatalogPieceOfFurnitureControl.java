@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@ import de.dh.cad.architect.libraryimporter.sh3d.furniture.CatalogPieceOfFurnitur
 import de.dh.cad.architect.ui.assets.AssetLoader;
 import de.dh.cad.architect.ui.assets.AssetManager;
 import de.dh.cad.architect.utils.vfs.IResourceLocator;
-import de.dh.utils.fx.io.formats.obj.RawMaterialData;
+import de.dh.utils.io.obj.RawMaterialData;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
@@ -201,7 +201,7 @@ public class CatalogPieceOfFurnitureControl extends BorderPane implements Initia
         Node objView = ObjectLoader.load3DResource(mPieceOfFurniture.getModel(), mPieceOfFurniture.getModelRotationJavaFX(), mDefaultMaterials);
         if (objView == null) {
             Group g = new Group();
-            g.getChildren().addAll(AssetLoader.loadBroken3DResource().getSurfaces());
+            g.getChildren().addAll(AssetLoader.loadBroken3DResource().getSurfaceMeshViews());
             objView = g;
         }
         mThreeDObjectView.setObjView(objView, 100);

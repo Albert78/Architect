@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -24,7 +24,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.dh.cad.architect.fx.nodes.CombinedTransformGroup;
 import de.dh.cad.architect.fx.nodes.objviewer.ThreeDObjectViewConfiguration.CameraType;
 import de.dh.utils.fx.FxUtils;
 import de.dh.utils.fx.ImageUtils;
@@ -118,7 +117,7 @@ public class ThreeDObjectViewControl extends StackPane {
     public ThreeDObjectViewControl() {
         mLightDragIndicator = loadFlashlight();
 
-        mTransformRoot = new CombinedTransformGroup();
+        mTransformRoot = new Group();
 
         mPointLight = new PointLight();
         mPointLightGroup = new Group(mPointLight, mLightDragIndicator);
@@ -276,7 +275,7 @@ public class ThreeDObjectViewControl extends StackPane {
         Node lightDragIndicator;
         try {
             lightDragIndicator = Flashlight.create();
-            FxUtils.normalizeAndCenter(lightDragIndicator, NORMALIZED_LIGHT_DRAG_INDICATOR_SIZE);
+            FxUtils.normalizeAndCenter(lightDragIndicator, NORMALIZED_LIGHT_DRAG_INDICATOR_SIZE, true);
             Rotate rotate = new Rotate(90, new Point3D(1, 0, 0));
             lightDragIndicator.getTransforms().add(0, rotate);
         } catch (IOException e) {
@@ -526,7 +525,7 @@ public class ThreeDObjectViewControl extends StackPane {
         mObjView = value;
         if (mObjView != null) {
             children.add(mObjView);
-            FxUtils.normalizeAndCenter(mObjView, NORMALIZED_OBJECT_SIZE);
+            FxUtils.normalizeAndCenter(mObjView, NORMALIZED_OBJECT_SIZE, true);
         }
     }
 

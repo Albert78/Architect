@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ public class SoftDockBehavior extends AbstractDockBehavior {
 
     @Override
     protected void executeDockToSelectedAnchorAction(Anchor anchor) {
-        mView.getUiController().setHandleAnchorPosition(mHandleAnchor, anchor.getPosition());
+        mView.getUiController().setHandleAnchorPosition(mHandleAnchor, anchor.getPosition(), false);
     }
 
     @Override

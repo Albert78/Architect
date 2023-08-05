@@ -53,7 +53,7 @@ import eu.mihosoft.vvecmath.Vector3d;
  */
 public final class Polygon {
     /**
-     * Polygon vertices
+     * Polygon vertices.
      */
     public final List<Vertex> vertices;
 
@@ -62,18 +62,18 @@ public final class Polygon {
      */
     private PropertyStorage shared;
 
+    private boolean valid = true;
+
     /**
      * Plane defined by this polygon.
      *
-     * <b>Note:</b> uses first three vertices to define the plane.
+     * <b>Note:</b> Uses first three vertices to define the plane.
      */
     public final Plane _csg_plane;
     private eu.mihosoft.vvecmath.Plane plane;
 
     /**
      * Returns the plane defined by this triangle.
-     *
-     * @return plane
      */
     public eu.mihosoft.vvecmath.Plane getPlane() {
         return plane;
@@ -82,13 +82,11 @@ public final class Polygon {
     /**
      * Decomposes the specified concave polygon into convex polygons.
      *
-     * @param points the points that define the polygon
-     * @return the decomposed concave polygon (list of convex polygons)
+     * @param points The points that define the polygon.
+     * @return The decomposed concave polygons (list of convex polygons).
      */
     public static List<Polygon> fromConcavePoints(Vector3d... points) {
-        Polygon p = fromPoints(points);
-
-        return PolygonUtil.concaveToConvex(p);
+        return fromConcavePoints(Arrays.asList(points));
     }
 
     /**
@@ -104,7 +102,8 @@ public final class Polygon {
     }
 
     /**
-     * Indicates whether this polyon is valid, i.e., if it
+     * Indicates whether this polyon is valid, i.e., if its vertex vectors are linearly independent and
+     * thus the polygon has a surface area > 0.
      *
      * @return
      */
@@ -112,17 +111,13 @@ public final class Polygon {
         return valid;
     }
 
-    private boolean valid = true;
-
     /**
-     * Constructor. Creates a new polygon that consists of the specified
-     * vertices.
+     * Creates a new polygon that consists of the specified vertices.
      *
-     * <b>Note:</b> the vertices used to initialize a polygon must be coplanar
-     * and form a convex loop.
+     * <b>Note:</b> The vertices used to initialize a polygon must be coplanar and form a convex loop.
      *
-     * @param vertices polygon vertices
-     * @param shared shared property
+     * @param vertices Polygon vertices.
+     * @param shared Shared storage to be used.
      */
     public Polygon(List<Vertex> vertices, PropertyStorage shared) {
         this.vertices = vertices;
@@ -137,42 +132,15 @@ public final class Polygon {
         validateAndInit();
     }
 
-    private void validateAndInit() {
-        if (vertices.size() < 3) {
-            throw new RuntimeException(
-                    "Invalid polygon: at least 3 vertices expected, got: "
-                    + vertices.size());
-        }
-        for (Vertex v : vertices) {
-            v.normal = _csg_plane.normal;
-        }
-        if (Vector3d.ZERO.equals(_csg_plane.normal)) {
-            valid = false;
-            throw new RuntimeException(
-                "Normal is zero! Probably, duplicate points have been specified!\n\n" + toStlString());
-        }
-    }
-
     /**
-     * Constructor. Creates a new polygon that consists of the specified
-     * vertices.
+     * Creates a new polygon that consists of the specified vertices.
      *
-     * <b>Note:</b> the vertices used to initialize a polygon must be coplanar
-     * and form a convex loop.
+     * <b>Note:</b> The vertices used to initialize a polygon must be coplanar and form a convex loop.
      *
-     * @param vertices polygon vertices
+     * @param vertices Polygon vertices
      */
     public Polygon(List<Vertex> vertices) {
-        this.vertices = vertices;
-        this._csg_plane = Plane.createFromPoints(
-                vertices.get(0).pos,
-                vertices.get(1).pos,
-                vertices.get(2).pos);
-
-        this.plane = eu.mihosoft.vvecmath.Plane.
-                fromPointAndNormal(centroid(), _csg_plane.normal);
-
-        validateAndInit();
+        this(vertices, null);
     }
 
     /**
@@ -189,6 +157,22 @@ public final class Polygon {
         this(Arrays.asList(vertices));
     }
 
+    private void validateAndInit() {
+        if (vertices.size() < 3) {
+            throw new RuntimeException(
+                    "Invalid polygon: at least 3 vertices expected, got: "
+                    + vertices.size());
+        }
+        for (Vertex v : vertices) {
+            v.normal = _csg_plane.normal;
+        }
+        if (Vector3d.ZERO.equals(_csg_plane.normal)) {
+            valid = false;
+            throw new RuntimeException(
+                "Invalid polygon with a zero-width normal! Probably, duplicate points have been specified!" + toStlString());
+        }
+    }
+
     @Override
     public Polygon clone() {
         List<Vertex> newVertices = new ArrayList<>();
@@ -199,9 +183,9 @@ public final class Polygon {
     }
 
     /**
-     * Flips this polygon.
+     * Flips this polygon, which will change this polygon.
      *
-     * @return this polygon
+     * @return This polygon.
      */
     public Polygon flip() {
         vertices.forEach((vertex) -> {
@@ -218,7 +202,7 @@ public final class Polygon {
     /**
      * Returns a flipped copy of this polygon.
      *
-     * <b>Note:</b> this polygon is not modified.
+     * <b>Note:</b> This polygon is not modified.
      *
      * @return a flipped copy of this polygon
      */
@@ -328,7 +312,7 @@ public final class Polygon {
     /**
      * Returns a translated copy of this polygon.
      *
-     * <b>Note:</b> this polygon is not modified
+     * <b>Note:</b> this polygon is not modified.
      *
      * @param v the vector that defines the translation
      *
@@ -383,7 +367,7 @@ public final class Polygon {
      * <b>Note:</b> if the applied transformation performs a mirror operation
      * the vertex order of this polygon is reversed.
      *
-     * <b>Note:</b> this polygon is not modified
+     * <b>Note:</b> this polygon is not modified.
      *
      * @param transform the transformation to apply
      * @return a transformed copy of this polygon

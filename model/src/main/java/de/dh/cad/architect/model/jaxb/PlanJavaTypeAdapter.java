@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -27,8 +27,8 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
-import de.dh.cad.architect.model.ChangeSet;
 import de.dh.cad.architect.model.Plan;
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.objects.Anchor;
 import de.dh.cad.architect.model.objects.Ceiling;
 import de.dh.cad.architect.model.objects.Covering;
@@ -97,33 +97,33 @@ public class PlanJavaTypeAdapter extends XmlAdapter<PlanJavaTypeAdapter.PlanProx
 
         public Plan toPlan() {
             Plan result = new Plan(mId);
-            ChangeSet unUsed = new ChangeSet();
+            List<IModelChange> unUsedChangeTrace = new ArrayList<>();
             for (Anchor anchor : mAnchors) {
-                result.addAnchor_Internal(anchor, unUsed);
+                result.addAnchor_Internal(anchor, unUsedChangeTrace);
             }
             for (Dimensioning dimensioning : mDimensionings) {
-                result.addOwnedChild_Internal(dimensioning, unUsed);
+                result.addOwnedChild_Internal(dimensioning, unUsedChangeTrace);
             }
             for (Floor floor : mFloors) {
-                result.addOwnedChild_Internal(floor, unUsed);
+                result.addOwnedChild_Internal(floor, unUsedChangeTrace);
             }
             for (Wall wall : mWalls) {
-                result.addOwnedChild_Internal(wall, unUsed);
+                result.addOwnedChild_Internal(wall, unUsedChangeTrace);
             }
             for (Ceiling ceiling : mCeilings) {
-                result.addOwnedChild_Internal(ceiling, unUsed);
+                result.addOwnedChild_Internal(ceiling, unUsedChangeTrace);
             }
             for (Covering covering : mCoverings) {
-                result.addOwnedChild_Internal(covering, unUsed);
+                result.addOwnedChild_Internal(covering, unUsedChangeTrace);
             }
             for (SupportObject so : mSupportObjects) {
-                result.addOwnedChild_Internal(so, unUsed);
+                result.addOwnedChild_Internal(so, unUsedChangeTrace);
             }
             for (GuideLine guideLine : mGuideLines) {
-                result.addOwnedChild_Internal(guideLine, unUsed);
+                result.addOwnedChild_Internal(guideLine, unUsedChangeTrace);
             }
             for (ObjectsGroup group : mGroups) {
-                result.addOwnedChild_Internal(group, unUsed);
+                result.addOwnedChild_Internal(group, unUsedChangeTrace);
             }
             result.afterDeserialize();
             return result;

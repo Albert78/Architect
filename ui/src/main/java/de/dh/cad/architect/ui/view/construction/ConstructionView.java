@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -46,8 +46,8 @@ import de.dh.cad.architect.ui.view.AbstractUiMode;
 import de.dh.cad.architect.ui.view.NullMode;
 import de.dh.cad.architect.ui.view.OptionalCoordinates2D;
 import de.dh.cad.architect.ui.view.construction.behaviors.AbstractConstructionBehavior;
+import de.dh.utils.Vector2D;
 import de.dh.utils.fx.ImageUtils;
-import de.dh.utils.fx.Vector2D;
 import javafx.event.EventHandler;
 import javafx.geometry.Point2D;
 import javafx.scene.control.ToggleButton;

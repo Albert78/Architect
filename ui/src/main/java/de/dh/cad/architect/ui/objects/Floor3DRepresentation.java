@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -29,14 +29,15 @@ import de.dh.cad.architect.model.objects.Floor;
 import de.dh.cad.architect.model.objects.SurfaceConfiguration;
 import de.dh.cad.architect.ui.assets.AssetLoader;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
-import de.dh.cad.architect.ui.utils.SurfaceAwareCSG;
-import de.dh.cad.architect.ui.utils.SurfaceAwareCSG.ExtrusionSurfaceDataProvider;
-import de.dh.cad.architect.ui.utils.SurfaceAwareCSG.ShapeSurfaceData;
-import de.dh.cad.architect.ui.utils.TextureCoordinateSystem;
-import de.dh.cad.architect.ui.utils.TextureProjection;
 import de.dh.cad.architect.ui.view.threed.Abstract3DView;
 import de.dh.cad.architect.ui.view.threed.ThreeDView;
-import de.dh.utils.fx.Vector3D;
+import de.dh.utils.Vector3D;
+import de.dh.utils.csg.SurfaceAwareCSG;
+import de.dh.utils.csg.SurfaceAwareCSG.ExtrusionSurfaceDataProvider;
+import de.dh.utils.io.MeshData;
+import de.dh.utils.io.fx.FxMeshBuilder;
+import de.dh.utils.csg.TextureCoordinateSystem;
+import de.dh.utils.csg.TextureProjection;
 import eu.mihosoft.jcsg.ext.org.poly2tri.PolygonUtil;
 import eu.mihosoft.vvecmath.Vector3d;
 import javafx.geometry.Point3D;
@@ -45,8 +46,6 @@ import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Rotate;
 
 public class Floor3DRepresentation extends Abstract3DRepresentation {
-    protected static final String SURFACE_TYPE_ID_FLOOR = "Default";
-
     protected final SurfaceData mSurfaceData;
     protected final Rotate mRotation = new Rotate();
 
@@ -58,7 +57,7 @@ public class Floor3DRepresentation extends Abstract3DRepresentation {
         MeshView meshView = mSurfaceData.getMeshView();
         meshView.getTransforms().add(mRotation);
         add(meshView);
-        markSurfaceNode(meshView, new ObjectSurface(this, SURFACE_TYPE_ID_FLOOR) {
+        markSurfaceNode(meshView, new ObjectSurface(this, surfaceTypeId) {
             @Override
             public AssetRefPath getMaterialRef() {
                 return surfaceConfiguration.getMaterialAssignment();
@@ -66,8 +65,7 @@ public class Floor3DRepresentation extends Abstract3DRepresentation {
 
             @Override
             public boolean assignMaterial(AssetRefPath materialRef) {
-                surfaceConfiguration.setMaterialAssignment(materialRef);
-                mParentView.getUiController().notifyObjectsChanged(floor);
+                setObjectSurface(floor, mSurfaceTypeId, materialRef);
                 return true;
             }
         });
@@ -168,9 +166,9 @@ public class Floor3DRepresentation extends Abstract3DRepresentation {
                 return Surface.S1;
             }
         }, 0, false);
-        Map<Surface, ShapeSurfaceData<Surface>> meshes = csg.createJavaFXTrinagleMeshes();
-        ShapeSurfaceData<Surface> shapeSurfaceData = meshes.computeIfAbsent(Surface.S1, s -> ShapeSurfaceData.empty());
-        Mesh mesh = shapeSurfaceData.getMesh();
+        Map<Surface, MeshData> meshes = csg.createMeshes(Optional.empty());
+        MeshData meshData = meshes.get(Surface.S1);
+        Mesh mesh = FxMeshBuilder.buildMesh(meshData);
         MeshView meshView = mSurfaceData.getMeshView();
         meshView.setMesh(mesh);
         Point3D axisP3D = new Point3D(0, 0, 1);

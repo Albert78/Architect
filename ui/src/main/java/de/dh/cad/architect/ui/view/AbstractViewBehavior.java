@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -25,8 +25,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.TreeSet;
 
-import de.dh.cad.architect.model.ChangeSet;
 import de.dh.cad.architect.model.Plan;
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.objects.BaseObject;
 import de.dh.cad.architect.model.objects.ObjectsGroup;
 import de.dh.cad.architect.ui.Strings;
@@ -57,7 +57,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 
 public abstract class AbstractViewBehavior<TRepr extends IModelBasedObject, TAnc extends Node> {
-    protected final ChangeListener<Boolean> OBJECT_SPOTTED_LISTENER_UPDATE_USER_HINT = new ChangeListener<>() {
+    protected final ChangeListener<Boolean> OBJECT_SPOTTED_LISTENER = new ChangeListener<>() {
         @Override
         public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
             ReadOnlyProperty<?> prop = (ReadOnlyProperty<?>) observable;
@@ -185,6 +185,7 @@ public abstract class AbstractViewBehavior<TRepr extends IModelBasedObject, TAnc
         return mUserHintProperty.get();
     }
 
+    // TODO: Add timeout for hint, replace hint automatically by default hint when timeout is expired
     public void setUserHint(String value) {
         mUserHintProperty.set(value);
     }
@@ -550,22 +551,23 @@ public abstract class AbstractViewBehavior<TRepr extends IModelBasedObject, TAnc
     }
 
     protected IContextAction createRemoveObjectsAction(Collection<? extends BaseObject> rootObjects) {
+        int numObjects = rootObjects.size();
         return new IContextAction() {
             @Override
             public String getTitle() {
-                if (rootObjects.size() == 1) {
+                if (numObjects == 1) {
                     return MessageFormat.format(Strings.ACTION_GROUND_PLAN_REMOVE_SINGLE_OBJECT_TITLE, BaseObjectUIRepresentation.getShortName(rootObjects.iterator().next()));
                 }
-                return MessageFormat.format(Strings.ACTION_GROUND_PLAN_REMOVE_OBJECTS_TITLE, rootObjects.size());
+                return MessageFormat.format(Strings.ACTION_GROUND_PLAN_REMOVE_OBJECTS_TITLE, numObjects);
             }
 
             @Override
             public void execute() {
                 UiController uiController = getUiController();
                 uiController.setSelectedObjectIds(Collections.emptyList());
-                ChangeSet changeSet = new ChangeSet();
-                uiController.doRemoveObjects(rootObjects, changeSet);
-                uiController.notifyChanges(changeSet);
+                List<IModelChange> changeTrace = new ArrayList<>();
+                uiController.doRemoveObjects(rootObjects, changeTrace);
+                uiController.notifyChange(changeTrace, MessageFormat.format(Strings.REMOVE_OBJECTS_CHANGE, numObjects));
             }
         };
     }

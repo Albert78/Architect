@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -17,9 +17,11 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.view.construction.feedback.wall;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.objects.Anchor;
 import de.dh.cad.architect.model.objects.Wall;
@@ -69,8 +71,8 @@ public class AncillaryWall implements IWall {
         result.getAnchorWallHandleB().setPosition(handleB.getPosition().projectionXY());
 
         result.setThickness(wall.getThickness());
-        result.setWallBevelA(wall.getWallBevelA());
-        result.setWallBevelB(wall.getWallBevelB());
+        result.setWallBevelA(wall.getWallBevelA(), null);
+        result.setWallBevelB(wall.getWallBevelB(), null);
         return result;
     }
 
@@ -110,8 +112,9 @@ public class AncillaryWall implements IWall {
     }
 
     @Override
-    public void setWallBevelA(WallBevelType value) {
+    public void setWallBevelA(WallBevelType value, List<IModelChange> changeTrace) {
         mWallBevelA = value;
+        // No need to add changes to the change trace - we're no model element
     }
 
     @Override
@@ -120,8 +123,9 @@ public class AncillaryWall implements IWall {
     }
 
     @Override
-    public void setWallBevelB(WallBevelType value) {
+    public void setWallBevelB(WallBevelType value, List<IModelChange> changeTrace) {
         mWallBevelB = value;
+        // No need to add changes to the change trace - we're no model element
     }
 
     @Override

@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
+import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.control.ComboBox;
@@ -42,7 +43,7 @@ public class FxUtils {
         node.setClip(clipRect);
     }
 
-    public static Transform flatten(List<Transform> transforms) {
+    public static Transform concatenate(List<Transform> transforms) {
         Transform result = null;
         for (Transform t : transforms) {
             if (result == null) {
@@ -84,7 +85,11 @@ public class FxUtils {
         });
     }
 
-    public static void normalizeAndCenter(Node node, int targetSize) {
+    public static void normalizeAndCenter(Node node, int targetSize, boolean resetTransforms) {
+        ObservableList<Transform> transforms = node.getTransforms();
+        if (resetTransforms) {
+            transforms.clear();
+        }
         Bounds objBoundsInParent = node.getBoundsInParent();
 
         Translate translate = new Translate();
@@ -105,14 +110,13 @@ public class FxUtils {
         translate.setZ(desiredTranslateZ - currentTranslateZ);
 
         // Normalize the object's size
-        Bounds objBoundsInLocal = node.getBoundsInLocal();
-        double maxSize = Math.max(objBoundsInLocal.getWidth(), Math.max(objBoundsInLocal.getHeight(), objBoundsInLocal.getDepth()));
+        double maxSize = Math.max(objBoundsInParent.getWidth(), Math.max(objBoundsInParent.getHeight(), objBoundsInParent.getDepth()));
         double scale = targetSize / maxSize;
         Scale objectSizeCompensation = new Scale();
         objectSizeCompensation.setX(scale);
         objectSizeCompensation.setY(scale);
         objectSizeCompensation.setZ(scale);
 
-        node.getTransforms().addAll(0, Arrays.asList(objectSizeCompensation, translate));
+        transforms.addAll(0, Arrays.asList(objectSizeCompensation, translate));
     }
 }

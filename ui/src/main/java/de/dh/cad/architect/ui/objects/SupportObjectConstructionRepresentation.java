@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@ package de.dh.cad.architect.ui.objects;
 import java.util.Optional;
 
 import de.dh.cad.architect.model.coords.Length;
-import de.dh.cad.architect.model.objects.Anchor;
 import de.dh.cad.architect.model.objects.SupportObject;
 import de.dh.cad.architect.ui.Constants;
 import de.dh.cad.architect.ui.assets.AssetLoader;
@@ -28,8 +27,8 @@ import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.DragControl;
 import de.dh.cad.architect.ui.view.construction.Abstract2DView;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
+import de.dh.utils.Vector2D;
 import de.dh.utils.fx.MouseHandlerContext;
-import de.dh.utils.fx.Vector2D;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Point2D;
@@ -45,7 +44,7 @@ import javafx.scene.transform.Rotate;
 
 public class SupportObjectConstructionRepresentation extends AbstractAnchoredObjectConstructionRepresentation {
     public interface IMoveHandler {
-        void move(de.dh.cad.architect.model.coords.Vector2D delta);
+        void move(de.dh.cad.architect.model.coords.Vector2D delta, boolean firstMoveEvent);
     }
 
     protected final ImageView mImage;
@@ -85,11 +84,6 @@ public class SupportObjectConstructionRepresentation extends AbstractAnchoredObj
     @Override
     public ConstructionView getParentView() {
         return (ConstructionView) mParentView;
-    }
-
-    @Override
-    public boolean isAnchorVisible(Anchor anchor) {
-        return false;
     }
 
     protected void updateProperties() {
@@ -158,18 +152,22 @@ public class SupportObjectConstructionRepresentation extends AbstractAnchoredObj
 
     public void enableCollectiveMove(IMoveHandler moveHandler) {
         disableCollectiveMove();
-        final DragControl dragControl = new DragControl();
+        final var dragControl = new DragControl() {
+            boolean FirstMoveEvent = true;
+        };
 
         // Drag handler is installed when modification features are turned on
         mCollectiveMoveHandler = createDragHandler(
             op -> { // Start drag
                 dragControl.setPoint(op);
+                dragControl.FirstMoveEvent = true;
             },
             (op, dp, sp) -> { // Drag
                 Point2D last = dragControl.getPoint();
                 de.dh.cad.architect.model.coords.Vector2D delta = CoordinateUtils.point2DToVector2D(dp.subtract(last));
-                moveHandler.move(delta);
+                moveHandler.move(delta, dragControl.FirstMoveEvent);
                 dragControl.setPoint(dp);
+                dragControl.FirstMoveEvent = false;
             },
             (op, dp, sp) -> { // End drag
                 // Nothing to do

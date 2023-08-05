@@ -1,5 +1,23 @@
+/*******************************************************************************
+ *     Architect - A free 2D/3D home and interior designer
+ *     Copyright (C) 2021 - 2023  Daniel Höh
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program.  If not, see <https://www.gnu.org/licenses/>
+ *******************************************************************************/
 package de.dh.utils.fx.viewsfx;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,10 +35,10 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 
 /**
- * Leaf of a dock host hierarchy, containing the actual dockable's UI control(s).
- * A tab dock host is either child of a splitter dock host or a direct child of the root dock host control.
+ * Leaf of a dock zones hierarchy, containing the actual dockable's UI control(s).
+ * A tab dock host is either child of a sash dock host or a direct child of the root dock area control.
  *
- * There will always be at least one tab dock host per {@link DockHostControl}. If no dockables are
+ * There will always be at least one tab dock host per {@link DockAreaControl}. If no dockables are
  * currently docked, that tab dock host is the only child of the dock host control and it is empty.
  */
 public final class TabDockHost extends StackPane implements IDockZone {
@@ -88,10 +106,10 @@ public final class TabDockHost extends StackPane implements IDockZone {
         };
 
         protected final Dockable<?> mDockable;
-        protected final TabDockHost mDockHost;
+        protected final TabDockHost mTabDockHost;
         protected final Label mTitleLabel;
 
-        public DockableTabControl(Dockable<?> dockable, TabDockHost dockHost) {
+        public DockableTabControl(Dockable<?> dockable, TabDockHost tabDockHost) {
             mDockable = dockable;
             mTitleLabel = new Label(dockable.getDockableTitle());
             setGraphic(mTitleLabel); // We use our own Label to enable adding our drag & drop event handlers
@@ -103,7 +121,7 @@ public final class TabDockHost extends StackPane implements IDockZone {
                 event.consume();
             });
             setContent(mDockable.getView());
-            mDockHost = dockHost;
+            mTabDockHost = tabDockHost;
         }
 
         public Dockable<?> getDockable() {
@@ -114,30 +132,35 @@ public final class TabDockHost extends StackPane implements IDockZone {
             return mTitleLabel;
         }
 
-        public TabDockHost getDockHost() {
-            return mDockHost;
+        public TabDockHost getTabDockHost() {
+            return mTabDockHost;
+        }
+
+        public int getDockPosition() {
+            return mTabDockHost.getTabs().indexOf(this);
+        }
+
+        public void selectTab() {
+            mTabDockHost.getTabPane().getSelectionModel().select(getDockPosition());
         }
 
         @Override
         public Node dispose() {
             mDockable.titleProperty().removeListener(mTitleListener);
             setContent(null);
-            mDockHost.removeDockableTab(this);
+            mTabDockHost.removeDockableTab(this);
             return mDockable.getView();
-        }
-
-        public int getDockPosition() {
-            return mDockHost.getTabs().indexOf(this);
         }
     }
 
-    protected final String mDockZoneId;
+    protected final String mTabDockHostId;
+    protected String mDockZoneId;
     protected final TabPane mTabPane;
     protected final Pane mFeedbackPane;
-    protected IDockHostParent mParentDockHost = null;
+    protected IDockZoneParent mDockZoneParent = null;
 
-    public TabDockHost(String dockZoneId) {
-        mDockZoneId = dockZoneId;
+    public TabDockHost(String tabDockHostId, String dockZoneId, IDockZoneParent dockZoneParent) {
+        mTabDockHostId = tabDockHostId;
         mTabPane = new TabPane() {
             // Hack to let our dockable get the focus at once instead of focusing the tab pane
             @Override
@@ -155,15 +178,15 @@ public final class TabDockHost extends StackPane implements IDockZone {
         mFeedbackPane = new Pane();
         mFeedbackPane.setMouseTransparent(true);
         getChildren().addAll(mTabPane, mFeedbackPane);
+        occupyDockZone(dockZoneId, dockZoneParent);
     }
 
-    public static TabDockHost create(IDockHostParent parentDockHost) {
-        return create(parentDockHost, UUID.randomUUID().toString());
+    public static TabDockHost create(IDockZoneParent parentDockHost) {
+        return create(parentDockHost, UUID.randomUUID().toString(), UUID.randomUUID().toString());
     }
 
-    public static TabDockHost create(IDockHostParent parentDockHost, String dockZoneId) {
-        TabDockHost result = new TabDockHost(dockZoneId);
-        result.setParentDockHost(parentDockHost);
+    public static TabDockHost create(IDockZoneParent dockZoneParent, String dockZoneId, String tabDockHostId) {
+        TabDockHost result = new TabDockHost(tabDockHostId, dockZoneId, dockZoneParent);
         result.initialize();
         return result;
     }
@@ -194,11 +217,15 @@ public final class TabDockHost extends StackPane implements IDockZone {
 
     protected void dispose() {
         DockSystem.removeDragTargetEventHandlers(this);
-        mParentDockHost = null;
+        mDockZoneParent = null;
     }
 
-    public boolean isAlive() {
-        return mParentDockHost != null;
+    /**
+     * Returns the id of this tab dock host. This id won't change over time and will identify this tab dock host
+     * forever. In contrast, the dock zone id WILL change when the docking situation changes.
+     */
+    public String getTabDockHostId() {
+        return mTabDockHostId;
     }
 
     public TabPane getTabPane() {
@@ -217,9 +244,35 @@ public final class TabDockHost extends StackPane implements IDockZone {
         return Optional.empty();
     }
 
+    public void selectDockable(Dockable<?> dockable) {
+        @SuppressWarnings("unlikely-arg-type")
+        int index = getTabs().indexOf(dockable.getDockableUIRepresentation());
+        if (index != -1) {
+            mTabPane.getSelectionModel().select(index);
+        }
+    }
+
     @Override
-    public IDockZone findDockZoneById(String dockZoneId) {
-        return dockZoneId.equals(mDockZoneId) ? this : null;
+    public void clearViews() {
+        for (Tab tab : new ArrayList<>(getTabs())) {
+            DockableTabControl dtc = (DockableTabControl) tab;
+            dtc.getDockable().detachFromDockingHost();
+        }
+    }
+
+    @Override
+    public Optional<IDockZone> findDockZoneById(String dockZoneId) {
+        return mDockZoneId.equals(dockZoneId) ? Optional.of(this) : Optional.empty();
+    }
+
+    @Override
+    public Optional<TabDockHost> findTabDockHostById(String tabDockHostId) {
+        return mTabDockHostId.equals(tabDockHostId) ? Optional.of(this) : Optional.empty();
+    }
+
+    @Override
+    public boolean isAlive() {
+        return mDockZoneParent != null;
     }
 
     @Override
@@ -228,17 +281,19 @@ public final class TabDockHost extends StackPane implements IDockZone {
     }
 
     @Override
-    public IDockHostParent getParentDockHost() {
-        return mParentDockHost;
+    public String getDockZoneId() {
+        return mDockZoneId;
     }
 
     @Override
-    public void setParentDockHost(IDockHostParent value) {
-        mParentDockHost = value;
+    public IDockZoneParent getDockZoneParent() {
+        return mDockZoneParent;
     }
 
-    public String getDockZoneId() {
-        return mDockZoneId;
+    @Override
+    public void occupyDockZone(String dockZoneId, IDockZoneParent dockZoneParent) {
+        mDockZoneId = dockZoneId;
+        mDockZoneParent = dockZoneParent;
     }
 
     public boolean isSingleChild(IDockableUIRepresentation representation) {
@@ -441,7 +496,12 @@ public final class TabDockHost extends StackPane implements IDockZone {
         DockSystem.removeDragSourceEventHandlers(dockableTab.getTitleLabel());
 
         if (tabs.isEmpty()) {
-            getParentDockHost().invalidateLeaf(this);
+            getDockZoneParent().invalidateLeaf(this);
         }
+    }
+
+    @Override
+    public String toString() {
+        return "TabDockHost, DockZoneId='" + mDockZoneId + "'";
     }
 }

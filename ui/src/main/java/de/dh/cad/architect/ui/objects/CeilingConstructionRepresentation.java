@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -22,12 +22,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
-import de.dh.cad.architect.model.ChangeSet;
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.model.coords.Position3D;
 import de.dh.cad.architect.model.objects.Anchor;
 import de.dh.cad.architect.model.objects.Ceiling;
 import de.dh.cad.architect.ui.Constants;
+import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.objects.IntermediatePoint.IntermediatePointCallback;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.construction.Abstract2DView;
@@ -221,9 +222,9 @@ public class CeilingConstructionRepresentation extends AbstractAnchoredObjectCon
             @Override
             protected Anchor createHandleAnchor(IntermediatePoint source, Anchor anchorBefore, Anchor anchorAfter, Position2D bendPosition) {
                 Ceiling ceiling = getCeiling();
-                ChangeSet changeSet = new ChangeSet();
-                Anchor anchor = ceiling.createEdgeAnchor(anchorAfter, bendPosition, changeSet).getEdgeHandleAnchor();
-                mParentView.getUiController().notifyChanges(changeSet);
+                List<IModelChange> changeTrace = new ArrayList<>();
+                Anchor anchor = ceiling.createEdgeAnchor(anchorAfter, bendPosition, changeTrace).getEdgeHandleAnchor();
+                mParentView.getUiController().notifyChange(changeTrace, Strings.CEILING_CREATE_HANDLE_CHANGE);
                 return anchor;
             }
         });

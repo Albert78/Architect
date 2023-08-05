@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import de.dh.cad.architect.model.ChangeSet;
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.model.objects.Anchor;
 import de.dh.cad.architect.model.objects.Wall;
@@ -29,6 +29,7 @@ import de.dh.cad.architect.model.wallmodel.IWallAnchor;
 import de.dh.cad.architect.model.wallmodel.WallAnchorPositions;
 import de.dh.cad.architect.model.wallmodel.WallBevelType;
 import de.dh.cad.architect.ui.controller.UiController;
+import de.dh.cad.architect.ui.controller.UiController.DockConflictStrategy;
 import de.dh.cad.architect.ui.view.construction.feedback.wall.AncillaryWallAnchor;
 import de.dh.cad.architect.ui.view.construction.feedback.wall.PrincipalWallAncillaryWallsModel;
 
@@ -75,7 +76,7 @@ public class DockedWallEnding extends AbstractWallEnding {
         SimpleWallEndConfiguration result = new SimpleWallEndConfiguration(this, ancillaryWallsModel, wallBevel, openWallEnd);
         ancillaryWallsModel.updateVirtualHandle(handle, mDockedAnchor.projectionXY(), wallBevel, Optional.of(mDockedAnchor));
         AncillaryWallAnchor startHandle = result.getAncillaryWallsModel().getPrincipalWallStartAnchor();
-        WallAnchorPositions.setWallBevelTypeOfAnchorDock(startHandle, wallBevel);
+        WallAnchorPositions.setWallBevelTypeOfAnchorDock(startHandle, wallBevel, null);
         return result;
     }
 
@@ -138,8 +139,8 @@ public class DockedWallEnding extends AbstractWallEnding {
 
     @Override
     protected void configureFinalWall(AbstractWallEndConfiguration wallEndConfiguration, Wall wall, Anchor wallEndHandle,
-        UiController uiController, ChangeSet changeSet) {
-        uiController.doDock(wallEndHandle, mDockedAnchor, changeSet);
+        UiController uiController, DockConflictStrategy dockConflictStrategy, List<IModelChange> changeTrace) {
+        uiController.doDock(wallEndHandle, mDockedAnchor, dockConflictStrategy, changeTrace);
     }
 
     @Override

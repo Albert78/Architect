@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@ package de.dh.cad.architect.model.objects;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import de.dh.cad.architect.model.assets.AssetRefPath;
@@ -39,13 +40,9 @@ public class SurfaceConfiguration {
         mSurfaceTypeId = surfaceTypeId;
     }
 
-    @XmlAttribute(name = "surfaceTypeId")
+    @XmlTransient
     public String getSurfaceTypeId() {
         return mSurfaceTypeId;
-    }
-
-    public void setSurfaceTypeId(String value) {
-        mSurfaceTypeId = value;
     }
 
     @XmlElement(name = "MaterialRef")
@@ -56,5 +53,14 @@ public class SurfaceConfiguration {
 
     public void setMaterialAssignment(AssetRefPath value) {
         mMaterialAssignment = value;
+    }
+
+    @XmlAttribute(name = "surfaceTypeId")
+    public String getSurfaceTypeId_JAXB() {
+        return mSurfaceTypeId;
+    }
+
+    public void setSurfaceTypeId_JAXB(String value) {
+        mSurfaceTypeId = value;
     }
 }

@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -144,7 +144,7 @@ public class ShowSupportObjectControl extends BorderPane implements Initializabl
         SupportObjectDescriptor soDescriptor = mAssetDescriptor;
         ThreeDObject obj = mAssetLoader.loadSupportObject3DObject(soDescriptor, Optional.empty(), true);
         Group group = new Group();
-        group.getChildren().addAll(obj.getSurfaces());
+        group.getChildren().addAll(obj.getSurfaceMeshViews());
         Bounds boundsInParent = group.getBoundsInParent();
         Optional<Transform> oTrans = obj.getORootTransformation();
         ObservableList<Transform> transforms = group.getTransforms();

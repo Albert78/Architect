@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -20,9 +20,10 @@ package de.dh.cad.architect.ui.objects;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
-import de.dh.cad.architect.model.ChangeSet;
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.objects.BaseObject;
 import de.dh.cad.architect.model.objects.Wall;
@@ -73,11 +74,11 @@ public class WallUIRepresentation extends BaseObjectUIRepresentation {
                     @Override
                     public void setValue(Object value) {
                         Length thickness = (Length) value;
-                        ChangeSet changeSet = new ChangeSet();
-                        wall.setThickness(thickness);
-                        changeSet.changed(wall);
-                        WallReconciler.updateWallAnchors(wall, uiController, changeSet);
-                        uiController.notifyChanges(changeSet);
+
+                        List<IModelChange> changeTrace = new ArrayList<>();
+                        wall.setThickness(thickness, changeTrace);
+                        WallReconciler.doUpdateWallAnchors(wall, uiController, changeTrace);
+                        uiController.notifyChange(changeTrace, Strings.WALL_SET_PROPERTY_CHANGE);
                     }
                 },
                 new UiProperty<WallBevelType>(wall, KEY_PROPERTY_BEVEL_TYPE_A, Strings.WALL_PROPERTIES_BEVEL_TYPE_A, PropertyType.WallBevelType, true) {
@@ -113,13 +114,12 @@ public class WallUIRepresentation extends BaseObjectUIRepresentation {
                     @Override
                     public void setValue(Object value) {
                         Length height = (Length) value;
-                        wall.setHeightA(height);
-                        ChangeSet changeSet = new ChangeSet();
-                        changeSet.changed(wall);
+                        List<IModelChange> changeTrace = new ArrayList<>();
+                        wall.setHeightA(height, changeTrace);
                         ObjectReconcileOperation omo = new ObjectReconcileOperation(Strings.WALL_PROPERTIES_OPERATION_HAME_SET_HEIGHT_A);
                         omo.tryAddObjectToProcess(wall);
-                        uiController.doReconcileObjects(omo, changeSet);
-                        uiController.notifyChanges(changeSet);
+                        uiController.doReconcileObjects(omo, changeTrace);
+                        uiController.notifyChange(changeTrace, Strings.WALL_SET_PROPERTY_CHANGE);
                     }
                 },
                 new UiProperty<Length>(wall, KEY_PROPERTY_WALL_HEIGHT_B, Strings.WALL_PROPERTIES_HEIGHT_B, PropertyType.Length, true) {
@@ -131,13 +131,12 @@ public class WallUIRepresentation extends BaseObjectUIRepresentation {
                     @Override
                     public void setValue(Object value) {
                         Length height = (Length) value;
-                        wall.setHeightB(height);
-                        ChangeSet changeSet = new ChangeSet();
-                        changeSet.changed(wall);
+                        List<IModelChange> changeTrace = new ArrayList<>();
+                        wall.setHeightB(height, changeTrace);
                         ObjectReconcileOperation omo = new ObjectReconcileOperation(Strings.WALL_PROPERTIES_OPERATION_HAME_SET_HEIGHT_B);
                         omo.tryAddObjectToProcess(wall);
-                        uiController.doReconcileObjects(omo, changeSet);
-                        uiController.notifyChanges(changeSet);
+                        uiController.doReconcileObjects(omo, changeTrace);
+                        uiController.notifyChange(changeTrace, Strings.WALL_SET_PROPERTY_CHANGE);
                     }
                 },
                 new ConstantUiProperty<>(wall, KEY_PROPERTY_WALL_LENGTH_BASE, Strings.WALL_PROPERTIES_BASE_LENGTH, PropertyType.Length, wall.calculateBaseLength()),

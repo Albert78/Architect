@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -57,10 +57,9 @@ public class MaterialChooserDialog extends Dialog<AssetRefPath> {
         });
         setResizable(true);
 
+        dialogPane.getStylesheets().add(Constants.APPLICATION_CSS.toExternalForm());
+
         Scene scene = dialogPane.getScene();
-
-        scene.getStylesheets().add(Constants.APPLICATION_CSS.toExternalForm());
-
         Stage stage = (Stage) scene.getWindow();
         stage.setMinHeight(DIALOG_MIN_HEIGHT);
         stage.setMinWidth(DIALOG_MIN_WIDTH);

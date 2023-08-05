@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ import de.dh.cad.architect.ui.objects.WallReconciler.DividedWallParts;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
 import de.dh.cad.architect.ui.view.construction.feedback.wall.ChangeWallsVisualFeedbackManager;
-import de.dh.utils.fx.Vector2D;
+import de.dh.utils.Vector2D;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Bounds;
@@ -94,6 +94,12 @@ public class WallConstructionRepresentation extends AbstractAnchoredObjectConstr
         objectSpottedProperty().addListener(propertiesUpdaterListener);
         objectFocusedProperty().addListener(propertiesUpdaterListener);
         objectEmphasizedProperty().addListener(propertiesUpdaterListener);
+    }
+
+    @Override
+    public void dispose() {
+        removeIntermediatePoints();
+        removeVisualFeedback();
     }
 
     public Wall getWall() {
@@ -297,11 +303,17 @@ public class WallConstructionRepresentation extends AbstractAnchoredObjectConstr
         return mModificationFeaturesEnabled && Wall.isWallHandleAnchor(anchor);
     }
 
+    protected void removeVisualFeedback() {
+        if (mFeedbackManager == null) {
+            return;
+        }
+        mFeedbackManager.uninstall();
+    }
+
     @Override
-    public void dragAnchor(Anchor anchor,
-        Point2D startDragPoint, Point2D currentDragPoint,
-        Position2D targetPosition, boolean shiftDown, boolean altDown, boolean controlDown) {
-        super.dragAnchor(anchor, startDragPoint, currentDragPoint, targetPosition, shiftDown, altDown, controlDown);
+    public void dragAnchor(Anchor anchor, Point2D startDragPoint, Point2D currentDragPoint, Position2D targetPosition, boolean firstMoveEvent,
+    boolean shiftDown, boolean altDown, boolean controlDown) {
+        super.dragAnchor(anchor, startDragPoint, currentDragPoint, targetPosition, firstMoveEvent, shiftDown, altDown, controlDown);
         if (mFeedbackManager == null) {
             return;
         }
@@ -313,7 +325,7 @@ public class WallConstructionRepresentation extends AbstractAnchoredObjectConstr
         Point2D startDragPoint, Position2D startDragPosition) {
         super.startAnchorDrag(anchor, startDragPoint, startDragPosition);
         if (mFeedbackManager != null) {
-            mFeedbackManager.removeVisualObjects();
+            mFeedbackManager.uninstall();
         }
         mFeedbackManager = new ChangeWallsVisualFeedbackManager(getParentView());
         mFeedbackManager.initializeForDragWallHandle(anchor);
@@ -326,13 +338,13 @@ public class WallConstructionRepresentation extends AbstractAnchoredObjectConstr
         if (mFeedbackManager == null) {
             return;
         }
-        mFeedbackManager.removeVisualObjects();
+        mFeedbackManager.uninstall();
         mFeedbackManager = null;
     }
 
     @Override
-    public void dragAnchorDock(Anchor anchor,
-        Position2D targetPosition, boolean shiftDown, boolean altDown, boolean controlDown) {
+    public void dragAnchorDock(Anchor anchor, Position2D targetPosition, boolean firstMoveEvent,
+        boolean shiftDown, boolean altDown, boolean controlDown) {
         Optional<Position2D> oPreferredSnapPos;
         if (controlDown) {
             oPreferredSnapPos = Optional.empty();
@@ -341,7 +353,7 @@ public class WallConstructionRepresentation extends AbstractAnchoredObjectConstr
         } else {
             oPreferredSnapPos = Optional.empty();
         }
-        super.dragAnchorDock(anchor, oPreferredSnapPos.orElse(targetPosition), shiftDown, altDown, controlDown);
+        super.dragAnchorDock(anchor, oPreferredSnapPos.orElse(targetPosition), firstMoveEvent, shiftDown, altDown, controlDown);
     }
 
     @Override

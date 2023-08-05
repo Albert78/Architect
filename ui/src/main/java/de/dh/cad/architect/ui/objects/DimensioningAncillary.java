@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -16,6 +16,8 @@
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>
  *******************************************************************************/
 package de.dh.cad.architect.ui.objects;
+
+import java.util.Optional;
 
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.ui.view.construction.Abstract2DView;
@@ -51,7 +53,7 @@ public class DimensioningAncillary extends Abstract2DAncillaryObject {
         }
 
         mVisual.setLabelDistance(mLabelDistanceScaled + mLabelDistanceUnscaled * scaleCompensation);
-        mVisual.updateShape(mPosition1, mPosition2, scaleCompensation);
+        mVisual.updateShape(mPosition1, mPosition2, Optional.empty(), scaleCompensation);
     }
 
     public void setProperties(Position2D pos1, Position2D pos2, double labelDistanceScaled, double labelDistanceUnscaled, boolean valid) {

@@ -2,7 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.dh.utils.fx</groupId>
 	<artifactId>viewsfx</artifactId>
-    <version>${architect-modules-version}</version>
+    <version>${viewsfx-version}</version>
 
     <parent>
         <groupId>de.dh.cad.architect</groupId>

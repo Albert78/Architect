@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -31,8 +32,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.dh.cad.architect.model.assets.AssetRefPath;
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.objects.SupportObject;
 import de.dh.cad.architect.model.objects.SurfaceConfiguration;
+import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.assets.AssetLoader;
 import de.dh.cad.architect.ui.assets.AssetManager;
 import de.dh.cad.architect.ui.assets.ThreeDObject;
@@ -40,8 +43,8 @@ import de.dh.cad.architect.ui.controller.UiController;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.threed.Abstract3DView;
 import de.dh.cad.architect.ui.view.threed.ThreeDView;
-import de.dh.utils.fx.Vector2D;
-import de.dh.utils.fx.io.formats.obj.RawMaterialData;
+import de.dh.utils.Vector2D;
+import de.dh.utils.io.obj.RawMaterialData;
 import javafx.beans.InvalidationListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
@@ -112,7 +115,7 @@ public class SupportObject3DRepresentation extends Abstract3DRepresentation {
     public void initializeNode() {
         SupportObject supportObject = getSupportObject();
         AssetLoader assetLoader = getAssetLoader();
-        Map<String, AssetRefPath> overriddenSurfaceMaterialRefs = supportObject.getOverriddenSurfaceMaterialRefs();
+        Map<String, AssetRefPath> overriddenSurfaceMaterialRefs = supportObject.getSurfaceMaterialRefs();
         Map<String, RawMaterialData> overriddenMaterials;
         try {
             overriddenMaterials = assetLoader.loadMaterialData(overriddenSurfaceMaterialRefs);
@@ -120,9 +123,10 @@ public class SupportObject3DRepresentation extends Abstract3DRepresentation {
             log.error("Error loading overridden materials", e);
             overriddenMaterials = Collections.emptyMap();
         }
+
         // Prepare object
         ThreeDObject object = assetLoader.loadSupportObject3DObject(supportObject.getSupportObjectDescriptorRef(), Optional.of(overriddenMaterials), true);
-        Collection<MeshView> meshViews = object.getSurfaces();
+        Collection<MeshView> meshViews = object.getSurfaceMeshViews();
         mObjectViewRoot = new Group();
         mObjectViewRoot.getChildren().addAll(meshViews);
         Optional<Transform> oTrans = object.getORootTransformation();
@@ -130,12 +134,12 @@ public class SupportObject3DRepresentation extends Abstract3DRepresentation {
         ObservableList<Transform> transforms = mObjectViewRoot.getTransforms();
         transforms.add(r);
         oTrans.ifPresent(trans -> transforms.add(trans));
-        Bounds origBounds = mObjectViewRoot.getBoundsInParent();
+        Bounds bounds = mObjectViewRoot.getBoundsInParent();
+        mRawBounds = bounds;
         Translate t = new Translate(
-            -origBounds.getWidth() / 2 - origBounds.getMinX(),
-            -origBounds.getHeight() / 2 - origBounds.getMinY(),
-            -origBounds.getMaxZ());
-        mRawBounds = mObjectViewRoot.getBoundsInParent();
+            -bounds.getWidth() / 2 - bounds.getMinX(),
+            -bounds.getHeight() / 2 - bounds.getMinY(),
+            -bounds.getMaxZ());
         transforms.addAll(0, Arrays.asList(mTranslation, mRotation, mScale, t));
         add(mObjectViewRoot);
 
@@ -160,8 +164,7 @@ public class SupportObject3DRepresentation extends Abstract3DRepresentation {
                     if (sc == null) {
                         return false;
                     }
-                    sc.setMaterialAssignment(materialRef);
-                    mParentView.getUiController().notifyObjectsChanged(supportObject);
+                    setObjectSurface(supportObject, mSurfaceTypeId, materialRef);
                     return true;
                 }
             });
@@ -175,10 +178,11 @@ public class SupportObject3DRepresentation extends Abstract3DRepresentation {
         if (obj == null) {
             return;
         }
-        Set<String> meshIds = obj.getSurfaces().stream().map(mv -> mv.getId()).collect(Collectors.toSet());
-        supportObject.initializeSurfaces(meshIds);
+        Set<String> meshIds = obj.getSurfaceMeshViews().stream().map(mv -> mv.getId()).collect(Collectors.toSet());
+        List<IModelChange> changeTrace = new ArrayList<>();
+        supportObject.initializeSurfaces(meshIds, changeTrace);
         initializeNode();
-        uiController.notifyObjectsChanged(supportObject);
+        uiController.notifyChange(changeTrace, Strings.SUPPORT_OBJECT_SET_PROPERTY_CHANGE);
     }
 
     protected void updateProperties() {

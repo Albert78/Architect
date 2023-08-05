@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -149,15 +149,15 @@ public abstract class Abstract3DViewBehavior extends AbstractViewBehavior<Abstra
     @Override
     protected void configureDefaultObjectHandlers(Abstract3DRepresentation repr) {
         repr.enableMouseOverSpot();
-        repr.objectSpottedProperty().removeListener(OBJECT_SPOTTED_LISTENER_UPDATE_USER_HINT);
-        repr.objectSpottedProperty().addListener(OBJECT_SPOTTED_LISTENER_UPDATE_USER_HINT);
+        repr.objectSpottedProperty().removeListener(OBJECT_SPOTTED_LISTENER);
+        repr.objectSpottedProperty().addListener(OBJECT_SPOTTED_LISTENER);
         repr.setOnMouseClicked(MOUSE_CLICK_HANDLER_SELECT_OBJECT);
     }
 
     @Override
     protected void unconfigureDefaultObjectHandlers(Abstract3DRepresentation repr) {
         repr.disableMouseOverSpot();
-        repr.objectSpottedProperty().removeListener(OBJECT_SPOTTED_LISTENER_UPDATE_USER_HINT);
+        repr.objectSpottedProperty().removeListener(OBJECT_SPOTTED_LISTENER);
         repr.setOnMouseClicked(null);
     }
 

@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import de.dh.cad.architect.model.ChangeSet;
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.model.coords.Vector2D;
@@ -31,6 +31,7 @@ import de.dh.cad.architect.model.wallmodel.IWallAnchor;
 import de.dh.cad.architect.model.wallmodel.WallAnchorPositions;
 import de.dh.cad.architect.model.wallmodel.WallBevelType;
 import de.dh.cad.architect.ui.controller.UiController;
+import de.dh.cad.architect.ui.controller.UiController.DockConflictStrategy;
 import de.dh.cad.architect.ui.view.construction.feedback.wall.AncillaryWall;
 import de.dh.cad.architect.ui.view.construction.feedback.wall.AncillaryWallAnchor;
 import de.dh.cad.architect.ui.view.construction.feedback.wall.AncillaryWallsModel;
@@ -121,8 +122,8 @@ public class UnconnectedWallEnding extends AbstractWallEnding {
         List<IWallAnchor> dockedAnchors = cornerWallAnchor.getAllDockedAnchors();
         cornerWallHandleA.setDockedAnchors(dockedAnchors);
         dockedAnchors.add(cornerWallHandleA);
-        WallAnchorPositions.setWallBevelTypeOfAnchorDock(cornerWallHandleA, wallBevelCornerWalls);
-        WallAnchorPositions.setWallBevelTypeOfAnchorDock(cornerWallHandleB, wallBevelCornerWalls);
+        WallAnchorPositions.setWallBevelTypeOfAnchorDock(cornerWallHandleA, wallBevelCornerWalls, null);
+        WallAnchorPositions.setWallBevelTypeOfAnchorDock(cornerWallHandleB, wallBevelCornerWalls, null);
     }
 
     protected void createCornerWalls(AncillaryWallAnchor virtualWallHandleAnchor, String cornerWallCWId, String cornerWallCCWId, PrincipalWallAncillaryWallsModel ancillaryWallsModel) {
@@ -140,7 +141,7 @@ public class UnconnectedWallEnding extends AbstractWallEnding {
     public AbstractWallEndConfiguration configureWallStart(PrincipalWallAncillaryWallsModel ancillaryWallsModel, WallBevelType wallBevel, boolean openWallEnd) {
         SimpleWallEndConfiguration result = new SimpleWallEndConfiguration(this, ancillaryWallsModel, wallBevel, openWallEnd);
         AncillaryWallAnchor startHandle = ancillaryWallsModel.getPrincipalWallStartAnchor();
-        WallAnchorPositions.setWallBevelTypeOfAnchorDock(startHandle, wallBevel);
+        WallAnchorPositions.setWallBevelTypeOfAnchorDock(startHandle, wallBevel, null);
         createCornerWalls(startHandle, CORNER_WALL_ID_A_CW, CORNER_WALL_ID_A_CCW, ancillaryWallsModel);
         return result;
     }
@@ -193,7 +194,7 @@ public class UnconnectedWallEnding extends AbstractWallEnding {
     public AbstractWallEndConfiguration configureWallEnd(PrincipalWallAncillaryWallsModel ancillaryWallsModel, WallBevelType wallBevel) {
         SimpleWallEndConfiguration result = new SimpleWallEndConfiguration(this, ancillaryWallsModel, wallBevel, false);
         AncillaryWallAnchor endHandle = ancillaryWallsModel.getPrincipalWallEndAnchor();
-        WallAnchorPositions.setWallBevelTypeOfAnchorDock(endHandle, wallBevel);
+        WallAnchorPositions.setWallBevelTypeOfAnchorDock(endHandle, wallBevel, null);
         createCornerWalls(endHandle, CORNER_WALL_ID_B_CW, CORNER_WALL_ID_B_CCW, ancillaryWallsModel);
         return result;
     }
@@ -218,8 +219,8 @@ public class UnconnectedWallEnding extends AbstractWallEnding {
 
     @Override
     protected void configureFinalWall(AbstractWallEndConfiguration wallEndConfiguration, Wall wall, Anchor wallEndHandle,
-        UiController uiController, ChangeSet changeSet) {
-        uiController.doSetHandleAnchorPosition(wallEndHandle, mPosition, changeSet);
+        UiController uiController, DockConflictStrategy dockConflictStrategy, List<IModelChange> changeTrace) {
+        uiController.doSetHandleAnchorPosition(wallEndHandle, mPosition, changeTrace);
     }
 
     @Override

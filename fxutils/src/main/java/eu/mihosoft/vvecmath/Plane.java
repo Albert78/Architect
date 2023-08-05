@@ -40,37 +40,35 @@ package eu.mihosoft.vvecmath;
  * @author Michael Hoffer &lt;info@michaelhoffer.de&gt;
  */
 public class Plane {
-
     public static final double TOL = 1e-12;
 
     /**
      * XY plane.
      */
     public static final Plane XY_PLANE = new Plane(Vector3d.ZERO, Vector3d.Z_ONE);
+
     /**
      * XZ plane.
      */
     public static final Plane XZ_PLANE = new Plane(Vector3d.ZERO, Vector3d.Y_ONE);
+
     /**
      * YZ plane.
      */
     public static final Plane YZ_PLANE = new Plane(Vector3d.ZERO, Vector3d.X_ONE);
 
     /**
-     * Normal vector.
+     * Normal vector with a length of 1.
      */
     private final Vector3d normal;
+
     /**
      * Distance to origin.
      */
     private final Vector3d anchor;
 
     /**
-     * Constructor. Creates a new plane defined by its normal vector and an
-     * anchor point
-     *
-     * @param normal plane normal
-     * @param dist distance to origin
+     * Creates a new plane defined by its normal vector and an anchor point.
      */
     private Plane(Vector3d anchor, Vector3d normal) {
         this.normal = normal.normalized();
@@ -79,12 +77,9 @@ public class Plane {
 
     /**
      * Creates a plane defined by the the specified points. The anchor point of
-     * the plane is the centroid of the triangle (a,b,c).
-     *
-     * @param a first point
-     * @param b second point
-     * @param c third point
-     * @return a plane
+     * the created plane is set to the centroid of the triangle (a, b, c).
+     * If the points are positioned in counter-clockwise orientation, the computed normal points
+     * towards the viewer.
      */
     public static Plane fromPoints(Vector3d a, Vector3d b, Vector3d c) {
         Vector3d normal = b.minus(a).crossed(c.minus(a)).normalized();
@@ -101,16 +96,16 @@ public class Plane {
     }
 
     /**
-     * Creates a plane defined by an anchor point and a normal vector.
-     *
-     * @param p anchor point
-     * @param n plane normal
-     * @return a plane
+     * Creates a plane defined by an anchor point and a normal vector. The given parameters will directly be used
+     * as internal storage without cloning.
      */
     public static Plane fromPointAndNormal(Vector3d p, Vector3d n) {
         return new Plane(p, n);
     }
 
+    /**
+     * Clones this plane by reusing the internal storage, i.e. creates a shallow copy.
+     */
     @Override
     public Plane clone() {
         return new Plane(anchor, normal);
@@ -118,7 +113,6 @@ public class Plane {
 
     /**
      * Returns a flipped copy of this plane.
-     * @return flipped coppy of this plane
      */
     public Plane flipped() {
         return new Plane(anchor, normal.negated());
@@ -126,8 +120,6 @@ public class Plane {
 
     /**
      * Return the distance of this plane to the origin.
-     *
-     * @return distance of this plane to the origin
      */
     public double getDist() {
         return anchor.magnitude();
@@ -135,16 +127,13 @@ public class Plane {
 
     /**
      * Return the anchor point of this plane.
-     *
-     * @return anchor point of this plane
      */
     public Vector3d getAnchor() {
         return anchor;
     }
 
     /**
-     * Returns the normal of this plane.
-     * @return the normal of this plane
+     * Returns the normal of this plane (length = 1).
      */
     public Vector3d getNormal() {
         return normal;
@@ -153,11 +142,10 @@ public class Plane {
     /**
      * Projects the specified point onto this plane.
      *
-     * @param p point to project
-     * @return projection of p onto this plane
+     * @param p Point to project.
+     * @return Projection of p onto this plane.
      */
     public Vector3d project(Vector3d p) {
-
         // dist:   the distance of this plane to the origin
         // anchor: is the anchor point of the plane (closest point to origin)
         // n:      the plane normal
@@ -174,8 +162,7 @@ public class Plane {
     /**
      * Returns the shortest distance between the specified point and this plane.
      *
-     * @param p point
-     * @return the shortest distance between the specified point and this plane
+     * @param p Some Point.
      */
     public double distance(Vector3d p) {
         return p.minus(project(p)).magnitude();
@@ -185,34 +172,23 @@ public class Plane {
      * Determines whether the specified point is in front of, in back of or on
      * this plane.
      *
-     * @param p point to check
-     * @param TOL tolerance
+     * @param p Point to check.
+     * @param tol Tolerance.
      * @return {@code 1}, if p is in front of the plane, {@code -1}, if the
      * point is in the back of this plane and {@code 0} if the point is on this
-     * plane
+     * plane.
      */
-    public int compare(Vector3d p, double TOL) {
-
+    public int compare(Vector3d p, double tol) {
         // angle between vector n and vector (p-anchor)
         double t = this.normal.dot(p.minus(anchor));
-        return (t < -TOL) ? -1 : (t > TOL) ? 1 : 0;
+        return (t < -tol) ? -1 : (t > tol) ? 1 : 0;
     }
-    
+
     /**
      * Determines whether the specified point is in front of, in back of or on
-     * this plane.
-     *
-     * @param p point to check
-     * 
-     * @return {@code 1}, if p is in front of the plane, {@code -1}, if the
-     * point is in the back of this plane and {@code 0} if the point is on this
-     * plane
+     * this plane. See {@link #compare(Vector3d, double)} with a tolerance of {@link #TOL}.
      */
     public int compare(Vector3d p) {
-
-        // angle between vector n and vector (p-anchor)
-        double t = this.normal.dot(p.minus(anchor));
-        return (t < -TOL) ? -1 : (t > TOL) ? 1 : 0;
+        return compare(p, TOL);
     }
-
 }

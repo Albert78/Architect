@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -18,16 +18,18 @@
 package de.dh.cad.architect.ui.view.construction.behaviors;
 
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import de.dh.cad.architect.model.ChangeSet;
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.model.objects.Anchor;
 import de.dh.cad.architect.model.objects.BaseObject;
 import de.dh.cad.architect.model.objects.Dimensioning;
 import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.controller.UiController;
+import de.dh.cad.architect.ui.controller.UiController.DockConflictStrategy;
 import de.dh.cad.architect.ui.objects.Abstract2DAncillaryObject;
 import de.dh.cad.architect.ui.objects.Abstract2DRepresentation;
 import de.dh.cad.architect.ui.objects.AbstractAnchoredObjectConstructionRepresentation;
@@ -114,18 +116,18 @@ public class GroundPlanAddDimensioningBehavior extends AbstractConstructionSelec
 
     protected void commitDimensioning(
         Optional<Position2D> oEndPosition, Optional<Anchor> oEndDockAnchor) {
-        ChangeSet changeSet = new ChangeSet();
+        List<IModelChange> changeTrace = new ArrayList<>();
         Position2D startPosition = mOStartDockAnchor.map(a -> a.getPosition().projectionXY()).or(() -> mOStartPosition).get();
         Position2D endPosition = oEndDockAnchor.map(a -> a.getPosition().projectionXY()).or(() -> oEndPosition).get();
-        Dimensioning dimensioning = Dimensioning.create(null, startPosition, endPosition, DIMENSIONING_LABEL_DISTANCE, getPlan(), changeSet);
+        Dimensioning dimensioning = Dimensioning.create(null, startPosition, endPosition, DIMENSIONING_LABEL_DISTANCE, getPlan(), changeTrace);
         UiController uiController = getUiController();
         mOStartDockAnchor.ifPresent(startDockAnchor -> {
-            uiController.doDock(dimensioning.getAnchor1(), startDockAnchor, changeSet);
+            uiController.doDock(dimensioning.getAnchor1(), startDockAnchor, DockConflictStrategy.SkipDock, changeTrace);
         });
         oEndDockAnchor.ifPresent(endDockAnchor -> {
-            uiController.doDock(dimensioning.getAnchor2(), endDockAnchor, changeSet);
+            uiController.doDock(dimensioning.getAnchor2(), endDockAnchor, DockConflictStrategy.SkipDock, changeTrace);
         });
-        uiController.notifyChanges(changeSet);
+        uiController.notifyChange(changeTrace, Strings.DIMENSIONING_ADD_CHANGE);
         mParentMode.resetBehavior();
     }
 

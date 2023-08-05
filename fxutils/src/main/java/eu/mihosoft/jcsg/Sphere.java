@@ -79,7 +79,7 @@ public class Sphere implements Primitive {
      * Constructor. Creates a sphere with the specified radius, number of slices
      * and stacks.
      *
-     * @param radius sphare radius
+     * @param radius sphere radius
      * @param numSlices number of slices
      * @param numStacks number of stacks
      */

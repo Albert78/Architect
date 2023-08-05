@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -20,9 +20,10 @@ package de.dh.cad.architect.ui.objects;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
-import de.dh.cad.architect.model.ChangeSet;
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.objects.BaseObject;
 import de.dh.cad.architect.model.objects.Floor;
@@ -64,8 +65,9 @@ public class FloorUIRepresentation extends BaseObjectUIRepresentation {
 
                     @Override
                     public void setValue(Object value) {
-                        floor.setLevel((Integer) value);
-                        uiController.notifyObjectsChanged(floor);
+                        List<IModelChange> changeTrace = new ArrayList<>();
+                        floor.setLevel((Integer) value, changeTrace);
+                        uiController.notifyChange(changeTrace, Strings.FLOOR_SET_PROPERTY_CHANGE);
                     }
 
                 },
@@ -77,13 +79,12 @@ public class FloorUIRepresentation extends BaseObjectUIRepresentation {
 
                     @Override
                     public void setValue(Object value) {
-                        ChangeSet changeSet = new ChangeSet();
-                        floor.setHeight((Length) value);
-                        changeSet.changed(floor);
+                        List<IModelChange> changeTrace = new ArrayList<>();
+                        floor.setHeight((Length) value, changeTrace);
                         ObjectReconcileOperation omo = new ObjectReconcileOperation(Strings.FLOOR_PROPERTIES_SET_HEIGHT_OPERATION_NAME);
                         omo.tryAddObjectToProcess(floor);
-                        uiController.doReconcileObjects(omo, changeSet);
-                        uiController.notifyChanges(changeSet);
+                        uiController.doReconcileObjects(omo, changeTrace);
+                        uiController.notifyChange(changeTrace, Strings.FLOOR_SET_PROPERTY_CHANGE);
                     }
                 },
                 new UiProperty<Length>(floor, KEY_PROPERTY_THICKNESS, Strings.FLOOR_PROPERTIES_THICKNESS, PropertyType.Length, true) {
@@ -94,13 +95,12 @@ public class FloorUIRepresentation extends BaseObjectUIRepresentation {
 
                     @Override
                     public void setValue(Object value) {
-                        ChangeSet changeSet = new ChangeSet();
-                        floor.setThickness((Length) value);
-                        changeSet.changed(floor);
+                        List<IModelChange> changeTrace = new ArrayList<>();
+                        floor.setThickness((Length) value, changeTrace);
                         ObjectReconcileOperation omo = new ObjectReconcileOperation(Strings.FLOOR_PROPERTIES_SET_THICKNESS_OPERATION_NAME);
                         omo.tryAddObjectToProcess(floor);
-                        uiController.doReconcileObjects(omo, changeSet);
-                        uiController.notifyChanges(changeSet);
+                        uiController.doReconcileObjects(omo, changeTrace);
+                        uiController.notifyChange(changeTrace, Strings.FLOOR_SET_PROPERTY_CHANGE);
                     }
                 },
                 new ConstantUiProperty<>(floor, KEY_PROPERTY_AREA, Strings.FLOOR_PROPERTIES_AREA, PropertyType.String, floor.getAreaString())

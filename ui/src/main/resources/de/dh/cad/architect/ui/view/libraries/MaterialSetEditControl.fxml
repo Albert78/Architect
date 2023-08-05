@@ -55,7 +55,7 @@
                      <graphic>
                         <ImageView fitHeight="16" fitWidth="16">
                            <image>
-                              <Image url="@edit.png" />
+                              <Image url="@import.png" />
                            </image>
                         </ImageView>
                      </graphic>

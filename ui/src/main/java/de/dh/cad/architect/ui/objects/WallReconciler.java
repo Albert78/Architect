@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -20,11 +20,13 @@ package de.dh.cad.architect.ui.objects;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.collections4.CollectionUtils;
 
-import de.dh.cad.architect.model.ChangeSet;
+import de.dh.cad.architect.model.changes.IModelChange;
+import de.dh.cad.architect.model.changes.MacroChange;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.model.coords.Vector2D;
@@ -35,7 +37,9 @@ import de.dh.cad.architect.model.objects.WallHole;
 import de.dh.cad.architect.model.wallmodel.SingleWallBendPoint;
 import de.dh.cad.architect.model.wallmodel.WallDockEnd;
 import de.dh.cad.architect.model.wallmodel.WallEndView;
+import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.controller.UiController;
+import de.dh.cad.architect.ui.controller.UiController.DockConflictStrategy;
 import de.dh.cad.architect.ui.view.DefaultObjectReconciler;
 import de.dh.cad.architect.ui.view.ObjectReconcileOperation;
 
@@ -61,13 +65,13 @@ public class WallReconciler extends DefaultObjectReconciler {
     /**
      * Updates all corner anchors according to the current wall handle positions via an object reconcile operation.
      */
-    public static boolean updateWallAnchors(Wall wall, UiController uiController, ChangeSet changeSet) {
+    public static boolean doUpdateWallAnchors(Wall wall, UiController uiController, List<IModelChange> changeTrace) {
         ObjectReconcileOperation omo = new ObjectReconcileOperation("Update Wall Anchors");
         omo.tryAddObjectToProcess(wall);
         for (WallHole wallHole : wall.getWallHoles()) {
             omo.tryAddObjectToProcess(wallHole);
         }
-        uiController.doReconcileObjects(omo, changeSet);
+        uiController.doReconcileObjects(omo, changeTrace);
         return true;
     }
 
@@ -90,8 +94,29 @@ public class WallReconciler extends DefaultObjectReconciler {
         return true;
     }
 
+    /**
+     * Transfers the dock situation of the source anchor to the target anchor, i.e. docks
+     * the target anchor to the dock master of source and docks all dock slaves from source
+     * to the target anchor.
+     */
+    protected static void doTransferDocks(Anchor source, Anchor target, UiController uiController, List<IModelChange> changeTrace) {
+        for (Anchor dockedAnchor : new ArrayList<>(source.getDockSlaves())) {
+            uiController.doDock(dockedAnchor, target, DockConflictStrategy.SkipDock, changeTrace);
+        }
+        source.getDockMaster().ifPresent(sourceDockMaster -> {
+            uiController.doDock(target, sourceDockMaster, DockConflictStrategy.SkipDock, changeTrace);
+        });
+    }
+
+    public static boolean straightenWallBendPoint(Anchor bendPointAnchor, UiController uiController) {
+        List<IModelChange> changeTrace = new ArrayList<>();
+        boolean result = doStraightenWallBendPoint(bendPointAnchor, uiController, changeTrace);
+        uiController.notifyChange(changeTrace, Strings.WALL_STRAIGHTEN_BENDPOINT_CHANGE);
+        return result;
+    }
+
     // TODO: Is it possible to do all this stuff with only one reconcile operation at the end?
-    public static boolean straightenWallBendPoint(Anchor bendPointAnchor, UiController uiController, ChangeSet changeSet) {
+    public static boolean doStraightenWallBendPoint(Anchor bendPointAnchor, UiController uiController, List<IModelChange> changeTrace) {
         SingleWallBendPoint bendPoint = SingleWallBendPoint.fromAnchorDock(bendPointAnchor).orElse(null);
         if (bendPoint == null) {
             // The given anchor is not a wall bend point
@@ -103,21 +128,24 @@ public class WallReconciler extends DefaultObjectReconciler {
 
         WallEndView resultWallDockEndView = bendPoint.getWall1DockEnd();
         WallEndView removeWallDockEndView = bendPoint.getWall2DockEnd();
+        WallEndView removeWallOppositeEnd = removeWallDockEndView.getOppositeWallEndView();
 
-        // Move windows from second wall to first wall
+        List<IModelChange> innerChangeTrace = new ArrayList<>(); // Changes where only modifications are relevant
+
+        resultWallDockEndView.setWallHeight(removeWallOppositeEnd.getWallHeight(), innerChangeTrace);
+
+        // Move windows from removeWall to resultWall
         WallDockEnd removeWallDockEnd = removeWallDockEndView.getWallEnd();
         for (WallHole wallHole : new ArrayList<>(removeWall.getWallHoles())) {
-            // First ensure wall holes are docked at the wall end which will survive the operation
-            // (if the removed anchor is not located at the direct connection between the two other anchors,
+            // First ensure wall holes are docked at the wall end which will survive the operation.
+            // (If the removed anchor is not located at the direct connection between the two other anchors,
             // i.e. the two walls are not in a line, I don't know how I should calculate the new wall hole
             // position if it is docked to the anchor which will be removed)
             if (wallHole.getDockEnd().equals(removeWallDockEnd)) {
-                WallHoleReconciler.doSwapWallHoleDockEnd(wallHole, uiController, changeSet);
+                WallHoleReconciler.doSwapWallHoleDockEnd(wallHole, uiController, innerChangeTrace);
             }
-            ChangeSet dummy = new ChangeSet();
-            removeWall.removeOwnedChild_Internal(wallHole, dummy);
-            result.addWallHole_Internal(wallHole, dummy);
-            changeSet.changed(result, wallHole);
+            removeWall.removeOwnedChild_Internal(wallHole, innerChangeTrace);
+            result.addWallHole_Internal(wallHole, innerChangeTrace);
         }
 
         // Remove middle anchors from their dock if they are docked, they won't be present any more later
@@ -125,49 +153,94 @@ public class WallReconciler extends DefaultObjectReconciler {
         middleAnchors.addAll(resultWallDockEndView.getAllAnchors());
         middleAnchors.addAll(removeWallDockEndView.getAllAnchors());
         for (Anchor middleAnchor : middleAnchors) {
-            uiController.doRemoveAnchorFromDock(middleAnchor, changeSet);
+            uiController.doRemoveAnchorFromDock(middleAnchor, innerChangeTrace);
         }
 
-        WallEndView removeWallOppositeEnd = removeWallDockEndView.getOppositeWallEndView();
-        // Transfer all docks from the removed wall end to the result wall end
-        uiController.doTransferDocks(removeWallOppositeEnd.getHandleAnchor(), resultWallDockEndView.getHandleAnchor(), changeSet);
-        uiController.doTransferDocks(removeWallOppositeEnd.getCornerL_CCW(), resultWallDockEndView.getCornerL_CCW(), changeSet);
-        uiController.doTransferDocks(removeWallOppositeEnd.getCornerL_CW(), resultWallDockEndView.getCornerL_CW(), changeSet);
-        uiController.doTransferDocks(removeWallOppositeEnd.getCornerU_CCW(), resultWallDockEndView.getCornerU_CCW(), changeSet);
-        uiController.doTransferDocks(removeWallOppositeEnd.getCornerU_CW(), resultWallDockEndView.getCornerU_CW(), changeSet);
+        // Anchors to be transferred to result wall
+        Anchor aEndB = removeWallOppositeEnd.getHandleAnchor();
+        Anchor aEndL_CCW = removeWallOppositeEnd.getCornerL_CCW();
+        Anchor aEndL_CW = removeWallOppositeEnd.getCornerL_CW();
+        Anchor aEndU_CCW = removeWallOppositeEnd.getCornerU_CCW();
+        Anchor aEndU_CW = removeWallOppositeEnd.getCornerU_CW();
 
-        uiController.doSetHandleAnchorPosition(resultWallDockEndView.getHandleAnchor().getRootMasterOfAnchorDock(), removeWallOppositeEnd.getHandleAnchor().getPosition(), changeSet);
+        removeWall.removeAnchor_Internal(aEndB, innerChangeTrace);
+        removeWall.removeAnchor_Internal(aEndL_CCW, innerChangeTrace);
+        removeWall.removeAnchor_Internal(aEndL_CW, innerChangeTrace);
+        removeWall.removeAnchor_Internal(aEndU_CCW, innerChangeTrace);
+        removeWall.removeAnchor_Internal(aEndU_CW, innerChangeTrace);
+
+        // Anchors to be transferred to removeWall
+        Anchor aMidB = resultWallDockEndView.getHandleAnchor();
+        Anchor aMidL_CCW = resultWallDockEndView.getCornerL_CCW();
+        Anchor aMidL_CW = resultWallDockEndView.getCornerL_CW();
+        Anchor aMidU_CCW = resultWallDockEndView.getCornerU_CCW();
+        Anchor aMidU_CW = resultWallDockEndView.getCornerU_CW();
+
+        result.removeAnchor_Internal(aMidB, innerChangeTrace);
+        result.removeAnchor_Internal(aMidL_CCW, innerChangeTrace);
+        result.removeAnchor_Internal(aMidL_CW, innerChangeTrace);
+        result.removeAnchor_Internal(aMidU_CCW, innerChangeTrace);
+        result.removeAnchor_Internal(aMidU_CW, innerChangeTrace);
+
+        // Transfer anchors
+        result.addAnchor_Internal(aEndB, innerChangeTrace);
+        result.addAnchor_Internal(aEndL_CCW, innerChangeTrace);
+        result.addAnchor_Internal(aEndL_CW, innerChangeTrace);
+        result.addAnchor_Internal(aEndU_CCW, innerChangeTrace);
+        result.addAnchor_Internal(aEndU_CW, innerChangeTrace);
+
+        removeWall.addAnchor_Internal(aMidB, innerChangeTrace);
+        removeWall.addAnchor_Internal(aMidL_CCW, innerChangeTrace);
+        removeWall.addAnchor_Internal(aMidL_CW, innerChangeTrace);
+        removeWall.addAnchor_Internal(aMidU_CCW, innerChangeTrace);
+        removeWall.addAnchor_Internal(aMidU_CW, innerChangeTrace);
 
         // Remove obsolete wall
-        uiController.doRemoveObject(removeWall, changeSet);
+        uiController.doRemoveObject(removeWall, innerChangeTrace);
 
         // Reconcile wall and all other docked objects
         ObjectReconcileOperation oro = new ObjectReconcileOperation("Merge walls", Arrays.asList(result));
-        uiController.doReconcileObjects(oro, changeSet);
+        uiController.doReconcileObjects(oro, innerChangeTrace);
+
+        changeTrace.add(MacroChange.create(innerChangeTrace, false));
         return true;
     }
 
     /**
      * Divides the given wall into two and positions the created break point at the given bend position.
      * Given the old wall OW with handle positions OW|A and OW|B, the new walls will be located like this:
+     * <pre>
      * WallPartEndA|A - WallPartEndA|B <docked to> WallPartEndB|A - WallPartEndB|B
+     * </pre>
+     * <pre>
+     * WallPartEndA|A located at OW|A, WallPartEndA|B and WallPartEndB|A located at bendPosition, WallPartEndB|B located at OW|B.
+     * </pre>
      */
     public static DividedWallParts divideWall(Wall wall, Position2D bendPosition, UiController uiController) {
-        Length heightEndB = wall.getHeightB(); // If wall is angular, put the diagonal part to wall end B and make wall end A horizontal
+        List<IModelChange> changeTrace = new ArrayList<>();
+        DividedWallParts result = doDivideWall(wall, bendPosition, uiController, changeTrace);
+        uiController.notifyChange(changeTrace, Strings.WALL_DIVIDE_CHANGE);
+        return result;
+    }
+
+    public static DividedWallParts doDivideWall(Wall wall, Position2D bendPosition, UiController uiController, List<IModelChange> changeTrace) {
+        // If the wall's top is angular, we'll put the diagonal part to wall part end B and make wall part end A horizontal
+        Length heightEndB = wall.getHeightB();
         Length thickness = wall.getThickness();
 
-        ChangeSet changeSet = new ChangeSet();
+        List<IModelChange> innerChangeTrace = new ArrayList<>();
+
         // TODO: Generate names for new wall parts from old name
 
         // The following operation will shrink this wall so that it's B anchor matches the bend position.
         // The new wall will reach from the bend position to the old B end anchors.
 
         // We do a trick to avoid undocking the B end anchors: We create the new wall with zero size
-        // at the bend position and then swap its B end anchors with the B end anchors of this wall
-        Wall wallPartEndB = Wall.createFromHandlePositions(null, thickness, wall.getHeightB(), heightEndB,
-                bendPosition, bendPosition, wall.getOwnerContainer(), changeSet);
+        // at the bend position and then swap its B end anchors with the B end anchors of the wall to be divided
+        Wall wallPartEndB = Wall.createFromHandlePositions(null, thickness, wall.getHeightA(), heightEndB,
+                bendPosition, bendPosition, wall.getOwnerContainer(), innerChangeTrace);
 
-        // Collect B anchors from wallPartEndB (anchors are located at the middle of the whole wall -> aMidXXX)
+        // Collect B side anchors from wallPartEndB (anchors are located at the middle of the whole wall -> aMidXXX)
         Anchor aMidB = wallPartEndB.getAnchorWallHandleB();
         Anchor aMidLB1 = wallPartEndB.getAnchorWallCornerLB1();
         Anchor aMidLB2 = wallPartEndB.getAnchorWallCornerLB2();
@@ -175,11 +248,11 @@ public class WallReconciler extends DefaultObjectReconciler {
         Anchor aMidUB2 = wallPartEndB.getAnchorWallCornerUB2();
 
         // Remove B anchors from wallPartEndB
-        wallPartEndB.removeAnchor_Internal(aMidB);
-        wallPartEndB.removeAnchor_Internal(aMidLB1);
-        wallPartEndB.removeAnchor_Internal(aMidLB2);
-        wallPartEndB.removeAnchor_Internal(aMidUB1);
-        wallPartEndB.removeAnchor_Internal(aMidUB2);
+        wallPartEndB.removeAnchor_Internal(aMidB, innerChangeTrace);
+        wallPartEndB.removeAnchor_Internal(aMidLB1, innerChangeTrace);
+        wallPartEndB.removeAnchor_Internal(aMidLB2, innerChangeTrace);
+        wallPartEndB.removeAnchor_Internal(aMidUB1, innerChangeTrace);
+        wallPartEndB.removeAnchor_Internal(aMidUB2, innerChangeTrace);
 
         // Collect B anchors from thisWall (anchors are located at the end of the whole wall -> aEndXXX)
         Anchor aEndB = wall.getAnchorWallHandleB();
@@ -189,38 +262,37 @@ public class WallReconciler extends DefaultObjectReconciler {
         Anchor aEndUB2 = wall.getAnchorWallCornerUB2();
 
         // Remove B anchors from this wall
-        wall.removeAnchor_Internal(aEndB);
-        wall.removeAnchor_Internal(aEndLB1);
-        wall.removeAnchor_Internal(aEndLB2);
-        wall.removeAnchor_Internal(aEndUB1);
-        wall.removeAnchor_Internal(aEndUB2);
+        wall.removeAnchor_Internal(aEndB, innerChangeTrace);
+        wall.removeAnchor_Internal(aEndLB1, innerChangeTrace);
+        wall.removeAnchor_Internal(aEndLB2, innerChangeTrace);
+        wall.removeAnchor_Internal(aEndUB1, innerChangeTrace);
+        wall.removeAnchor_Internal(aEndUB2, innerChangeTrace);
 
         // Add former B end anchors from thisWall to wallPartEndB
-        wallPartEndB.addAnchor_Internal(aEndB);
-        wallPartEndB.addAnchor_Internal(aEndLB1);
-        wallPartEndB.addAnchor_Internal(aEndLB2);
-        wallPartEndB.addAnchor_Internal(aEndUB1);
-        wallPartEndB.addAnchor_Internal(aEndUB2);
+        wallPartEndB.addAnchor_Internal(aEndB, innerChangeTrace);
+        wallPartEndB.addAnchor_Internal(aEndLB1, innerChangeTrace);
+        wallPartEndB.addAnchor_Internal(aEndLB2, innerChangeTrace);
+        wallPartEndB.addAnchor_Internal(aEndUB1, innerChangeTrace);
+        wallPartEndB.addAnchor_Internal(aEndUB2, innerChangeTrace);
 
         // Add former B end anchors from wallPartEndB to thisWall
-        wall.addAnchor_Internal(aMidB);
-        wall.addAnchor_Internal(aMidLB1);
-        wall.addAnchor_Internal(aMidLB2);
-        wall.addAnchor_Internal(aMidUB1);
-        wall.addAnchor_Internal(aMidUB2);
+        wall.addAnchor_Internal(aMidB, innerChangeTrace);
+        wall.addAnchor_Internal(aMidLB1, innerChangeTrace);
+        wall.addAnchor_Internal(aMidLB2, innerChangeTrace);
+        wall.addAnchor_Internal(aMidUB1, innerChangeTrace);
+        wall.addAnchor_Internal(aMidUB2, innerChangeTrace);
 
-        changeSet.changed(aMidB, aMidLB1, aMidLB2, aMidUB1, aMidUB2, aEndB, aEndLB1, aEndLB2, aEndUB1, aEndUB2);
-
-        wall.setHeightB(wall.getHeightA());
+        wall.setHeightB(wall.getHeightA(), innerChangeTrace);
         // TODO: Allocate each wall hole to one wall end, depending on position
 
         Anchor wallPartEndBHandleA = wallPartEndB.getAnchorWallHandleA();
         Collection<BaseAnchoredObject> changedWalls = Arrays.asList(wall, wallPartEndB);
         ObjectReconcileOperation omo = new ObjectReconcileOperation("Update Wall Anchors", changedWalls);
-        uiController.doReconcileObjects(omo, changeSet);
+        uiController.doReconcileObjects(omo, innerChangeTrace);
 
-        uiController.doDock(wallPartEndBHandleA, aMidB, changeSet);
-        uiController.notifyChanges(changeSet);
+        uiController.doDock(wallPartEndBHandleA, aMidB, DockConflictStrategy.SkipDock, innerChangeTrace);
+
+        changeTrace.add(MacroChange.create(innerChangeTrace, false));
         return new DividedWallParts(wall, wallPartEndB);
     }
 

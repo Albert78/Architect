@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import de.dh.cad.architect.model.assets.SupportObjectDescriptor;
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.MathUtils;
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.model.objects.Anchor;
@@ -151,11 +152,13 @@ public class SupportObjectsAddSupportObjectBehavior extends AbstractConstruction
     public void createNewSupportObject(Position2D pos) {
         UiController uiController = getUiController();
         try {
+            List<IModelChange> changeTrace = new ArrayList<>();
             Collection<String> newObjectIds = new ArrayList<>();
             for (SupportObjectTemplate template : mTemplates) {
-                SupportObject so = template.createSupportObject(pos, uiController);
+                SupportObject so = template.createSupportObject(pos, uiController, changeTrace);
                 newObjectIds.add(so.getId());
             }
+            uiController.notifyChange(changeTrace, Strings.SUPPORT_OBJECT_CREATE_CHANGE);
             uiController.setSelectedObjectIds(newObjectIds);
         } catch (IOException e) {
             showMissingSupportObjectModelAlert();

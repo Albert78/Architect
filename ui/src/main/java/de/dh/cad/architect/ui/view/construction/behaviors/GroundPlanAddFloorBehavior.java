@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import de.dh.cad.architect.model.ChangeSet;
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.model.objects.Anchor;
@@ -33,6 +33,7 @@ import de.dh.cad.architect.model.objects.Floor;
 import de.dh.cad.architect.model.objects.Wall;
 import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.controller.UiController;
+import de.dh.cad.architect.ui.controller.UiController.DockConflictStrategy;
 import de.dh.cad.architect.ui.objects.Abstract2DAncillaryObject;
 import de.dh.cad.architect.ui.objects.Abstract2DRepresentation;
 import de.dh.cad.architect.ui.objects.AbstractAnchoredObjectConstructionRepresentation;
@@ -43,7 +44,7 @@ import de.dh.cad.architect.ui.objects.WallConstructionRepresentation;
 import de.dh.cad.architect.ui.view.AbstractPlanView;
 import de.dh.cad.architect.ui.view.AbstractUiMode;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
-import de.dh.cad.architect.ui.view.construction.GroundPlanUIElementFilter;
+import de.dh.cad.architect.ui.view.construction.GroundPlanLowerUIElementFilter;
 import de.dh.cad.architect.ui.view.construction.feedback.AncillaryPosition;
 import de.dh.cad.architect.ui.view.construction.feedback.polygon.AddPolylineShapeVisualFeedbackManager;
 
@@ -77,7 +78,7 @@ public class GroundPlanAddFloorBehavior extends AbstractConstructionSelectAnchor
 
     @Override
     protected void initializeUiElementFilter() {
-        setUIElementFilter(new GroundPlanUIElementFilter());
+        setUIElementFilter(new GroundPlanLowerUIElementFilter());
     }
 
     @Override
@@ -118,26 +119,29 @@ public class GroundPlanAddFloorBehavior extends AbstractConstructionSelectAnchor
     }
 
     protected void commitFloor() {
-        ChangeSet addChangeSet = new ChangeSet();
+        if (mPositions.size() < 3) {
+            setUserHint(Strings.GROUND_PLAN_ADD_FLOOR_BEHAVIOR_TOO_FEW_POSITIONS);
+            mParentMode.resetBehavior();
+            return;
+        }
+        List<IModelChange> changeTrace = new ArrayList<>();
         Floor floor = Floor.create(mLevel, mHeight, null,
             mPositions
                 .stream()
                 .map(afp -> afp.getPosition())
                 .collect(Collectors.toList()),
-            getPlan(), addChangeSet);
+            getPlan(), changeTrace);
         UiController uiController = getUiController();
-        uiController.notifyChanges(addChangeSet);
-        ChangeSet changeSet = new ChangeSet();
         List<Anchor> edgeHandleAnchors = floor.getEdgeHandleAnchors();
         for (int i = 0; i < mPositions.size(); i++) {
-            AncillaryPosition afp = mPositions.get(i);
+            AncillaryPosition ap = mPositions.get(i);
             int currentI = i;
-            afp.getOAnchor().ifPresent(afpAnchor -> {
+            ap.getOAnchor().ifPresent(apAnchor -> {
                 Anchor floorAnchor = edgeHandleAnchors.get(currentI);
-                uiController.doDock(floorAnchor, afpAnchor, changeSet);
+                uiController.doDock(floorAnchor, apAnchor, DockConflictStrategy.SkipDock, changeTrace);
             });
         }
-        uiController.notifyChanges(changeSet);
+        uiController.notifyChange(changeTrace, Strings.FLOOR_ADD_CHANGE);
         mParentMode.resetBehavior();
     }
 

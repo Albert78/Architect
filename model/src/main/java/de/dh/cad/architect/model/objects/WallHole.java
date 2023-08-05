@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -19,13 +19,15 @@ package de.dh.cad.architect.model.objects;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-import de.dh.cad.architect.model.ChangeSet;
+import de.dh.cad.architect.model.changes.IModelChange;
+import de.dh.cad.architect.model.changes.ObjectModificationChange;
 import de.dh.cad.architect.model.coords.AnchorTarget;
 import de.dh.cad.architect.model.coords.Dimensions2D;
 import de.dh.cad.architect.model.coords.Length;
@@ -196,30 +198,30 @@ public class WallHole extends BaseSolidObject {
     }
 
     @Override
-    public void initializeSurfaces() {
-        clearSurfaces();
-        createSurface(SURFACE_TYPE_EMBRASURE);
+    protected void initializeSurfaces(List<IModelChange> changeTrace) {
+        clearSurfaces(changeTrace);
+        createSurface(SURFACE_TYPE_EMBRASURE, changeTrace);
     }
 
     public static WallHole create(String name, Length parapetHeight, Dimensions2D dimensions,
-        WallDockEnd dockEnd, Length distanceFromWallEnd, Wall wall, ChangeSet changeSet) {
+        WallDockEnd dockEnd, Length distanceFromWallEnd, Wall wall, List<IModelChange> changeTrace) {
         WallHole result = new WallHole(IdGenerator.generateUniqueId(WallHole.class), name, parapetHeight, dimensions, dockEnd, distanceFromWallEnd);
-        wall.addWallHole_Internal(result, changeSet);
+        wall.addWallHole_Internal(result, changeTrace);
         // Those anchors are managed, they can only be changed by changing the other parameters
-        result.createAnchor(AP_CORNER_LA, Position3D.zero(), changeSet);
-        result.createAnchor(AP_CORNER_LB, Position3D.zero(), changeSet);
-        result.createAnchor(AP_CORNER_UA, Position3D.zero(), changeSet);
-        result.createAnchor(AP_CORNER_UB, Position3D.zero(), changeSet);
+        result.createAnchor(AP_CORNER_LA, Position3D.zero(), changeTrace);
+        result.createAnchor(AP_CORNER_LB, Position3D.zero(), changeTrace);
+        result.createAnchor(AP_CORNER_UA, Position3D.zero(), changeTrace);
+        result.createAnchor(AP_CORNER_UB, Position3D.zero(), changeTrace);
+        result.initializeSurfaces(changeTrace);
         return result;
     }
 
     public static WallHole createFromParameters(String name, Length parapetHeight, Dimensions2D dimensions, WallDockEnd dockEnd, Length distanceFromWallEnd,
-        Wall wall, ChangeSet changeSet) {
-        WallHole result = create(name, parapetHeight, dimensions, dockEnd, distanceFromWallEnd, wall, changeSet);
+        Wall wall, List<IModelChange> changeTrace) {
+        WallHole result = create(name, parapetHeight, dimensions, dockEnd, distanceFromWallEnd, wall, changeTrace);
         HoleAnchorPositions3D hap3 = HoleAnchorPositions3D.forWallHole(result);
         Collection<AnchorTarget> anchorTargets = result.calculateAnchorTargets(hap3);
-        result.updateAnchorPositions(anchorTargets, changeSet);
-        changeSet.added(result);
+        updateAnchorPositions(anchorTargets, changeTrace);
         return result;
     }
 
@@ -244,43 +246,64 @@ public class WallHole extends BaseSolidObject {
         return (Wall) getOwnerContainer();
     }
 
-    @XmlJavaTypeAdapter(LengthJavaTypeAdapter.class)
-    @XmlElement(name = "ParapetHeight")
     public Length getParapetHeight() {
         return mParapetHeight;
     }
 
-    public void setParapetHeight(Length value) {
+    public void setParapetHeight(Length value, List<IModelChange> changeTrace) {
+        Length oldParapetHeight = mParapetHeight;
         mParapetHeight = value;
+        changeTrace.add(new ObjectModificationChange(this) {
+            @Override
+            public void undo(List<IModelChange> undoChangeTrace) {
+                setParapetHeight(oldParapetHeight, undoChangeTrace);
+            }
+        });
     }
 
-    @XmlJavaTypeAdapter(Dimensions2DJavaTypeAdapter.class)
-    @XmlElement(name = "Dimensions")
     public Dimensions2D getDimensions() {
         return mDimensions;
     }
 
-    public void setDimensions(Dimensions2D value) {
+    public void setDimensions(Dimensions2D value, List<IModelChange> changeTrace) {
+        Dimensions2D oldDimensions = mDimensions;
         mDimensions = value;
+        changeTrace.add(new ObjectModificationChange(this) {
+            @Override
+            public void undo(List<IModelChange> undoChangeTrace) {
+                setDimensions(oldDimensions, undoChangeTrace);
+            }
+        });
     }
 
-    @XmlElement(name = "DockEnd")
     public WallDockEnd getDockEnd() {
         return mDockEnd;
     }
 
-    public void setDockEnd(WallDockEnd value) {
+    public void setDockEnd(WallDockEnd value, List<IModelChange> changeTrace) {
+        WallDockEnd oldDockEnd = mDockEnd;
         mDockEnd = value;
+        changeTrace.add(new ObjectModificationChange(this) {
+            @Override
+            public void undo(List<IModelChange> undoChangeTrace) {
+                setDockEnd(oldDockEnd, undoChangeTrace);
+            }
+        });
     }
 
-    @XmlJavaTypeAdapter(LengthJavaTypeAdapter.class)
-    @XmlElement(name = "DistanceFromWallEnd")
     public Length getDistanceFromWallEnd() {
         return mDistanceFromWallEnd;
     }
 
-    public void setDistanceFromWallEnd(Length value) {
+    public void setDistanceFromWallEnd(Length value, List<IModelChange> changeTrace) {
+        Length oldDistanceFromWallEnd = mDistanceFromWallEnd;
         mDistanceFromWallEnd = value;
+        changeTrace.add(new ObjectModificationChange(this) {
+            @Override
+            public void undo(List<IModelChange> undoChangeTrace) {
+                setDistanceFromWallEnd(oldDistanceFromWallEnd, undoChangeTrace);
+            }
+        });
     }
 
     public Length getDistanceFromWallEndA(Length wallSideLength) {
@@ -317,5 +340,44 @@ public class WallHole extends BaseSolidObject {
     @XmlTransient
     public Anchor getAnchorCornerUB() {
         return getAnchorByAnchorType(AP_CORNER_UB);
+    }
+
+    @XmlJavaTypeAdapter(LengthJavaTypeAdapter.class)
+    @XmlElement(name = "ParapetHeight")
+    public Length getParapetHeight_JAXB() {
+        return mParapetHeight;
+    }
+
+    public void setParapetHeight_JAXB(Length value) {
+        mParapetHeight = value;
+    }
+
+    @XmlJavaTypeAdapter(Dimensions2DJavaTypeAdapter.class)
+    @XmlElement(name = "Dimensions")
+    public Dimensions2D getDimensions_JAXB() {
+        return mDimensions;
+    }
+
+    public void setDimensions_JAXB(Dimensions2D value) {
+        mDimensions = value;
+    }
+
+    @XmlElement(name = "DockEnd")
+    public WallDockEnd getDockEnd_JAXB() {
+        return mDockEnd;
+    }
+
+    public void setDockEnd_JAXB(WallDockEnd value) {
+        mDockEnd = value;
+    }
+
+    @XmlJavaTypeAdapter(LengthJavaTypeAdapter.class)
+    @XmlElement(name = "DistanceFromWallEnd")
+    public Length getDistanceFromWallEnd_JAXB() {
+        return mDistanceFromWallEnd;
+    }
+
+    public void setDistanceFromWallEnd_JAXB(Length value) {
+        mDistanceFromWallEnd = value;
     }
 }

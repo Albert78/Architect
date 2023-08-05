@@ -1,6 +1,6 @@
 /*******************************************************************************
  *     Architect - A free 2D/3D home and interior designer
- *     Copyright (C) 2021, 2022  Daniel Höh
+ *     Copyright (C) 2021 - 2023  Daniel Höh
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,9 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.objects;
 
-import de.dh.cad.architect.model.ChangeSet;
+import java.util.List;
+
+import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.objects.Anchor;
 import de.dh.cad.architect.model.objects.Floor;
 import de.dh.cad.architect.ui.controller.UiController;
@@ -39,7 +41,7 @@ public class FloorReconciler extends DefaultObjectReconciler {
         return true;
     }
 
-    public static boolean removeFloorCorner(Anchor bendPointHandleAnchor, UiController uiController, ChangeSet changeSet) {
+    public static boolean removeFloorCorner(Anchor bendPointHandleAnchor, UiController uiController, List<IModelChange> changeTrace) {
         Floor floor = (Floor) bendPointHandleAnchor.getAnchorOwner();
         if (floor.getNumEdges() <= 3) {
             return false;
@@ -47,10 +49,10 @@ public class FloorReconciler extends DefaultObjectReconciler {
 
         // Remove anchors from docks
         Anchor edgePositionAnchor = floor.getEdgePositionAnchorForConnectedEdgeHandleAnchor(bendPointHandleAnchor);
-        uiController.doRemoveAnchorFromDock(bendPointHandleAnchor, changeSet);
-        uiController.doRemoveAnchorFromDock(edgePositionAnchor, changeSet);
+        uiController.doRemoveAnchorFromDock(bendPointHandleAnchor, changeTrace);
+        uiController.doRemoveAnchorFromDock(edgePositionAnchor, changeTrace);
 
-        floor.removeEdge(bendPointHandleAnchor, changeSet);
+        floor.removeEdge(bendPointHandleAnchor, changeTrace);
 
         return true;
     }
