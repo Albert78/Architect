@@ -4,6 +4,10 @@
 ![2D view](Documentation/Screenshots/Construction-Create-Wall-2D.png)
 ![2D view](Documentation/Screenshots/Furniture-Living-Room-2D.png)
 ![3D view](Documentation/Screenshots/Selection-Living-Room-3D.png)
+![Material Library](Documentation/Screenshots/Material-Library.png)
+![Material Editor](Documentation/Screenshots/Material-Editor.png)
+![SupportObject Library](Documentation/Screenshots/SupportObject-Library.png)
+![SupportObject Editor](Documentation/Screenshots/SupportObject-Editor.png)
 
 ## tl;dr
 Notwendig:
