@@ -106,13 +106,12 @@ public class LengthControl extends BorderPane implements Initializable {
     }
 
     protected void update() {
-        Length length;
         try {
-            length = parseValue();
+            Length length = parseValue();
+            mLengthProperty.set(length);
         } catch (IllegalStateException e) {
-            length = null;
+            // Ignore, maybe user is editing
         }
-        mLengthProperty.set(length);
     }
 
     @Override

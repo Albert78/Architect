@@ -21,29 +21,17 @@ import de.dh.cad.architect.model.objects.GuideLine;
 import javafx.scene.shape.Polygon;
 
 public class GuideArrow extends Polygon {
-    protected final GuideLine mGuideLine;
-    protected final AbstractRuler mParent;
+    public static final int GUIDE_ARROW_HEIGHT = 12;
+    public static final int GUIDE_ARROW_WIDTH = 10;
 
-    public GuideArrow(GuideLine guideLine, AbstractRuler parent) {
+    protected final GuideLine mGuideLine;
+
+    public GuideArrow(GuideLine guideLine) {
         mGuideLine = guideLine;
-        mParent = parent;
-        Double[] points;
-        switch (guideLine.getDirection()) {
-        case Vertical:
-            points = new Double[] {
-                -AbstractRuler.GUIDE_ARROW_WIDTH / 2.0, 0d,
-                AbstractRuler.GUIDE_ARROW_WIDTH / 2.0, 0d,
-                0d, (double) AbstractRuler.GUIDE_ARROW_HEIGHT};
-            break;
-        case Horizontal:
-            points = new Double[] {
-                0d, -AbstractRuler.GUIDE_ARROW_WIDTH / 2.0,
-                0d, AbstractRuler.GUIDE_ARROW_WIDTH / 2.0,
-                (double) AbstractRuler.GUIDE_ARROW_HEIGHT, 0d};
-            break;
-        default:
-            throw new RuntimeException("Invalid guide line direction '" + guideLine.getDirection() + "'");
-        }
+        Double[] points = new Double[] {
+            -GUIDE_ARROW_WIDTH / 2.0, 0d,
+            GUIDE_ARROW_WIDTH / 2.0, 0d,
+            0d, (double) GUIDE_ARROW_HEIGHT};
         getPoints().setAll(points);
     }
 

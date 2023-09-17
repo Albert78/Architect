@@ -137,7 +137,7 @@ public class WallDimensioningsFeedback implements IVisualObjectFeedback<IWall> {
                     mParentView.addAncillaryObject(mBaseDimensioning);
                 }
                 mBaseDimensioning.setProperties(handleAPosition, handleBPosition,
-                    CoordinateUtils.lengthToCoords(mWall.getThickness()) / 2, BASE_DIMENSIONING_LABEL_DISTANCE, true);
+                    CoordinateUtils.lengthToCoords(mWall.getThickness(), null) / 2, BASE_DIMENSIONING_LABEL_DISTANCE, true);
             } else {
                 if (mBaseDimensioning != null) {
                     mParentView.removeAncillaryObject(mBaseDimensioning.getId());

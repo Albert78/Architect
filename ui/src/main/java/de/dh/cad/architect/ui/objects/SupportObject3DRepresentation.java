@@ -17,19 +17,14 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.objects;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import de.dh.cad.architect.model.assets.AssetRefPath;
 import de.dh.cad.architect.model.changes.IModelChange;
@@ -44,7 +39,6 @@ import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.threed.Abstract3DView;
 import de.dh.cad.architect.ui.view.threed.ThreeDView;
 import de.dh.utils.Vector2D;
-import de.dh.utils.io.obj.RawMaterialData;
 import javafx.beans.InvalidationListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
@@ -60,8 +54,6 @@ import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
 
 public class SupportObject3DRepresentation extends Abstract3DRepresentation {
-    private static Logger log = LoggerFactory.getLogger(SupportObject3DRepresentation.class);
-
     protected static class SupportObjectSurfaceData extends SurfaceData {
         protected PhongMaterial mOriginalMaterial;
         protected Color mOriginalDiffuseColor;
@@ -116,26 +108,22 @@ public class SupportObject3DRepresentation extends Abstract3DRepresentation {
         SupportObject supportObject = getSupportObject();
         AssetLoader assetLoader = getAssetLoader();
         Map<String, AssetRefPath> overriddenSurfaceMaterialRefs = supportObject.getSurfaceMaterialRefs();
-        Map<String, RawMaterialData> overriddenMaterials;
-        try {
-            overriddenMaterials = assetLoader.loadMaterialData(overriddenSurfaceMaterialRefs);
-        } catch (IOException e) {
-            log.error("Error loading overridden materials", e);
-            overriddenMaterials = Collections.emptyMap();
-        }
 
         // Prepare object
-        ThreeDObject object = assetLoader.loadSupportObject3DObject(supportObject.getSupportObjectDescriptorRef(), Optional.of(overriddenMaterials), true);
+        ThreeDObject object = assetLoader.loadSupportObject3DObject(supportObject.getSupportObjectDescriptorRef(), Optional.of(overriddenSurfaceMaterialRefs), true);
         Collection<MeshView> meshViews = object.getSurfaceMeshViews();
         mObjectViewRoot = new Group();
         mObjectViewRoot.getChildren().addAll(meshViews);
-        Optional<Transform> oTrans = object.getORootTransformation();
-        Rotate r = new Rotate(90, new Point3D(1, 0, 0));
+
         ObservableList<Transform> transforms = mObjectViewRoot.getTransforms();
-        transforms.add(r);
-        oTrans.ifPresent(trans -> transforms.add(trans));
+
+        // Object rotation correction plus rotation to JavaFx coordinate system
+        Transform transform = object.getTransform(CoordinateUtils.createTransformArchitectToJavaFx());
+        transforms.add(transform);
         Bounds bounds = mObjectViewRoot.getBoundsInParent();
         mRawBounds = bounds;
+        // Translate object to center X/Y and put its bottom on the ground
+        // TODO: When we support multiple levels, take level into account for the Z coordinate
         Translate t = new Translate(
             -bounds.getWidth() / 2 - bounds.getMinX(),
             -bounds.getHeight() / 2 - bounds.getMinY(),
@@ -216,10 +204,11 @@ public class SupportObject3DRepresentation extends Abstract3DRepresentation {
         SupportObject supportObject = getSupportObject();
         Point2D center = CoordinateUtils.positionToPoint2D(supportObject.getHandleAnchor().getPosition().projectionXY());
         Vector2D size = CoordinateUtils.dimensions2DToUiVector2D(supportObject.getSize());
-        double height = CoordinateUtils.lengthToCoords(supportObject.getHeight());
-        double elevation = CoordinateUtils.lengthToCoords(supportObject.getElevation());
+        double height = CoordinateUtils.lengthToCoords(supportObject.getHeight(), null);
+        double elevation = CoordinateUtils.lengthToCoords(supportObject.getElevation(), null);
         Point3D rotationAxis = new Point3D(0, 0, 1);
-        float rotationDeg = supportObject.getRotationDeg();
+        // Rotation direction is negated against global coordinate system
+        float rotationDeg = -supportObject.getRotationDeg();
 
         mScale.setX(size.getX() / mRawBounds.getWidth());
         mScale.setY(size.getY() / mRawBounds.getHeight());
@@ -228,7 +217,7 @@ public class SupportObject3DRepresentation extends Abstract3DRepresentation {
         mRotation.setAngle(rotationDeg);
         mTranslation.setX(center.getX());
         mTranslation.setY(center.getY());
-        mTranslation.setZ(-elevation); // Negative Z is up
+        mTranslation.setZ(-elevation);
     }
 
     @Override

@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.TreeSet;
 
+import org.apache.commons.lang3.StringUtils;
+
 import de.dh.cad.architect.model.Plan;
 import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.objects.BaseObject;
@@ -35,6 +37,7 @@ import de.dh.cad.architect.ui.objects.BaseObjectUIRepresentation;
 import de.dh.cad.architect.ui.objects.IModelBasedObject;
 import de.dh.cad.architect.ui.view.construction.behaviors.EditSelectedAnchorBehavior;
 import de.dh.cad.architect.ui.view.construction.behaviors.GroundPlanDefaultBehavior;
+import de.dh.cad.architect.utils.ObjectStringAdapter;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -48,7 +51,11 @@ import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.ToolBar;
 import javafx.scene.input.KeyCode;
@@ -137,6 +144,8 @@ public abstract class AbstractViewBehavior<TRepr extends IModelBasedObject, TAnc
     // Behavior specific toolbar beneath the menu
     protected final ToolBar mActionsToolBar;
 
+    protected AbstractUIElementFilter<TRepr> mUIElementFilter = null;
+
     // Behavior specific actions Tab which is presented next to the properties tab
     protected final ObjectProperty<InteractionsControl> mInteractionsControlProperty = new SimpleObjectProperty<>();
 
@@ -215,6 +224,14 @@ public abstract class AbstractViewBehavior<TRepr extends IModelBasedObject, TAnc
     }
 
     public abstract String getTitle();
+
+    public AbstractUIElementFilter<TRepr> getUIElementFilter() {
+        return mUIElementFilter;
+    }
+
+    public void setUIElementFilter(AbstractUIElementFilter<TRepr> filter) {
+        mUIElementFilter = filter;
+    }
 
     protected List<BaseObject> getSelectedObjects() {
         Plan plan = getPlan();
@@ -334,7 +351,7 @@ public abstract class AbstractViewBehavior<TRepr extends IModelBasedObject, TAnc
     // using #install() and #uninstall().
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    protected abstract void setDefaultUserHint();
+    public abstract void setDefaultUserHint();
     protected abstract void updateActionsList(List<BaseObject> selectedObjects, List<BaseObject> selectedRootObjects);
 
     protected void updateToSelection(Collection<TRepr> selectedReprs) {
@@ -349,6 +366,10 @@ public abstract class AbstractViewBehavior<TRepr extends IModelBasedObject, TAnc
     // To be overridden
     protected void configureObject(TRepr repr) {
         configureDefaultObjectHandlers(repr);
+
+        if (mUIElementFilter != null) {
+            mUIElementFilter.configure(repr);
+        }
     }
 
     /**
@@ -359,6 +380,10 @@ public abstract class AbstractViewBehavior<TRepr extends IModelBasedObject, TAnc
      */
     // To be overridden
     protected void unconfigureObject(TRepr repr, boolean objectRemoved) {
+        if (mUIElementFilter != null) {
+            mUIElementFilter.unconfigure(repr);
+        }
+
         unconfigureDefaultObjectHandlers(repr);
     }
 
@@ -368,7 +393,9 @@ public abstract class AbstractViewBehavior<TRepr extends IModelBasedObject, TAnc
      */
     // To be overridden
     protected void updateObject(TRepr repr) {
-        // Nothing to do here
+        if (mUIElementFilter != null) {
+            mUIElementFilter.configure(repr);
+        }
     }
 
     // To be overridden
@@ -492,6 +519,14 @@ public abstract class AbstractViewBehavior<TRepr extends IModelBasedObject, TAnc
         getView().removeEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_SPACE_TOGGLE_OBJECT_VISIBILITY);
     }
 
+    protected void installDefaultDeleteObjectsKeyHandler() {
+        getView().addEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_DELETE_SELECTED_OBJECTS);
+    }
+
+    protected void uninstallDefaultDeleteObjectsKeyHandler() {
+        getView().removeEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_DELETE_SELECTED_OBJECTS);
+    }
+
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Default actions
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -528,6 +563,7 @@ public abstract class AbstractViewBehavior<TRepr extends IModelBasedObject, TAnc
                     UiController uiController = getUiController();
                     ObjectsGroup group = uiController.groupObjects(objectsToGroup, groupName);
                     uiController.setSelectedObjectId(group.getId());
+                    AbstractViewBehavior.this.updateActionsListToSelection();
                 });
             }
         };
@@ -548,6 +584,109 @@ public abstract class AbstractViewBehavior<TRepr extends IModelBasedObject, TAnc
                 uiController.setSelectedObjectIds(objectIdsFromGroup);
             }
         };
+    }
+
+    protected IContextAction createAddObjectsToGroupAction(Collection<BaseObject> objectsToAdd) {
+        return new IContextAction() {
+            @Override
+            public String getTitle() {
+                return MessageFormat.format(Strings.ADD_OBJECTS_TO_GROUP_ACTION_TITLE, objectsToAdd.size());
+            }
+
+            @Override
+            public void execute() {
+                Collection<ObjectsGroup> groups = getPlan().getGroups().values();
+                ChoiceDialog<ObjectStringAdapter<ObjectsGroup>> choiceDialog =
+                        new ChoiceDialog<>(null, ObjectStringAdapter.wrap(groups, g -> BaseObjectUIRepresentation.getShortName(g)));
+                choiceDialog.setTitle(Strings.ADD_OBJECTS_TO_GROUP_GROUP_CHOICE_DIALOG_TITLE);
+                choiceDialog.setHeaderText(
+                        MessageFormat.format(Strings.ADD_OBJECTS_TO_GROUP_GROUP_CHOICE_DIALOG_HEADER_TEXT,
+                            StringUtils.join(objectsToAdd
+                                    .stream()
+                                    .map(o -> BaseObjectUIRepresentation.getShortName(o))
+                                    .toList()), ", "));
+                Optional<ObjectStringAdapter<ObjectsGroup>> oRes = choiceDialog.showAndWait();
+                oRes.ifPresent(osaGroup -> {
+                    ObjectsGroup group = osaGroup.getObj();
+                    UiController uiController = getUiController();
+                    List<IModelChange> changeTrace = new ArrayList<>();
+                    group.addAllObjects(objectsToAdd, changeTrace);
+                    uiController.notifyChange(changeTrace, Strings.ADD_OBJECTS_TO_GROUP_CHANGE);
+                    AbstractViewBehavior.this.updateActionsListToSelection();
+                });
+            }
+        };
+    }
+
+    /**
+     * Retrieves all groups which completely contain the given objects.
+     */
+    protected Collection<ObjectsGroup> getCompletelyContainingGroups(Collection<? extends BaseObject> objects) {
+        return getPlan().getGroups().values()
+            .stream()
+            .filter(group -> group.getGroupedObjects().containsAll(objects))
+            .toList();
+    }
+
+    protected IContextAction createRemoveObjectsFromGroupAction(Collection<BaseObject> objectsToRemove) {
+        return new IContextAction() {
+            @Override
+            public String getTitle() {
+                return MessageFormat.format(Strings.REMOVE_OBJECTS_FROM_GROUP_ACTION_TITLE, objectsToRemove.size());
+            }
+
+            @Override
+            public void execute() {
+                Collection<ObjectsGroup> groups = getCompletelyContainingGroups(objectsToRemove);
+                if (groups.isEmpty()) {
+                    new Alert(AlertType.ERROR, Strings.REMOVE_OBJECTS_FROM_GROUP_NO_GROUPS_ERROR_TEXT, ButtonType.OK)
+                        .showAndWait();
+                    return;
+                }
+                ChoiceDialog<ObjectStringAdapter<ObjectsGroup>> choiceDialog =
+                        new ChoiceDialog<>(null, ObjectStringAdapter.wrap(groups, g -> BaseObjectUIRepresentation.getShortName(g)));
+                choiceDialog.setTitle(Strings.REMOVE_OBJECTS_FROM_GROUP_GROUP_CHOICE_DIALOG_TITLE);
+                choiceDialog.setHeaderText(
+                        MessageFormat.format(Strings.REMOVE_OBJECTS_FROM_GROUP_GROUP_CHOICE_DIALOG_HEADER_TEXT,
+                                objectsToRemove
+                                    .stream()
+                                    .map(o -> BaseObjectUIRepresentation.getShortName(o))
+                                    .toList()));
+                Optional<ObjectStringAdapter<ObjectsGroup>> oRes = choiceDialog.showAndWait();
+                oRes.ifPresent(osaGroup -> {
+                    ObjectsGroup group = osaGroup.getObj();
+                    UiController uiController = getUiController();
+                    List<IModelChange> changeTrace = new ArrayList<>();
+                    group.removeAllObjects(objectsToRemove, changeTrace);
+                    uiController.notifyChange(changeTrace, Strings.REMOVE_OBJECTS_FROM_GROUP_CHANGE);
+                    AbstractViewBehavior.this.updateActionsListToSelection();
+                });
+            }
+        };
+    }
+
+    /**
+     * Adds actions when multiple objects are selected.
+     */
+    protected void addGroupingActionsForSelection(List<BaseObject> selectedObjects, Collection<IContextAction> actions) {
+        // Create group for selected objects
+        if (selectedObjects.size() > 1) {
+            actions.add(createGroupAction(selectedObjects));
+        }
+
+        // Add selected objects to existing group
+        Collection<ObjectsGroup> groups = new ArrayList<>(getPlan().getGroups().values());
+        groups.removeAll(selectedObjects); // Don't offer group as target which is contained in the selection
+        groups.removeAll(selectedObjects.stream().flatMap(bo -> bo.getGroups().stream()).toList());
+        if (groups.size() > 0 && !selectedObjects.isEmpty()) {
+            actions.add(createAddObjectsToGroupAction(selectedObjects));
+        }
+
+        // Remove objects from group action
+        Collection<ObjectsGroup> possibleRemoveGroups = getCompletelyContainingGroups(selectedObjects);
+        if (!possibleRemoveGroups.isEmpty()) {
+            actions.add(createRemoveObjectsFromGroupAction(selectedObjects));
+        }
     }
 
     protected IContextAction createRemoveObjectsAction(Collection<? extends BaseObject> rootObjects) {

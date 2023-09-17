@@ -49,7 +49,7 @@ public abstract class Abstract3DView extends AbstractPlanView<Abstract3DRepresen
     protected final Map<String, Abstract3DRepresentation> mRepresentationsById = new HashMap<>();
     protected final Pane mCenterPane;
 
-    protected double mMinNearClip = CoordinateUtils.lengthToCoords(Length.ofCM(50));
+    protected double mMinNearClip = CoordinateUtils.lengthToCoords(Length.ofCM(50), null);
     protected Group mLightGroup = null;
     protected AmbientLight mAmbientLight;
     protected PointLight mPointLight;
@@ -241,9 +241,11 @@ public abstract class Abstract3DView extends AbstractPlanView<Abstract3DRepresen
 
     public void zoom(double value) {
         mCamera.setTranslateZ(mCamera.getTranslateZ() - value);
+        setDirty();
     }
 
     public void moveNearClip(double value) {
         mCamera.setNearClip(Math.max(mCamera.getNearClip() - value, mMinNearClip));
+        setDirty();
     }
 }

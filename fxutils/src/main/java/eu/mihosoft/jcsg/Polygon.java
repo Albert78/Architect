@@ -259,11 +259,9 @@ public final class Polygon {
      * @return triangles
      */
     public List<Polygon> toTriangles() {
-
         List<Polygon> result = new ArrayList<>();
 
         if (this.vertices.size() >= 3) {
-
             // TODO: improve the triangulation?
             //
             // If our polygon has more vertices, create

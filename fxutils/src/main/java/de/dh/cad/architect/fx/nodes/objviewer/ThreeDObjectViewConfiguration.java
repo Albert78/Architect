@@ -22,30 +22,29 @@ public class ThreeDObjectViewConfiguration {
         Perspective, Parallel
     }
 
-    protected CameraType mCameraType;
+    protected CameraType mCameraType = CameraType.Perspective;
 
-    protected double mRotationAngleX;
-    protected double mRotationAngleY;
-    protected double mScaleFactor;
+    protected double mRotationAngleX = 0;
+    protected double mRotationAngleY = 0;
+    protected double mScaleFactor = 1;
 
-    protected boolean mPointLightOn;
-    protected double mPointLightIntensity;
+    protected boolean mPointLightOn = true;
+    protected double mPointLightIntensity = 0.5;
 
-    protected boolean mAmbientLightOn;
-    protected double mAmbientLightIntensity;
+    protected boolean mAmbientLightOn = true;
+    protected double mAmbientLightIntensity = 0.5;
 
-    protected double mLightAngleX;
-    protected double mLightAngleZ;
+    protected double mLightAngleX = 0;
+    protected double mLightAngleZ = 0;
 
-    protected boolean mCoordinateSystemVisible;
+    protected boolean mCoordinateSystemVisible = true;
 
     public static ThreeDObjectViewConfiguration standardPerspective() {
         return new ThreeDObjectViewConfiguration()
                 .setCameraType(CameraType.Perspective)
 
-                .setRotationAngleX(30)
-                .setRotationAngleY(50)
-                .setScaleFactor(1)
+                .setRotationAngleX(-70)
+                .setRotationAngleY(20)
 
                 .setPointLightOn(true)
                 .setPointLightIntensity(0.5)
@@ -62,7 +61,7 @@ public class ThreeDObjectViewConfiguration {
         return standardPerspective()
                 .setCameraType(CameraType.Parallel)
 
-                .setRotationAngleX(90)
+                .setRotationAngleX(0)
                 .setRotationAngleY(0)
 
                 .setPointLightIntensity(0.35)
@@ -144,6 +143,10 @@ public class ThreeDObjectViewConfiguration {
         return this;
     }
 
+    public double getLightAngleX() {
+        return mLightAngleX;
+    }
+
     public ThreeDObjectViewConfiguration setLightAngleX(double value) {
         mLightAngleX = value;
         return this;
@@ -156,10 +159,6 @@ public class ThreeDObjectViewConfiguration {
     public ThreeDObjectViewConfiguration setLightAngleZ(double value) {
         mLightAngleZ = value;
         return this;
-    }
-
-    public double getLightAngleX() {
-        return mLightAngleX;
     }
 
     public boolean isCoordinateSystemVisible() {

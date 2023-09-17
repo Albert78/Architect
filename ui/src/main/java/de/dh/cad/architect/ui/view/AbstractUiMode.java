@@ -42,11 +42,11 @@ public abstract class AbstractUiMode<TRepr extends IModelBasedObject, TAnc exten
             }
             MenuItem turnVisibleItem = new MenuItem(objectIdsInContext.size() == 1 ? Strings.CONSTRUCTION_BEHAVIOR_TURN_VISIBLE_1 : Strings.CONSTRUCTION_BEHAVIOR_TURN_VISIBLE_N);
             turnVisibleItem.setOnAction(actionEvent -> {
-                mUiController.setObjectsVisibilityFromId(objectIdsInContext, false);
+                mUiController.setObjectsVisibilityByIds(objectIdsInContext, false);
             });
             MenuItem turnInvisibleItem = new MenuItem(objectIdsInContext.size() == 1 ? Strings.CONSTRUCTION_BEHAVIOR_TURN_INVISIBLE_1 : Strings.CONSTRUCTION_BEHAVIOR_TURN_INVISIBLE_N);
             turnInvisibleItem.setOnAction(actionEvent -> {
-                mUiController.setObjectsVisibilityFromId(objectIdsInContext, true);
+                mUiController.setObjectsVisibilityByIds(objectIdsInContext, true);
             });
             return Arrays.asList(turnVisibleItem, turnInvisibleItem);
         }

@@ -46,8 +46,8 @@ public class SupportObject2DAncillary extends Abstract2DAncillaryObject {
     public void updateSupportObject(SupportObjectDescriptor descriptor, Dimensions2D dimensions, AssetLoader assetLoader) {
         mSupportObject = descriptor;
         Image image = assetLoader.loadSupportObjectPlanViewImage(descriptor, true);
-        double cWidth = CoordinateUtils.lengthToCoords(dimensions.getX());
-        double cDepth = CoordinateUtils.lengthToCoords(dimensions.getY());
+        double cWidth = CoordinateUtils.lengthToCoords(dimensions.getX(), null);
+        double cDepth = CoordinateUtils.lengthToCoords(dimensions.getY(), null);
         mImageView.setImage(image);
         mImageView.setFitWidth(cWidth);
         mImageView.setFitHeight(cDepth);

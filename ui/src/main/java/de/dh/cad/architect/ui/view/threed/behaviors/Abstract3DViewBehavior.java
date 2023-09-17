@@ -74,6 +74,7 @@ public abstract class Abstract3DViewBehavior extends AbstractViewBehavior<Abstra
             try {
                 ThreeDView view = getView();
                 dragController.mouseDragged(event, view.getRootGroup(), view.getTransformedRoot());
+                view.setDirty();
             } catch (Exception e) {
                 throw new RuntimeException("Unable to translate plan coordinates", e);
             }
@@ -190,6 +191,11 @@ public abstract class Abstract3DViewBehavior extends AbstractViewBehavior<Abstra
                 querySaveCurrentCameraPosition();
             });
             items.add(saveItem);
+            MenuItem resetCameraPositionItem = new MenuItem(Strings.THREE_D_MENU_CAMERA_POSITIONS_RESET);
+            resetCameraPositionItem.setOnAction(event -> {
+                getView().resetViewState();
+            });
+            items.add(resetCameraPositionItem);
             MenuItem manageItem = new MenuItem(Strings.THREE_D_MENU_CAMERA_POSITIONS_MANAGE_POSITIONS);
             manageItem.setOnAction(event -> {
                 manageCameraPositions();

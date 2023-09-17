@@ -23,6 +23,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.dh.cad.architect.fx.nodes.objviewer.CoordinateSystemConfiguration;
 import de.dh.cad.architect.fx.nodes.objviewer.ThreeDObjectViewControl;
 import de.dh.cad.architect.model.assets.AssetRefPath;
 import de.dh.cad.architect.model.assets.MaterialSetDescriptor;
@@ -70,7 +71,7 @@ public class ChoosePainterMaterialControl extends BorderPane {
                 setMaterial(mrp);
             });
         });
-        mThreeDObjectView = new ThreeDObjectViewControl();
+        mThreeDObjectView = new ThreeDObjectViewControl(CoordinateSystemConfiguration.architect());
         mThreeDObjectView.setPrefWidth(250);
         mThreeDObjectView.setPrefHeight(250);
         mThreeDObjectView.setCoordinateSystemVisible(false);
@@ -90,7 +91,7 @@ public class ChoosePainterMaterialControl extends BorderPane {
                 MaterialSetDescriptor descriptor = mAssetManager.loadMaterialSetDescriptor(materialRef.withoutMaterialName());
                 mSelectedMaterial = materialRef;
                 mCurrentMaterialLabel.setText(descriptor.getName() + " / " + materialName);
-                mThreeDObjectView.setObjView(ThreeDPreview.createMaterialPreviewBox(mSelectedMaterial, mAssetLoader, Optional.empty(), true), 200);
+                mThreeDObjectView.setObjView(ThreeDPreview.createMaterialPreviewBox(mSelectedMaterial, mAssetLoader, Optional.empty(), true));
                 return;
             } catch (IOException e) {
                 log.error("Error loading material <" + materialRef + ">");
@@ -98,7 +99,7 @@ public class ChoosePainterMaterialControl extends BorderPane {
         }
         mSelectedMaterial = null;
         mCurrentMaterialLabel.setText(Strings.THREE_D_PAINTER_BEHAVIOR_NO_MATERIAL_CHOOSEN);
-        mThreeDObjectView.setObjView(null, 200);
+        mThreeDObjectView.setObjView(null);
     }
 
     public AssetRefPath getSelectedMaterial() {

@@ -36,7 +36,7 @@ public class ConstructionNullBehavior extends AbstractConstructionBehavior {
     }
 
     @Override
-    protected void setDefaultUserHint() {
+    public void setDefaultUserHint() {
         // Do nothing
     }
 

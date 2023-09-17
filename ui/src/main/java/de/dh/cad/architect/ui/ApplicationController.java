@@ -92,7 +92,7 @@ public class ApplicationController {
     public static ApplicationController create(Configuration config, Stage primaryStage) {
         log.info("Creating application controller");
         ApplicationController result = new ApplicationController(config, primaryStage);
-        result.setPlan(Plan.newPlan()); // To avoid initialization issues in main window, which always needs an active plan object
+        result.setPlan(Plan.newPlan(), null); // To avoid initialization issues in main window, which always needs an active plan object
         return result;
     }
 
@@ -103,14 +103,15 @@ public class ApplicationController {
                 updateTitle();
             }
         };
-        ChangeListener<Path> updateAssetManagerListener = new ChangeListener<>() {
+        ChangeListener<Plan> updateAssetManagerListener = new ChangeListener<>() {
             @Override
-            public void changed(ObservableValue<? extends Path> observable, Path oldValue, Path newValue) {
-                mAssetManager.setPlanBaseDirectory(new PlainFileSystemDirectoryLocator(newValue));
+            public void changed(ObservableValue<? extends Plan> observable, Plan oldValue, Plan newValue) {
+                // Attention: Ensure that mPlanFilePath is always set before setting mPlanProperty
+                mAssetManager.setCurrentPlan(newValue.getId(), new PlainFileSystemDirectoryLocator(getPlanFilePath()));
             }
         };
         mPlanFilePathProperty.addListener(updateTitleChangeListener);
-        mPlanFilePathProperty.addListener(updateAssetManagerListener);
+        mPlanProperty.addListener(updateAssetManagerListener);
         mDirtyProperty.addListener(updateTitleChangeListener);
 
         mAssetManager.start();
@@ -176,15 +177,18 @@ public class ApplicationController {
         return mPlanProperty.getValue();
     }
 
-    public void setPlan(Plan value) {
-        mPlanProperty.setValue(value);
+    public void setPlan(Plan plan, Path planFilePath) {
+        // Attention: Plan's file path must be set first, listeners are attached to mPlanProperty and assume
+        // the plan's directory already to be updated
+        mPlanFilePathProperty.set(planFilePath);
+        mPlanProperty.setValue(plan);
     }
 
     public Path getPlanFilePath() {
         return mPlanFilePathProperty.get();
     }
 
-    protected void setPlanFilePath(Path value) {
+    protected void changePlanFilePath(Path value) {
         mPlanFilePathProperty.set(value);
     }
 
@@ -216,8 +220,7 @@ public class ApplicationController {
     public void newPlan() {
         log.info("Creating new root plan");
         mConfig.setLastPlanFilePath(null);
-        setPlan(Plan.newPlan());
-        setPlanFilePath(null);
+        setPlan(Plan.newPlan(), null);
         setDirty(false);
         updateTitle();
     }
@@ -228,8 +231,7 @@ public class ApplicationController {
     public void loadPlanFile(Path planFilePath) {
         log.info("Loading plan from '" + planFilePath + "'");
         PlanFile planFile = PlanFileIO.deserializePlanFile(planFilePath);
-        setPlanFilePath(planFilePath);
-        setPlan(planFile.getPlan());
+        setPlan(planFile.getPlan(), planFilePath);
         try {
             mUiController.setUiState(planFile.getUiState());
         } catch (Exception e) {
@@ -246,7 +248,7 @@ public class ApplicationController {
     public void savePlanAs(Path planFilePath) {
         log.info("Saving current plan as '" + planFilePath + "'");
         PlanFileIO.serializePlanFile(new PlanFile(getPlan(), mUiController.getUiState()), planFilePath);
-        setPlanFilePath(planFilePath);
+        changePlanFilePath(planFilePath);
         mConfig.setLastPlanFilePath(planFilePath);
         setDirty(false);
         updateTitle();

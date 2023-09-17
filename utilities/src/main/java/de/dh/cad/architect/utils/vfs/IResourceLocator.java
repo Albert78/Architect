@@ -51,4 +51,8 @@ public interface IResourceLocator extends IPathLocator {
             copyTo(os);
         }
     }
+    default void copyTo(IDirectoryLocator target) throws IOException {
+        IResourceLocator targetResource = target.resolveResource(getFileName());
+        copyTo(targetResource);
+    }
 }

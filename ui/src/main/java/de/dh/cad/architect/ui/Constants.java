@@ -27,7 +27,7 @@ public class Constants {
     public static Length DEFAULT_WALL_THICKNESS = Length.ofCM(30);
     public static Length DEFAULT_WALL_HEIGHT = Length.ofCM(250);
 
-    public static final int TWO_D_INFO_SYMBOLS_SIZE = 20;
+    public static final int TWO_D_INFO_SYMBOLS_SIZE = 32;
 
     public static final double VIEW_ORDER_OFFSET_NORMAL = 0;
     public static final double VIEW_ORDER_OFFSET_FOCUSED = -10;

@@ -72,7 +72,7 @@ public class GroundPlanAddCeilingBehavior extends AbstractConstructionSelectAnch
     }
 
     @Override
-    protected void setDefaultUserHint() {
+    public void setDefaultUserHint() {
         setUserHint(Strings.GROUND_PLAN_ADD_CEILING_BEHAVIOR_DEFAULT_USER_HINT);
     }
 

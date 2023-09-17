@@ -163,10 +163,10 @@ public class WallAngleConstructionAncillary extends Abstract2DAncillaryObject {
         double endAngleDeg = endAngle.getAngleDeg();
         ArcAngles angles = turnToSmallerSide ? ArcAngles.normalized(startAngleDeg, endAngleDeg) : new ArcAngles(startAngleDeg, endAngleDeg);
         double angle = angles.getDelta();
-        double normalizedStartAngle = angles.getStartAngle();
-        double normalizedEndAngle = angles.getEndAngle();
+        double normalizedStartAngle = -angles.getStartAngle();
+        double normalizedEndAngle = -angles.getEndAngle();
         mArc.setStartAngle(360 - normalizedStartAngle);
-        mArc.setLength(-angle);
+        mArc.setLength(angle);
         mArc.setRadiusX(ARC_RADIUS);
         mArc.setRadiusY(ARC_RADIUS);
 
@@ -178,7 +178,7 @@ public class WallAngleConstructionAncillary extends Abstract2DAncillaryObject {
         double textX = centerX - textWidth / 2;
         double textY;
 
-        double rotateAngle = (normalizedStartAngle + angle / 2 + 90 + 360) % 360;
+        double rotateAngle = (normalizedStartAngle - angle / 2 + 90 + 360) % 360;
         if (rotateAngle > 91 && rotateAngle < 269) {
             textY = centerY + ARC_RADIUS + 3;
             mText.setTextOrigin(VPos.TOP);

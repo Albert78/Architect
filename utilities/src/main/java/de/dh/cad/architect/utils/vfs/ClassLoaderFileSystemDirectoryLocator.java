@@ -26,8 +26,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class ClassLoaderFileSystemDirectoryLocator extends ClassLoaderFileSystemPathLocator implements IDirectoryLocator {
-    public ClassLoaderFileSystemDirectoryLocator(Path path, Module module) {
-        super(path, module);
+    public ClassLoaderFileSystemDirectoryLocator(Path path, Class<?> base) {
+        super(path, base);
     }
 
     @Override

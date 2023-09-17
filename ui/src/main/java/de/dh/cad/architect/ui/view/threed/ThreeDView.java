@@ -184,7 +184,7 @@ public class ThreeDView extends Abstract3DView {
             return;
         }
         CameraPosition currentCameraPosition = mSavedViewState.getCurrentCameraPosition();
-        setCameraPosition(currentCameraPosition);
+        doSetCameraPosition(currentCameraPosition);
     }
 
     public CameraPosition getCurrentCameraPosition() {
@@ -202,6 +202,11 @@ public class ThreeDView extends Abstract3DView {
     }
 
     public void setCameraPosition(CameraPosition cameraPosition) {
+        doSetCameraPosition(cameraPosition);
+        setDirty();
+    }
+
+    protected void doSetCameraPosition(CameraPosition cameraPosition) {
         mCamera.setTranslateZ(cameraPosition.getCameraTranslateZ());
         mCamera.setNearClip(Math.max(cameraPosition.getCameraNearClip(), mMinNearClip));
         mCamera.setFieldOfView(cameraPosition.getFieldOfView());
@@ -213,11 +218,27 @@ public class ThreeDView extends Abstract3DView {
         translate.setZ(cameraPosition.getZ());
     }
 
+    public void resetViewState() {
+        initializeViewState();
+        updateViewToViewState();
+        setDirty();
+    }
+
     public void setNamedCameraPositions(Map<String, CameraPosition> newPositions) {
+        doSetNamedCameraPositions(newPositions);
+        setDirty();
+    }
+
+    public void doSetNamedCameraPositions(Map<String, CameraPosition> newPositions) {
         mSavedViewState.setNamedCameraPositions(newPositions);
     }
 
     public void saveCameraPosition(String positionName) {
+        doSaveCameraPosition(positionName);
+        setDirty();
+    }
+
+    public void doSaveCameraPosition(String positionName) {
         mSavedViewState.getNamedCameraPositions().put(positionName, getCurrentCameraPosition());
     }
 

@@ -312,7 +312,7 @@ public class WallsSnappingModel {
         double nearestDistance = Double.MAX_VALUE;
         Position2D nearestPos = null;
         for (Position2D position : positions) {
-            double distance = CoordinateUtils.lengthToCoords(position.distance(startPos));
+            double distance = CoordinateUtils.lengthToCoords(position.distance(startPos), null);
             if (distance < Math.min(nearestDistance, maxDistance)) {
                 nearestDistance = distance;
                 nearestPos = position;

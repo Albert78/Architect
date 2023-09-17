@@ -44,6 +44,7 @@ import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.ui.assets.AssetLoader;
 import de.dh.cad.architect.ui.assets.AssetLoader.ImportResource;
 import de.dh.cad.architect.ui.assets.AssetManager;
+import de.dh.cad.architect.ui.assets.AssetManager.AssetLocation;
 import de.dh.cad.architect.ui.assets.AssetManager.LibraryData;
 import de.dh.cad.architect.utils.vfs.IResourceLocator;
 import de.dh.utils.io.obj.RawMaterialData;
@@ -95,7 +96,9 @@ public class ExternalTextureDescriptor {
         assetLoader.importMaterialSetMtlResource(importedDescriptor, materials, sourceImageBaseFileName + ".mtl", additionalResources);
     }
 
-    public MaterialSetDescriptor importTexture(LibraryData targetLibraryData, AssetManager assetManager) {
+    public MaterialSetDescriptor importTexture(LibraryData targetLibraryData, AssetLoader assetLoader) {
+        AssetManager assetManager = assetLoader.getAssetManager();
+
         String id = mSourceTexture.getId();
         if (StringUtils.isEmpty(id)) {
             log.debug("Generating id for texture");
@@ -128,7 +131,7 @@ public class ExternalTextureDescriptor {
         // library manager later.
         MaterialSetDescriptor importedDescriptor;
         try {
-            importedDescriptor = assetManager.createMaterialSet_PredefinedId(libraryAnchor, id);
+            importedDescriptor = assetManager.createMaterialSet_PredefinedId(new AssetLocation(targetLibraryData.getAssetCollection(), Path.of("")), id);
         } catch (IOException e) {
             throw new RuntimeException("Error creating asset '" + arp + "' for import", e);
         }
@@ -140,8 +143,6 @@ public class ExternalTextureDescriptor {
         importedDescriptor.setLastModified(LocalDateTime.now());
 
         arp = importedDescriptor.getSelfRef();
-
-        AssetLoader assetLoader = assetManager.buildAssetLoader();
 
         IResourceLocator icon = mSourceTexture.getIcon();
         IResourceLocator image = mSourceTexture.getImage();

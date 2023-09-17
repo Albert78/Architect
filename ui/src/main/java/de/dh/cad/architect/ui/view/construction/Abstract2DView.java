@@ -29,16 +29,12 @@ import de.dh.cad.architect.ui.objects.ObjectTypesRegistry;
 import de.dh.cad.architect.ui.view.AbstractPlanView;
 import de.dh.cad.architect.ui.view.construction.behaviors.ConstructionNullBehavior;
 import de.dh.utils.fx.ClippingStackPane;
-import javafx.beans.property.Property;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 
 public abstract class Abstract2DView extends AbstractPlanView<Abstract2DRepresentation, Abstract2DAncillaryObject> {
-    protected final Property<Double> mScaleXProperty = new SimpleObjectProperty<>(1.0);
-    protected final Property<Double> mScaleYProperty = new SimpleObjectProperty<>(1.0);
     protected final StackPane mCenterPane;
 
     protected Pane mTransformedRoot = null;
@@ -77,8 +73,6 @@ public abstract class Abstract2DView extends AbstractPlanView<Abstract2DRepresen
         setBehavior(new ConstructionNullBehavior());
         mTransformedRoot = new Pane();
         mTopLayer = new Pane();
-        mScaleXProperty.setValue(1.0);
-        mScaleYProperty.setValue(1.0);
 
         super.initialize();
 

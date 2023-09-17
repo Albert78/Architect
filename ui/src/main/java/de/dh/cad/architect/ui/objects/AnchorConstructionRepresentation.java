@@ -23,6 +23,7 @@ import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.model.objects.Anchor;
 import de.dh.cad.architect.model.objects.BaseAnchoredObject;
 import de.dh.cad.architect.ui.Constants;
+import de.dh.cad.architect.ui.utils.Axis;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.DragControl;
 import de.dh.cad.architect.ui.view.construction.Abstract2DView;
@@ -122,8 +123,8 @@ public class AnchorConstructionRepresentation extends Abstract2DRepresentation {
 
     protected void updateCenter() {
         Position2D position = getAnchor().getPosition().projectionXY();
-        mShape.setCenterX(CoordinateUtils.lengthToCoords(position.getX()));
-        mShape.setCenterY(CoordinateUtils.lengthToCoords(position.getY()));
+        mShape.setCenterX(CoordinateUtils.lengthToCoords(position.getX(), Axis.X));
+        mShape.setCenterY(CoordinateUtils.lengthToCoords(position.getY(), Axis.Y));
     }
 
     /**

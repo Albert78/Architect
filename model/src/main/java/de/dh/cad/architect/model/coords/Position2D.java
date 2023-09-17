@@ -56,6 +56,7 @@ public class Position2D implements IPosition {
         return mY;
     }
 
+    @Override
     public Position2D withX(Length x) {
         return new Position2D(x, mY);
     }
@@ -64,6 +65,7 @@ public class Position2D implements IPosition {
         return withX(mX.plus(x));
     }
 
+    @Override
     public Position2D withY(Length y) {
         return new Position2D(mX, y);
     }
@@ -79,6 +81,10 @@ public class Position2D implements IPosition {
 
     public Length distance(Position2D other) {
         return distance(this, other);
+    }
+
+    public Position2D scale(double sX, double sY) {
+        return new Position2D(mX.times(sX), mY.times(sY));
     }
 
     public Position2D scale(double sX, double sY, Position2D pivot) {
@@ -122,6 +128,16 @@ public class Position2D implements IPosition {
         return new Position3D(mX, mY, z);
     }
 
+    /**
+     * Returns a copy of this position rotated counter-clockwise by the given angle around 0/0.
+     */
+    public Position2D rotate(double angleDeg) {
+        return toVector2D().rotate(angleDeg).toPosition2D();
+    }
+
+    /**
+     * Returns a copy of this position rotated counter-clockwise by the given angle around the given pivot position.
+     */
     public Position2D rotateAround(double angleDeg, Position2D pivotPosition) {
         return pivotPosition.plus(
                         this.minus(pivotPosition)
@@ -136,6 +152,10 @@ public class Position2D implements IPosition {
     @Override
     public Position3D withZ(Length height) {
         return upscale(height);
+    }
+
+    public Vector2D toVector2D() {
+        return new Vector2D(mX, mY);
     }
 
     @Override

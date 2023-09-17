@@ -11,7 +11,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<fx:root prefHeight="800.0" prefWidth="800.0" type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+<fx:root prefHeight="800.0" prefWidth="800.0" type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <center>
       <GridPane hgap="5.0" vgap="5.0" BorderPane.alignment="CENTER">
         <columnConstraints>
@@ -49,8 +49,8 @@
             <VBox GridPane.columnIndex="1" GridPane.rowIndex="6">
                <children>
                   <Label fx:id="mWidthLabel" text="-" />
-                  <Label fx:id="mHeightLabel" text="-" />
                   <Label fx:id="mDepthLabel" text="-" />
+                  <Label fx:id="mHeightLabel" text="-" />
                   <Label fx:id="mElevationLabel" text="-" />
                </children>
             </VBox>

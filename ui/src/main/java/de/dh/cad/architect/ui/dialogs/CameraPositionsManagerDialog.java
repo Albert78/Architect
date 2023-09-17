@@ -81,6 +81,7 @@ public class CameraPositionsManagerDialog extends Dialog<Map<String, CameraPosit
     }
 
     protected final ObservableList<NamedCameraPositionWrapper> mCameraPositions = FXCollections.observableArrayList();
+    protected boolean mChanged = false;
 
     public CameraPositionsManagerDialog(Map<String, CameraPosition> cameraPositions) {
         setTitle(Strings.THREE_D_CAMERA_POSITIONS_MANAGER_DIALOG_TITLE);
@@ -101,7 +102,7 @@ public class CameraPositionsManagerDialog extends Dialog<Map<String, CameraPosit
         setResultConverter(new Callback<ButtonType, Map<String, CameraPosition>>() {
             @Override
             public Map<String, CameraPosition> call(ButtonType dialogButton) {
-                if (dialogButton == ButtonType.OK) {
+                if (mChanged && dialogButton == ButtonType.OK) {
                     return getCameraPositions();
                 }
                 return null;
@@ -132,6 +133,7 @@ public class CameraPositionsManagerDialog extends Dialog<Map<String, CameraPosit
         removeButton.setOnAction(event -> {
             ObservableList<NamedCameraPositionWrapper> selectedItems = listViewSelectionModel.getSelectedItems();
             mCameraPositions.removeAll(selectedItems);
+            mChanged = true;
         });
 
         Button renameButton = new Button(Strings.BUTTON_RENAME);
@@ -159,6 +161,7 @@ public class CameraPositionsManagerDialog extends Dialog<Map<String, CameraPosit
                 modifiedCameraPositions.remove(selectedName);
                 modifiedCameraPositions.put(name, selectedCameraPosition.getCameraPosition());
                 fillCameraPositions(modifiedCameraPositions);
+                mChanged = true;
             });
         });
 

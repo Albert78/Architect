@@ -6,6 +6,8 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
@@ -15,12 +17,12 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<fx:root prefHeight="750.0" prefWidth="800.0" type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+<fx:root prefHeight="900.0" prefWidth="1000.0" type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <center>
-      <GridPane hgap="5.0" vgap="5.0" BorderPane.alignment="CENTER">
+      <GridPane hgap="5.0" vgap="8.0">
         <columnConstraints>
-          <ColumnConstraints hgrow="NEVER" minWidth="10.0" prefWidth="100.0" />
-          <ColumnConstraints hgrow="SOMETIMES" minWidth="100.0" />
+          <ColumnConstraints hgrow="NEVER" minWidth="50.0" prefWidth="100.0" />
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="300.0" />
         </columnConstraints>
         <rowConstraints>
           <RowConstraints vgrow="NEVER" />
@@ -31,8 +33,7 @@
           <RowConstraints vgrow="NEVER" />
           <RowConstraints vgrow="NEVER" />
           <RowConstraints vgrow="NEVER" />
-          <RowConstraints vgrow="NEVER" />
-          <RowConstraints vgrow="NEVER" />
+          <RowConstraints vgrow="ALWAYS" />
         </rowConstraints>
          <children>
             <Label text="Basis" />
@@ -48,45 +49,18 @@
             <Label text="Typ/Art" GridPane.rowIndex="5" />
             <ComboBox fx:id="mTypeComboBox" editable="true" prefWidth="250.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
             <Label text="Beschreibung" GridPane.rowIndex="6" />
-            <TextArea fx:id="mDescriptionTextArea" prefHeight="166.0" prefWidth="275.0" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="6" />
-            <Label text="Icon" GridPane.rowIndex="7" />
-            <HBox alignment="CENTER_LEFT" spacing="5.0" BorderPane.alignment="CENTER" GridPane.columnIndex="1" GridPane.rowIndex="7">
+            <TextArea fx:id="mDescriptionTextArea" prefHeight="100.0" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+            <Label text="Bilder" GridPane.rowIndex="7" />
+            <HBox BorderPane.alignment="CENTER" GridPane.columnIndex="1" GridPane.rowIndex="7">
                <children>
-                  <ImageView fx:id="mIconImageView" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" />
-                  <Button fx:id="mChooseIconImageButton" mnemonicParsing="false">
-                     <graphic>
-                        <ImageView fitHeight="16" fitWidth="16">
-                           <image>
-                              <Image url="@import.png" />
-                           </image>
-                        </ImageView>
-                     </graphic>
-                  </Button>
-               </children>
-            </HBox>
-            <Label text="Bild im Grundriss-Plan" wrapText="true" GridPane.rowIndex="8" />
-            <HBox alignment="CENTER_LEFT" spacing="5.0" BorderPane.alignment="CENTER" GridPane.columnIndex="1" GridPane.rowIndex="8">
-               <children>
-                  <ImageView fx:id="mPlanViewImageView" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" />
-                  <Button fx:id="mChoosePlanViewImageButton" mnemonicParsing="false">
-                     <graphic>
-                        <ImageView fitHeight="16" fitWidth="16">
-                           <image>
-                              <Image url="@import.png" />
-                           </image>
-                        </ImageView>
-                     </graphic>
-                  </Button>
-               </children>
-            </HBox>
-            <Label text="3D-Objekt" wrapText="true" GridPane.rowIndex="9" />
-            <BorderPane fx:id="mThreeDResourcePane" BorderPane.alignment="CENTER" GridPane.columnIndex="1" GridPane.rowIndex="9">
-               <right>
-                  <HBox BorderPane.alignment="CENTER_LEFT">
-                     <children>
-                        <VBox alignment="CENTER" spacing="5.0">
-                           <children>
-                              <Button fx:id="mChooseThreeDObjectButton" mnemonicParsing="false">
+                  <TitledPane animated="false" collapsible="false" text="Icon">
+                     <content>
+                        <BorderPane>
+                           <center>
+                              <ImageView fx:id="mIconImageView" fitHeight="200.0" fitWidth="250.0" pickOnBounds="true" preserveRatio="true" />
+                           </center>
+                           <right>
+                              <Button fx:id="mChooseIconImageButton" mnemonicParsing="false" BorderPane.alignment="CENTER">
                                  <graphic>
                                     <ImageView fitHeight="16" fitWidth="16">
                                        <image>
@@ -94,30 +68,132 @@
                                        </image>
                                     </ImageView>
                                  </graphic>
+                                 <tooltip>
+                                    <Tooltip text="Bild importieren..." />
+                                 </tooltip>
+                                 <BorderPane.margin>
+                                    <Insets left="10.0" />
+                                 </BorderPane.margin>
                               </Button>
-                              <Button fx:id="mTakeSnapshotButton" mnemonicParsing="false">
+                           </right>
+                        </BorderPane>
+                     </content>
+                  </TitledPane>
+                  <TitledPane animated="false" collapsible="false" text="Erscheinung im Grundriss-Plan">
+                     <HBox.margin>
+                        <Insets />
+                     </HBox.margin>
+                     <content>
+                        <BorderPane>
+                           <right>
+                              <Button fx:id="mChoosePlanViewImageButton" mnemonicParsing="false" BorderPane.alignment="CENTER">
                                  <graphic>
                                     <ImageView fitHeight="16" fitWidth="16">
                                        <image>
-                                          <Image url="@snapshot.png" />
+                                          <Image url="@import.png" />
                                        </image>
                                     </ImageView>
                                  </graphic>
+                                 <tooltip>
+                                    <Tooltip text="Bild importieren..." />
+                                 </tooltip>
+                                 <BorderPane.margin>
+                                    <Insets left="10.0" />
+                                 </BorderPane.margin>
                               </Button>
+                           </right>
+                           <center>
+                              <ImageView fx:id="mPlanViewImageView" fitHeight="200.0" fitWidth="250.0" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="CENTER">
+                                 <BorderPane.margin>
+                                    <Insets left="20.0" />
+                                 </BorderPane.margin>
+                              </ImageView>
+                           </center>
+                        </BorderPane>
+                     </content>
+                  </TitledPane>
+               </children>
+            </HBox>
+            <Label text="3D-Objekt" wrapText="true" GridPane.rowIndex="8" />
+            <TitledPane animated="false" collapsible="false" minHeight="320.0" text="3D-Ansicht" BorderPane.alignment="CENTER" GridPane.columnIndex="1" GridPane.rowIndex="8" GridPane.vgrow="ALWAYS">
+               <content>
+                  <BorderPane fx:id="mThreeDResourcePane">
+                     <right>
+                        <HBox BorderPane.alignment="CENTER_LEFT">
+                           <children>
+                              <VBox alignment="CENTER" prefHeight="1000.0" spacing="5.0">
+                                 <children>
+                                    <Button fx:id="mChooseThreeDObjectButton" mnemonicParsing="false">
+                                       <graphic>
+                                          <ImageView fitHeight="16" fitWidth="16">
+                                             <image>
+                                                <Image url="@import.png" />
+                                             </image>
+                                          </ImageView>
+                                       </graphic>
+                                       <tooltip>
+                                          <Tooltip text="3D-Modell importieren..." />
+                                       </tooltip>
+                                    </Button>
+                                    <Button fx:id="mTakeSnapshotButton" mnemonicParsing="false">
+                                       <graphic>
+                                          <ImageView fitHeight="16" fitWidth="16">
+                                             <image>
+                                                <Image url="@snapshot.png" />
+                                             </image>
+                                          </ImageView>
+                                       </graphic>
+                                       <tooltip>
+                                          <Tooltip text="Bilder aus 3D-Modell erzeugen..." />
+                                       </tooltip>
+                                    </Button>
+                                 </children>
+                                 <HBox.margin>
+                                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                 </HBox.margin>
+                              </VBox>
+                              <BorderPane>
+                                 <center>
+                                    <GridPane alignment="TOP_CENTER">
+                                       <columnConstraints>
+                                          <ColumnConstraints hgrow="SOMETIMES" minWidth="0.0" />
+                                          <ColumnConstraints hgrow="SOMETIMES" />
+                                       </columnConstraints>
+                                       <rowConstraints>
+                                          <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                                       </rowConstraints>
+                                       <children>
+                                          <VBox fx:id="mRotationControlsVBox">
+                                             <opaqueInsets>
+                                                <Insets bottom="5.0" left="15.0" right="5.0" top="5.0" />
+                                             </opaqueInsets>
+                                          </VBox>
+                                          <VBox fx:id="mSizeControlsVBox" GridPane.columnIndex="1">
+                                             <opaqueInsets>
+                                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                             </opaqueInsets>
+                                          </VBox>
+                                       </children>
+                                       <padding>
+                                          <Insets left="15.0" />
+                                       </padding>
+                                    </GridPane>
+                                 </center>
+                                 <bottom>
+                                    <Button fx:id="mResetValuesButton" mnemonicParsing="false" text="Werte zurücksetzen" BorderPane.alignment="CENTER">
+                                       <BorderPane.margin>
+                                          <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                       </BorderPane.margin>
+                                    </Button>
+                                 </bottom>
+                              </BorderPane>
                            </children>
-                           <HBox.margin>
-                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                           </HBox.margin>
-                        </VBox>
-                        <VBox fx:id="mSizeControlsVBox" alignment="CENTER_LEFT" />
-                     </children>
-                  </HBox>
-               </right>
-            </BorderPane>
+                        </HBox>
+                     </right>
+                  </BorderPane>
+               </content>
+            </TitledPane>
          </children>
-         <BorderPane.margin>
-            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-         </BorderPane.margin>
       </GridPane>
    </center>
 </fx:root>

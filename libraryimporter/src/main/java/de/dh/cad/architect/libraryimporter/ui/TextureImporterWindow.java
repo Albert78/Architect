@@ -36,6 +36,7 @@ import de.dh.cad.architect.libraryimporter.sh3d.textures.CatalogTexture;
 import de.dh.cad.architect.libraryimporter.sh3d.textures.DefaultTexturesCatalog;
 import de.dh.cad.architect.libraryimporter.sh3d.textures.DefaultTexturesCatalog.SH3DTexturesLibrary;
 import de.dh.cad.architect.model.assets.MaterialSetDescriptor;
+import de.dh.cad.architect.ui.assets.AssetLoader;
 import de.dh.cad.architect.ui.assets.AssetManager;
 import de.dh.cad.architect.ui.assets.AssetManager.LibraryData;
 import de.dh.cad.architect.ui.assets.AssetManagerConfiguration;
@@ -108,6 +109,7 @@ public class TextureImporterWindow implements Initializable {
 
     protected Stage mStage = null;
     protected final AssetManager mAssetManager;
+    protected final AssetLoader mAssetLoader;
     protected SH3DTexturesLibrary mCurrentLibrary = null;
     protected CatalogTextureControl mCurrentTextureControl = null;
     protected Collection<TextureTreeEntry> mTreeEntries = new ArrayList<>();
@@ -147,6 +149,8 @@ public class TextureImporterWindow implements Initializable {
 
     protected TextureImporterWindow(AssetManager assetManager) {
         mAssetManager = assetManager;
+        mAssetLoader = assetManager.buildAssetLoader();
+
         FXMLLoader fxmlLoader = new FXMLLoader(TextureImporterWindow.class.getResource(FXML));
         fxmlLoader.setController(this);
         try {
@@ -370,7 +374,7 @@ public class TextureImporterWindow implements Initializable {
                         continue;
                     }
                     ExternalTextureDescriptor textureDescriptor = textureTreeEntry.getTextureDescriptor();
-                    MaterialSetDescriptor desc = textureDescriptor.importTexture(targetLibrary, mAssetManager);
+                    MaterialSetDescriptor desc = textureDescriptor.importTexture(targetLibrary, mAssetLoader);
                     if (desc == null) {
                         mNumErroneous++;
                     } else {

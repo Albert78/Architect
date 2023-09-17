@@ -50,6 +50,14 @@ public class Vector2D {
         return mY;
     }
 
+    public Vector2D withX(double x) {
+        return new Vector2D(x, mY);
+    }
+
+    public Vector2D withY(double y) {
+        return new Vector2D(mX, y);
+    }
+
     public Vector2D negated() {
         return new Vector2D(-mX, -mY);
     }

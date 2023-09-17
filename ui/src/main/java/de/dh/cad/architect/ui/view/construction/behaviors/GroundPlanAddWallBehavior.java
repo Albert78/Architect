@@ -79,9 +79,10 @@ public class GroundPlanAddWallBehavior extends AbstractGroundPlanCreateWallBehav
     protected ChangeWallsVisualFeedbackManager mFeedbackManager = null; // Lives from install() to uninstall()
     protected AddWallInteractionsPaneControl mInteractionsPane = null;
 
-    protected final AbstractWallEnding mWallStartEnding;
     protected AbstractWallEndConfiguration mWallStartConfig = null;
     protected AbstractWallEndConfiguration mWallEndConfig = null;
+
+    protected final AbstractWallEnding mWallStartEnding;
     protected final Collection<Wall> mForbiddenDockWalls;
     protected final Collection<Anchor> mForbiddenDockAnchors;
 
@@ -332,7 +333,7 @@ public class GroundPlanAddWallBehavior extends AbstractGroundPlanCreateWallBehav
     }
 
     @Override
-    protected void setDefaultUserHint() {
+    public void setDefaultUserHint() {
         setUserHint(Strings.GROUND_PLAN_ADD_WALL_BEHAVIOR_DEFAULT_USER_HINT);
     }
 
@@ -377,7 +378,9 @@ public class GroundPlanAddWallBehavior extends AbstractGroundPlanCreateWallBehav
         Length heightA = getHeightA();
         Length heightB = getHeightB();
         List<IModelChange> changeTrace = new ArrayList<>();
-        Wall wall = Wall.createFromHandlePositions(null, thickness, heightA, heightB,
+        Wall wall = Wall.createFromHandlePositions(
+            BaseObjectUIRepresentation.generateSimpleName(getPlan().getWalls().values(), Wall.class),
+            thickness, heightA, heightB,
             Position2D.zero(),
             Position2D.zero().movedX(Length.ofM(1)),
             getPlan(), changeTrace);

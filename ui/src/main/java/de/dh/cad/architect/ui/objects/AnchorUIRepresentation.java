@@ -84,6 +84,7 @@ public class AnchorUIRepresentation extends BaseObjectUIRepresentation {
 
     @Override
     public Abstract3DRepresentation create3DRepresentation(BaseObject modelObject, Abstract3DView parentView) {
-        return null;
+        Anchor anchor = (Anchor) modelObject;
+        return new Anchor3DRepresentation(anchor, parentView);
     }
 }

@@ -48,6 +48,7 @@ import de.dh.cad.architect.ui.view.OptionalCoordinates2D;
 import de.dh.cad.architect.ui.view.construction.behaviors.AbstractConstructionBehavior;
 import de.dh.utils.Vector2D;
 import de.dh.utils.fx.ImageUtils;
+import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.geometry.Point2D;
 import javafx.scene.control.ToggleButton;
@@ -151,6 +152,12 @@ public class ConstructionView extends Abstract2DView {
 
         updateViewToViewState();
         updateToTransform(true);
+        Platform.runLater(() -> {
+            // Schedule an update of the guidelines to a time when this view was layouted.
+            // We do this because at the time when the parent method (initialize()) is called, the vertical ruler
+            // isn't layouted yet and thus as a height of 0. The computation of guideline arrows will be wrong then.
+            updateToTransform(false);
+        });
 // TODO: Move to stylesheet
 mCenterPane.setStyle("-fx-background-color: cornsilk;");
         setConstructionMode(mGroundPlanMode);
@@ -373,9 +380,9 @@ mCenterPane.setStyle("-fx-background-color: cornsilk;");
         } else if (direction == GuideLineDirection.Horizontal) {
             double pos = mVerticalRuler.addGuideLine(guideLine);
             line.setStartX(0);
-            line.setStartY(pos);
+            line.setStartY(-pos);
             line.endXProperty().bind(mCenterPane.widthProperty());
-            line.setEndY(pos);
+            line.setEndY(-pos);
         } else {
             throw new RuntimeException("Unknown guideline direction '" + direction + "'");
         }
@@ -391,8 +398,8 @@ mCenterPane.setStyle("-fx-background-color: cornsilk;");
             line.setEndX(pos);
         } else {
             double pos = mVerticalRuler.updateGuideLine(guideLine);
-            line.setStartY(pos);
-            line.setEndY(pos);
+            line.setStartY(-pos);
+            line.setEndY(-pos);
         }
         line.setVisible(!guideLine.isHidden());
     }
@@ -410,9 +417,9 @@ mCenterPane.setStyle("-fx-background-color: cornsilk;");
     }
 
     protected void updateAllGuideLines() {
-        Plan plan = getPlan();
+        Map<String, GuideLine> guideLines = getPlan().getGuideLines();
         for (String guideLineId : mGuideLines.keySet()) {
-            GuideLine guideLine = plan.getGuideLines().get(guideLineId);
+            GuideLine guideLine = guideLines.get(guideLineId);
             updateGuideLine(guideLine);
         }
     }
@@ -427,7 +434,7 @@ mCenterPane.setStyle("-fx-background-color: cornsilk;");
         GuideLine nearestGuideLineX = null;
         Length nearestY = null;
         GuideLine nearestGuideLineY = null;
-        Length snapDelta = CoordinateUtils.coordsToLength(SNAP_DELTA / mScale);
+        Length snapDelta = CoordinateUtils.coordsToLength(SNAP_DELTA / mScale, null);
         for (GuideLine guideLine : getPlan().getGuideLines().values()) {
             GuideLineDirection direction = guideLine.getDirection();
             if (direction == GuideLineDirection.Vertical) {
@@ -475,12 +482,14 @@ mCenterPane.setStyle("-fx-background-color: cornsilk;");
         mScaleCompensation = 1 / mScale;
         mRootTransform.appendScale(coefficient, coefficient, rPoint.getX(), rPoint.getY());
         updateToTransform(true);
+        setDirty();
     }
 
     public void translate(double x, double y) {
         mCombinedTranslation = new Vector2D(mCombinedTranslation.getX() + x * mScale, mCombinedTranslation.getY() + y * mScale);
         mRootTransform.appendTranslation(x, y);
         updateToTransform(false);
+        setDirty();
     }
 
     /**
@@ -518,8 +527,8 @@ mCenterPane.setStyle("-fx-background-color: cornsilk;");
                 @Override
                 public void handle(MouseEvent event) {
                     Position2D pos = getPlanPositionFromScene(event.getSceneX(), event.getSceneY());
-                    mHorizontalRuler.setCursorMarker(pos.getX());
-                    mVerticalRuler.setCursorMarker(pos.getY());
+                    mHorizontalRuler.setCursorMarker(pos);
+                    mVerticalRuler.setCursorMarker(pos);
                 }
             };
             addEventHandler(MouseEvent.MOUSE_MOVED, mCursorMarkerMoveEventHandler);

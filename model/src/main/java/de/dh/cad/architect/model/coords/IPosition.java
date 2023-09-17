@@ -24,5 +24,7 @@ public interface IPosition {
     Length getX();
     Length getY();
     Position3D withZ(Length height);
-    IPosition withXY(Position2D plus);
+    IPosition withX(Length x);
+    IPosition withY(Length Y);
+    IPosition withXY(Position2D xy);
 }

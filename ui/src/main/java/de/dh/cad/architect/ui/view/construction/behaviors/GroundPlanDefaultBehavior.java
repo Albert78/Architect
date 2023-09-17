@@ -28,7 +28,6 @@ import de.dh.cad.architect.model.objects.Wall;
 import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.objects.Abstract2DAncillaryObject;
 import de.dh.cad.architect.ui.objects.Abstract2DRepresentation;
-import de.dh.cad.architect.ui.view.AbstractPlanView;
 import de.dh.cad.architect.ui.view.AbstractUiMode;
 import de.dh.cad.architect.ui.view.IContextAction;
 import de.dh.cad.architect.ui.view.construction.GroundPlanUIElementFilter;
@@ -72,9 +71,6 @@ public class GroundPlanDefaultBehavior extends AbstractConstructionBehavior {
             BaseObject first = selectedObjects.get(0);
             BaseObject second = selectedObjects.get(1);
 
-            // Grouping
-            actions.add(createGroupAction(selectedObjects));
-
             if (selectedObjects.size() == 2) {
                 // 2 objects selected
 
@@ -104,6 +100,8 @@ public class GroundPlanDefaultBehavior extends AbstractConstructionBehavior {
             }
         }
 
+        addGroupingActionsForSelection(selectedObjects, actions);
+
         // Delete
         if (!selectedRootObjects.isEmpty()) {
             actions.add(createRemoveObjectsAction(selectedRootObjects));
@@ -120,17 +118,5 @@ public class GroundPlanDefaultBehavior extends AbstractConstructionBehavior {
     @Override
     public String getTitle() {
         return Strings.GROUNDPLAN_DEFAULT_BEHAVIOR_TITLE;
-    }
-
-    @Override
-    public void install(AbstractPlanView<Abstract2DRepresentation, Abstract2DAncillaryObject> view) {
-        super.install(view);
-        installDefaultSpaceToggleObjectVisibilityKeyHandler();
-    }
-
-    @Override
-    public void uninstall() {
-        uninstallDefaultSpaceToggleObjectVisibilityKeyHandler();
-        super.uninstall();
     }
 }

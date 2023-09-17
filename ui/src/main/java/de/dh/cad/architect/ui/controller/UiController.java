@@ -96,6 +96,7 @@ public class UiController {
     // Initialized in initialize(...)
     protected ApplicationController mApplicationController;
     protected MainWindow mMainWindow;
+
     protected AbstractPlanView<?, ?> mCurrentView = null;
 
     public UiController(Property<Plan> planProperty, IConfig configuration) {
@@ -211,6 +212,10 @@ public class UiController {
 
     public void setUiState(UiState uiState) {
         mMainWindow.setMainWindowState(uiState.getMainWindowState());
+    }
+
+    public ApplicationController getApplicationController() {
+        return mApplicationController;
     }
 
     public void addContextMenuProvider(IObjectContextMenuProvider contextMenuProvider) {
@@ -389,10 +394,7 @@ public class UiController {
     public void doRemoveObject(BaseObject object, List<IModelChange> changeTrace) {
         if (object instanceof ObjectsGroup group) {
             // Delete objects in group recursively - this behavior is different than the behavior implemented in model
-            Collection<BaseObject> objectsInGroup = group.getGroupedObjects();
-            for (BaseObject obj : new ArrayList<>(objectsInGroup)) {
-                doRemoveObject(obj, changeTrace);
-            }
+            doRemoveObjects(new ArrayList<>(group.getGroupedObjects()), changeTrace);
         }
         // Remove children
         if (object instanceof IObjectsContainer parent) {
@@ -410,7 +412,7 @@ public class UiController {
     }
 
     public enum DockConflict {
-        SameOwnerObject, SourceNotAHandle;
+        SourceNotAHandle;
     }
 
     public static class DockConflictDescription {
@@ -439,13 +441,6 @@ public class UiController {
 
     public enum DockConflictStrategy {
         SkipDock, Exception;
-    }
-
-    /**
-     * Creates a dock conflict result for the situation that some of the participant anchors in a designated dock would have the same owner object.
-     */
-    protected static Optional<Collection<DockConflictDescription>> dockConflictSameAnchorOwner(Anchor source, Anchor designatedTarget) {
-        return Optional.of(Arrays.asList(new DockConflictDescription(source, designatedTarget, DockConflict.SameOwnerObject)));
     }
 
     /**
@@ -488,14 +483,24 @@ public class UiController {
      * a conflict. So the dock hierarchy will only be restored as far as possible without causing conflicts.
      */
     public void doRemoveAnchorFromDock(Anchor anchor, List<IModelChange> changeTrace) {
-        Collection<BaseAnchoredObject> formerDockOwners = anchor.getAllDockOwners();
+        Collection<BaseAnchoredObject> reconcileObjects = doRemoveAnchorFromDock_Internal(anchor, changeTrace);
+        ObjectReconcileOperation oro = new ObjectReconcileOperation("Cleanup after removing anchor from dock operation", reconcileObjects);
+        doReconcileObjects(oro, changeTrace);
+    }
+
+    /**
+     * Removes the given anchor from its dock as described for {@link #doRemoveAnchorFromDock(Anchor, List)} but leaves out the
+     * object reconcile operation at the end. Instead, returns all objects which need to be reconciled later.
+     */
+    public Collection<BaseAnchoredObject> doRemoveAnchorFromDock_Internal(Anchor anchor, List<IModelChange> changeTrace) {
+        Collection<BaseAnchoredObject> reconcileObjects = anchor.getAllDockOwners();
         Optional<Anchor> oDockMaster = anchor.getDockMaster();
         if (oDockMaster.isPresent()) {
             Anchor dockMaster = oDockMaster.get();
             anchor.setDockMaster(null, changeTrace);
             // Move our dock slaves to our dock master
             for (Anchor dockSlave : new ArrayList<>(anchor.getDockSlaves())) {
-                doDock(dockSlave, dockMaster, DockConflictStrategy.SkipDock, changeTrace);
+                reconcileObjects.addAll(doDock_Internal(dockSlave, dockMaster, DockConflictStrategy.SkipDock, changeTrace));
             }
         } else {
             Iterator<Anchor> iterator = new ArrayList<>(anchor.getDockSlaves()).iterator();
@@ -504,12 +509,12 @@ public class UiController {
                 newDockMaster.setDockMaster(null, changeTrace);
                 while (iterator.hasNext()) {
                     Anchor dockSlave = iterator.next();
-                    doDock(dockSlave, newDockMaster, DockConflictStrategy.SkipDock, changeTrace);
+                    dockSlave.undockFromDockMaster(changeTrace); // Force undocking, even if the dock operation in the next line runs in a conflict (and thus might fail)
+                    reconcileObjects.addAll(doDock_Internal(dockSlave, newDockMaster, DockConflictStrategy.SkipDock, changeTrace));
                 }
             }
         }
-        ObjectReconcileOperation oro = new ObjectReconcileOperation("Cleanup after removing anchor from dock operation", formerDockOwners);
-        doReconcileObjects(oro, changeTrace);
+        return reconcileObjects;
     }
 
     /**
@@ -528,34 +533,29 @@ public class UiController {
         if (!sourceAnchor.isHandle()) {
             return dockConflictSourceNotAHandle(sourceAnchor, targetAnchor);
         }
-        // Those would be contained in the resulting dock from target side
-        Collection<BaseAnchoredObject> targetDockOwners = targetAnchor.getAllDockOwners();
 
-        // Those would be contained in the resulting dock from source side
-        Collection<BaseAnchoredObject> sourceDockSlaveOwners = sourceAnchor.getAllDockedAnchorsDownStream()
-                        .stream()
-                        .map(Anchor::getAnchorOwner)
-                        .collect(Collectors.toList());
-        Collection<BaseAnchoredObject> sourceAndTargetOwners = CollectionUtils.intersection(targetDockOwners, sourceDockSlaveOwners);
-        if (!sourceAndTargetOwners.isEmpty()) {
-            // Docking the anchors would connect two anchors of the same owner object
-            return dockConflictSameAnchorOwner(sourceAnchor, targetAnchor);
-        }
         return dockOk();
     }
 
     public void doDock(Anchor sourceHandleAnchor, Anchor targetAnchor, DockConflictStrategy conflictStrategy, List<IModelChange> changeTrace) {
+        Collection<BaseAnchoredObject> reconcileObjects = doDock_Internal(sourceHandleAnchor, targetAnchor, conflictStrategy, changeTrace);
+
+        ObjectReconcileOperation oro = new ObjectReconcileOperation("Dock anchor", reconcileObjects);
+        doReconcileObjects(oro, changeTrace);
+    }
+
+    public Collection<BaseAnchoredObject> doDock_Internal(Anchor sourceHandleAnchor, Anchor targetAnchor, DockConflictStrategy conflictStrategy, List<IModelChange> changeTrace) {
         if (sourceHandleAnchor.getDockMaster()
                         .map(dm -> Boolean.valueOf(dm.equals(targetAnchor))) // Already docked to target anchor
                         .orElse(Boolean.FALSE)) {
             // Already docked to target anchor
-            return;
+            return Collections.emptyList();
         }
         Optional<Collection<DockConflictDescription>> oConflicts = checkDockConflicts(sourceHandleAnchor, targetAnchor);
         if (oConflicts.isPresent()) {
             switch (conflictStrategy) {
             case SkipDock:
-                return;
+                return Collections.emptyList();
             case Exception:
                 throw new RuntimeException("Cannot dock source anchor <" + sourceHandleAnchor + "> to anchor dock of target anchor <" + targetAnchor + ">");
             }
@@ -565,7 +565,7 @@ public class UiController {
         IPosition targetPosition = targetAnchor.getPosition();
         sourceHandleAnchor.setDockMaster(targetAnchor, changeTrace);
 
-        doSetDockPosition_Internal(sourceHandleAnchor, targetPosition, changeTrace, false);
+        return doSetDockPosition_Internal(sourceHandleAnchor, targetPosition, changeTrace);
     }
 
     /**
@@ -602,7 +602,7 @@ public class UiController {
         if (objects.isEmpty()) {
             throw new IllegalStateException("Cannot create an empty objects group");
         }
-        ObjectsGroup group = new ObjectsGroup(IdGenerator.generateUniqueId(ObjectsGroup.class), groupName, getPlan(), changeTrace);
+        ObjectsGroup group = ObjectsGroup.create(IdGenerator.generateUniqueId(ObjectsGroup.class), groupName, getPlan(), changeTrace);
         for (BaseObject object : objects) {
             group.addObject(object, changeTrace);
         }
@@ -617,7 +617,7 @@ public class UiController {
         notifyChange(changeTrace, Strings.UNGROUP_OBJECTS_CHANGE);
     }
 
-    public void setObjectsVisibilityFromId(Collection<String> objIds, boolean hidden) {
+    public void setObjectsVisibilityByIds(Collection<String> objIds, boolean hidden) {
         Plan plan = getPlan();
         setObjectsVisibility(objIds
             .stream()
@@ -707,14 +707,9 @@ public class UiController {
         Anchor rootMasterOfDock = anchor.getRootMasterOfAnchorDock();
         List<IModelChange> innerChangeTrace = new ArrayList<>();
 
-        Collection<BaseAnchoredObject> owners = new ArrayList<>();
-        for (Anchor changeAnchor : anchor.getAllDockedAnchors()) {
-            BaseAnchoredObject owner = changeAnchor.getAnchorOwner();
-            changeAnchor.setPosition(ObjectReconcileOperation.calculateTargetPositionForAnchor(changeAnchor, position), innerChangeTrace);
-            owners.add(owner);
-        }
+        Collection<BaseAnchoredObject> reconcileObjects = doSetDockPosition_Internal(anchor, position, innerChangeTrace);
 
-        ObjectReconcileOperation oro = new ObjectReconcileOperation("Set dock position", owners);
+        ObjectReconcileOperation oro = new ObjectReconcileOperation("Set dock position", reconcileObjects);
         doReconcileObjects(oro, innerChangeTrace);
 
         if (generateMergeableChange) {
@@ -722,6 +717,17 @@ public class UiController {
         } else {
             changeTrace.addAll(innerChangeTrace);
         }
+    }
+
+    protected Collection<BaseAnchoredObject> doSetDockPosition_Internal(Anchor anchor, IPosition position, List<IModelChange> changeTrace) {
+        Collection<BaseAnchoredObject> reconcileObjects = new ArrayList<>();
+        for (Anchor changeAnchor : anchor.getAllDockedAnchors()) {
+            BaseAnchoredObject owner = changeAnchor.getAnchorOwner();
+            changeAnchor.setPosition(ObjectReconcileOperation.calculateTargetPositionForAnchor(changeAnchor, position), changeTrace);
+            reconcileObjects.add(owner);
+        }
+
+        return reconcileObjects;
     }
 
     public void setHandleAnchorPosition(Anchor anchor, IPosition position, boolean tryMergeChange) {
@@ -736,7 +742,8 @@ public class UiController {
 
     public void createGuideLine(GuideLineDirection direction, Length position) {
         List<IModelChange> changeTrace = new ArrayList<>();
-        GuideLine.create(null, direction, position, getPlan(), changeTrace);
+        GuideLine.create(BaseObjectUIRepresentation.generateSimpleName(getPlan().getGuideLines().values(), GuideLine.class),
+            direction, position, getPlan(), changeTrace);
         notifyChange(changeTrace, Strings.CREATE_GUIDE_LINE_CHANGE);
     }
 
@@ -783,7 +790,9 @@ public class UiController {
             throw new IOException("Error creating support object");
         }
         Set<String> meshIds = obj.getSurfaceMeshViews().stream().map(mv -> mv.getId()).collect(Collectors.toSet());
-        SupportObject result = SupportObject.create(supportObjectDescriptor.getName(), supportObjectDescriptor.getSelfRef(), pos,
+        SupportObject result = SupportObject.create(
+            BaseObjectUIRepresentation.generateSimpleName(getPlan().getSupportObjects().values(), supportObjectDescriptor.getName()),
+            supportObjectDescriptor.getSelfRef(), pos,
             new Dimensions2D(supportObjectDescriptor.getWidth(), supportObjectDescriptor.getDepth()),
             supportObjectDescriptor.getHeight(), 0, supportObjectDescriptor.getElevation(), meshIds, plan, changeTrace);
         return result;

@@ -44,7 +44,6 @@ import de.dh.cad.architect.utils.vfs.IResourceLocator;
 import de.dh.utils.fx.ImageUtils;
 import de.dh.utils.fx.LightType;
 import javafx.application.Platform;
-import javafx.geometry.Point3D;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.transform.Rotate;
@@ -52,10 +51,13 @@ import javafx.scene.transform.Rotate;
 public class ExternalSupportObjectDescriptor {
     private static final Logger log = LoggerFactory.getLogger(ExternalSupportObjectDescriptor.class);
 
-    protected static final int ICON_SNAPSHOT_ANGLE_X = 30;
-    protected static final int ICON_SNAPSHOT_ANGLE_Y = 300;
+    protected static final int ICON_SNAPSHOT_ANGLE_X = -70;
+    protected static final int ICON_SNAPSHOT_ANGLE_Y = 20;
 
-    public static final int DEFAULT_ICON_SIZE = 100;
+    protected static final int PLANVIEW_SNAPSHOT_ANGLE_X = 180;
+    protected static final int PLANVIEW_SNAPSHOT_ANGLE_Y = 0;
+
+    public static final int DEFAULT_ICON_SIZE = 200;
     public static final int DEFAULT_PLAN_VIEW_IMAGE_SIZE = 300;
 
     private static final LightType ICON_SNAPSHOT_LIGHT_TYPE = LightType.Point;
@@ -83,7 +85,9 @@ public class ExternalSupportObjectDescriptor {
         return mSourceLibraryPath;
     }
 
-    public SupportObjectDescriptor importSupportObject(LibraryData targetLibraryData, AssetManager assetManager) {
+    public SupportObjectDescriptor importSupportObject(LibraryData targetLibraryData, AssetLoader assetLoader) {
+        AssetManager assetManager = assetLoader.getAssetManager();
+
         String id = mSourcePieceOfFurniture.getId();
         if (StringUtils.isEmpty(id)) {
             log.debug("Generating id for support object");
@@ -129,8 +133,6 @@ public class ExternalSupportObjectDescriptor {
 
         arp = importedDescriptor.getSelfRef();
 
-        AssetLoader assetLoader = assetManager.buildAssetLoader();
-
         IResourceLocator icon = mSourcePieceOfFurniture.getIcon();
         IResourceLocator planIcon = mSourcePieceOfFurniture.getPlanIcon();
         try {
@@ -140,7 +142,7 @@ public class ExternalSupportObjectDescriptor {
                 assetManager.deleteAsset(arp);
                 return null;
             }
-            import3DModel(importedDescriptor, modelResource, Optional.ofNullable(mSourcePieceOfFurniture.getModelRotationJavaFX()), assetLoader);
+            import3DModel(importedDescriptor, modelResource, Optional.ofNullable(mSourcePieceOfFurniture.getModelRotationArchitect()), assetLoader);
 
             if (icon != null) {
                 assetLoader.importAssetIconImage(importedDescriptor, icon, Optional.empty());
@@ -171,32 +173,36 @@ public class ExternalSupportObjectDescriptor {
         }
     }
 
-    public void createSnapshotForIcon(SupportObjectDescriptor soDescriptor, IResourceLocator modelResource, AssetLoader assetLoader) {
-        Node objView = ObjectLoader.load3DResource(modelResource, soDescriptor.getModelRotationMatrix(), assetLoader.getAssetManager().getDefaultMaterials());
+    public void createSnapshotForIcon(SupportObjectDescriptor soDescriptor, IResourceLocator modelResource, AssetLoader assetLoader) throws IOException {
+        Node objView = assetLoader.loadSupportObject3DResource(soDescriptor, Optional.empty()).getObject();
 
-        Rotate xRotate = new Rotate(ICON_SNAPSHOT_ANGLE_X, Rotate.X_AXIS);
-        Rotate yRotate = new Rotate(ICON_SNAPSHOT_ANGLE_Y, Rotate.Y_AXIS);
-        objView.getTransforms().addAll(0, Arrays.asList(xRotate, yRotate));
+        Rotate rotateX = new Rotate(ICON_SNAPSHOT_ANGLE_X, Rotate.X_AXIS);
+        Rotate rotateY = new Rotate(ICON_SNAPSHOT_ANGLE_Y, Rotate.Y_AXIS);
+
+        objView.getTransforms().addAll(0, Arrays.asList(rotateX, rotateY));
 
         Platform.runLater(() -> {
             try {
                 Image snapshot = ImageUtils.takeSnapshot(objView, ICON_SNAPSHOT_LIGHT_TYPE, DEFAULT_ICON_SIZE);
-                assetLoader.importAssetIconImage(soDescriptor, snapshot, modelResource.getFileName());
+                assetLoader.importAssetIconImage(soDescriptor, snapshot, AssetManager.ICON_IMAGE_DEFAULT_BASE_NAME);
             } catch (IOException e) {
                 throw new RuntimeException("Error importing snapshot image for plan view", e);
             }
         });
     }
 
-    public void createSnapshotForPlanViewImage(SupportObjectDescriptor soDescriptor, IResourceLocator modelResource, AssetLoader assetLoader) {
-        Node objView = ObjectLoader.load3DResource(modelResource, soDescriptor.getModelRotationMatrix(), assetLoader.getAssetManager().getDefaultMaterials());
+    public void createSnapshotForPlanViewImage(SupportObjectDescriptor soDescriptor, IResourceLocator modelResource, AssetLoader assetLoader) throws IOException {
+        Node objView = assetLoader.loadSupportObject3DResource(soDescriptor, Optional.empty()).getObject();
 
-        objView.getTransforms().add(0, new Rotate(90, new Point3D(1, 0, 0)));
+        Rotate rotateX = new Rotate(PLANVIEW_SNAPSHOT_ANGLE_X, Rotate.X_AXIS);
+        Rotate rotateY = new Rotate(PLANVIEW_SNAPSHOT_ANGLE_Y, Rotate.Y_AXIS);
+
+        objView.getTransforms().addAll(0, Arrays.asList(rotateX, rotateY));
 
         Platform.runLater(() -> {
             try {
                 Image snapshot = ImageUtils.takeSnapshot(objView, PLAN_VIEW_IMAGE_LIGHT_TYPE, DEFAULT_PLAN_VIEW_IMAGE_SIZE);
-                assetLoader.importSupportObjectPlanViewImage(soDescriptor, snapshot, modelResource.getFileName());
+                assetLoader.importSupportObjectPlanViewImage(soDescriptor, snapshot, AssetManager.PLAN_VIEW_IMAGE_DEFAULT_BASE_NAME);
             } catch (IOException e) {
                 throw new RuntimeException("Error importing snapshot image for plan view", e);
             }

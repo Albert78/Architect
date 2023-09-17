@@ -46,7 +46,6 @@ import de.dh.cad.architect.ui.view.AbstractUiMode;
 import de.dh.cad.architect.ui.view.AbstractViewBehavior;
 import de.dh.cad.architect.ui.view.DragControl;
 import de.dh.cad.architect.ui.view.IContextAction;
-import de.dh.cad.architect.ui.view.construction.ConstructionUIElementFilter;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
 import de.dh.cad.architect.ui.view.construction.feedback.wall.endings.DockedWallEnding;
 import javafx.event.EventHandler;
@@ -58,7 +57,6 @@ import javafx.scene.shape.Shape;
 
 public abstract class AbstractConstructionBehavior extends AbstractViewBehavior<Abstract2DRepresentation, Abstract2DAncillaryObject> {
     protected EventHandler<ScrollEvent> mZoomEventHandler = null;
-    protected ConstructionUIElementFilter mUIElementFilter = null;
 
     public AbstractConstructionBehavior(AbstractUiMode<Abstract2DRepresentation, Abstract2DAncillaryObject> parentMode) {
         super(parentMode);
@@ -67,14 +65,6 @@ public abstract class AbstractConstructionBehavior extends AbstractViewBehavior<
     @Override
     public ConstructionView getView() {
         return (ConstructionView) mView;
-    }
-
-    public ConstructionUIElementFilter getUIElementFilter() {
-        return mUIElementFilter;
-    }
-
-    public void setUIElementFilter(ConstructionUIElementFilter filter) {
-        mUIElementFilter = filter;
     }
 
     /**
@@ -99,41 +89,12 @@ public abstract class AbstractConstructionBehavior extends AbstractViewBehavior<
 
     // To be overridden
     @Override
-    protected void setDefaultUserHint() {
+    public void setDefaultUserHint() {
         int numSelectedObjects = getUiController().selectedObjectIds().size();
         if (numSelectedObjects == 0) {
             setUserHint(Strings.CONSTRUCTION_BEHAVIOR_USER_HINT);
         } else {
             setUserHint(MessageFormat.format(Strings.CONSTRUCTION_BEHAVIOR_USER_HINT_N_OBJECTS_SELECTED, numSelectedObjects));
-        }
-    }
-
-    // To be overridden
-    @Override
-    protected void configureObject(Abstract2DRepresentation repr) {
-        super.configureObject(repr);
-
-        if (mUIElementFilter != null) {
-            mUIElementFilter.configure(repr);
-        }
-    }
-
-    // To be overridden
-    @Override
-    protected void unconfigureObject(Abstract2DRepresentation repr, boolean objectRemoved) {
-        super.unconfigureObject(repr, objectRemoved);
-
-        if (mUIElementFilter != null) {
-            mUIElementFilter.unconfigure(repr);
-        }
-    }
-
-    // To be overridden
-    @Override
-    protected void updateObject(Abstract2DRepresentation repr) {
-        super.updateObject(repr);
-        if (mUIElementFilter != null) {
-            mUIElementFilter.configure(repr);
         }
     }
 
@@ -172,11 +133,13 @@ public abstract class AbstractConstructionBehavior extends AbstractViewBehavior<
             getUiController().selectedObjectIds().clear();
         });
         installDefaultSpaceToggleObjectVisibilityKeyHandler();
+        installDefaultDeleteObjectsKeyHandler();
     }
 
     @Override
     protected void uninstallDefaultViewHandlers() {
         super.uninstallDefaultViewHandlers();
+        uninstallDefaultDeleteObjectsKeyHandler();
         uninstallDefaultSpaceToggleObjectVisibilityKeyHandler();
         getView().setOnMouseClicked(null);
         disableMouseMovePlanGesture();
@@ -347,7 +310,8 @@ public abstract class AbstractConstructionBehavior extends AbstractViewBehavior<
             @Override
             public void execute() {
                 List<IModelChange> changeTrace = new ArrayList<>();
-                Ceiling ceiling = Ceiling.create(null,
+                Ceiling ceiling = Ceiling.create(
+                    BaseObjectUIRepresentation.generateSimpleName(getPlan().getCeilings().values(), Ceiling.class),
                     anchor3D1.getPosition3D(Length.ZERO),
                     anchor3D2.getPosition3D(Length.ZERO),
                     anchor3D3.getPosition3D(Length.ZERO),
@@ -376,7 +340,8 @@ public abstract class AbstractConstructionBehavior extends AbstractViewBehavior<
             @Override
             public void execute() {
                 List<IModelChange> changeTrace = new ArrayList<>();
-                Covering covering = Covering.create(null,
+                Covering covering = Covering.create(
+                    BaseObjectUIRepresentation.generateSimpleName(getPlan().getCoverings().values(), Covering.class),
                     anchor3D1.requirePosition3D(),
                     anchor3D2.requirePosition3D(),
                     anchor3D3.requirePosition3D(),
@@ -429,7 +394,8 @@ public abstract class AbstractConstructionBehavior extends AbstractViewBehavior<
                     distanceFromEnd = Length.ofCM(10);
                 }
                 List<IModelChange> changeTrace = new ArrayList<>();
-                WallHole wallHole = WallHole.createFromParameters(null,
+                WallHole wallHole = WallHole.createFromParameters(
+                    BaseObjectUIRepresentation.generateSimpleName(ownerWall.getWallHoles(), WallHole.class),
                     Length.ofCM(100), new Dimensions2D(windowWidth, windowHeight),
                     WallDockEnd.A, distanceFromEnd, ownerWall, changeTrace);
                 uiController.notifyChange(changeTrace, Strings.WALL_HOHE_ADD_CHANGE);

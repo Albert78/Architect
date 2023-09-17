@@ -98,7 +98,7 @@ public class SupportObject extends BaseSolidObject {
         changeTrace.add(new ObjectModificationChange(this) {
             @Override
             public void undo(List<IModelChange> undoChangeTrace) {
-                setSupportObjectDescriptorRef(oldDescriptorRef, changeTrace);
+                setSupportObjectDescriptorRef(oldDescriptorRef, undoChangeTrace);
             }
         });
     }

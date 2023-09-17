@@ -140,9 +140,18 @@ public class Strings {
     // Actions
     public static final String UNGROUP_ACTION_TITLE = "Gruppe auflösen";
     public static final String GROUP_N_OBJECTS_ACTION_TITLE = "{0} Objekte gruppieren";
+    public static final String ADD_OBJECTS_TO_GROUP_ACTION_TITLE = "{0} Objekte zu einer Gruppe hinzufügen";
+    public static final String REMOVE_OBJECTS_FROM_GROUP_ACTION_TITLE = "{0} Objekte aus einer Gruppe entfernen";
+    public static final String REMOVE_OBJECTS_FROM_GROUP_NO_GROUPS_ERROR_TEXT = "Es gibt keine Objektgruppe, die die selektierten Objekte enthält";
     public static final String GROUP_ACTION_EDIT_GROUP_NAME_DIALOG_TITLE = "Gruppenname eingeben";
     public static final String GROUP_ACTION_EDIT_GROUP_NAME_DIALOG_HEADER_TEXT = "Gib einen Namen für die neue Gruppe ein";
     public static final String GROUP_ACTION_EDIT_GROUP_NAME_DIALOG_CONTENT_TEXT = "Gruppenname";
+    public static final String ADD_OBJECTS_TO_GROUP_CHANGE = "Objekte zu Gruppe hinzufügen";
+    public static final String REMOVE_OBJECTS_FROM_GROUP_CHANGE = "Objekte aus Gruppe entfernen";
+    public static final String ADD_OBJECTS_TO_GROUP_GROUP_CHOICE_DIALOG_TITLE = "Objekte zu vorhandener Gruppe hinzufügen";
+    public static final String ADD_OBJECTS_TO_GROUP_GROUP_CHOICE_DIALOG_HEADER_TEXT = "Wähle die Gruppe, zu der die Objekte {0} hinzugefügt werden sollen";
+    public static final String REMOVE_OBJECTS_FROM_GROUP_GROUP_CHOICE_DIALOG_TITLE = "Objekte von einer Gruppe entfernen";
+    public static final String REMOVE_OBJECTS_FROM_GROUP_GROUP_CHOICE_DIALOG_HEADER_TEXT = "Wähle die Gruppe, von der die Objekte {0} entfernt werden sollen";
 
     public static final String PERMANENT_DOCK_ANCHOR_ACTION_TITLE = "Anker andocken";
     public static final String ACTION_CANCEL_PERMANENT_DOCK = "Abbrechen: Andocken";
@@ -242,15 +251,27 @@ public class Strings {
     public static final String WALL_STRAIGHTEN_BENDPOINT_CHANGE = "Wandecke entfernen/begradigen";
 
     public static final String SUPPORT_OBJECT_CONTROL_WIDTH_X_0 = "Breite (X): {0}";
-    public static final String SUPPORT_OBJECT_CONTROL_HEIGHT_Y_0 = "Höhe (Y): {0}";
-    public static final String SUPPORT_OBJECT_CONTROL_DEPTH_Z_0 = "Tiefe (Z): {0}";
-    public static final String SUPPORT_OBJECT_CONTROL_ELEVATION_Y_0 = "Vertikaler Versatz (Y): {0}";
+    public static final String SUPPORT_OBJECT_CONTROL_DEPTH_Y_0 = "Tiefe (Y): {0}";
+    public static final String SUPPORT_OBJECT_CONTROL_HEIGHT_Z_0 = "Höhe (Z): {0}";
+    public static final String SUPPORT_OBJECT_CONTROL_ELEVATION_Y_0 = "Vertikaler Versatz (Z): {0}";
 
     public static final String SUPPORT_OBJECT_CONTROL_DEFAULT_SIZE_TITLE = "Standardgröße:";
     public static final String SUPPORT_OBJECT_CONTROL_WIDTH_X_LABEL = "Breite (X)";
-    public static final String SUPPORT_OBJECT_CONTROL_HEIGHT_Y_LABEL = "Höhe (Y)";
-    public static final String SUPPORT_OBJECT_CONTROL_DEPTH_Z_LABEL = "Tiefe (Z)";
-    public static final String SUPPORT_OBJECT_CONTROL_ELEVATION_Y_LABEL = "Vertikaler Versatz (Y)";
+    public static final String SUPPORT_OBJECT_CONTROL_DEPTH_Y_LABEL = "Tiefe (Y)";
+    public static final String SUPPORT_OBJECT_CONTROL_HEIGHT_Z_LABEL = "Höhe (Z)";
+    public static final String SUPPORT_OBJECT_CONTROL_ELEVATION_Y_LABEL = "Vertikaler Versatz (Z)";
+    public static final String SUPPORT_OBJECT_CONTROL_ROTATION_TITLE = "Drehung";
+    public static final String SUPPORT_OBJECT_CONTROL_SHOW_AXIS = "Achsen anzeigen";
+    public static final String SUPPORT_OBJECT_CONTROL_ROT_X_LABEL = "X-Achse";
+    public static final String SUPPORT_OBJECT_CONTROL_ROT_X_UP_BUTTON = "+ 90°";
+    public static final String SUPPORT_OBJECT_CONTROL_ROT_X_DOWN_BUTTON = "- 90°";
+    public static final String SUPPORT_OBJECT_CONTROL_ROT_Y_LABEL = "Y-Achse";
+    public static final String SUPPORT_OBJECT_CONTROL_ROT_Y_UP_BUTTON = "+ 90°";
+    public static final String SUPPORT_OBJECT_CONTROL_ROT_Y_DOWN_BUTTON = "- 90°";
+    public static final String SUPPORT_OBJECT_CONTROL_ROT_Z_LABEL = "Z-Achse";
+    public static final String SUPPORT_OBJECT_CONTROL_ROT_Z_UP_BUTTON = "+ 90°";
+    public static final String SUPPORT_OBJECT_CONTROL_ROT_Z_DOWN_BUTTON = "- 90°";
+    public static final String SUPPORT_OBJECT_CONTROL_SHOW_VIRTUAL_FLOOR = "Boden anzeigen";
 
     public static final String PROPERTIES_DIMENSIONS_DIALOG_TITLE = "Ausmaße bearbeiten";
     public static final String PROPERTIES_LENGTH_DIALOG_TITLE = "Länge bearbeiten";
@@ -408,12 +429,17 @@ public class Strings {
     public static final String INTERACTIONS_TAB_SELECTED_SUPPORT_OBJECT_TITLE = "Hilfsobjekt(e) bearbeiten";
     public static final String SUPPORT_OBJECTS_EDIT_BEHAVIOR_USER_HINT = "Ordne die Hilfsobjekte an oder verändere sie";
     public static final String SUPPORT_OBJECTS_EDIT_BEHAVIOR_TITLE = "Hilfsobjekt(e) bearbeiten";
+    public static final String SUPPORT_OBJECT_RESIZE_USER_HINT = "Objektgröße ändern";
+    public static final String SUPPORT_OBJECT_ROTATE_USER_HINT = "Objekt drehen";
+    public static final String SUPPORT_OBJECT_CHANGE_HEIGHT_USER_HINT = "Höhe ändern";
+    public static final String SUPPORT_OBJECT_CHANGE_ELEVATION_USER_HINT = "Vertikalen Versatz ändern";
 
     // 3D plan
     public static final String THREE_D_PLAN_VIEW_TITLE = "3D-Ansicht";
 
     public static final String THREE_D_CAMERA_POSITIONS_ACTION_TITLE = "Kamerapositionen";
     public static final String THREE_D_MENU_CAMERA_POSITIONS_SAVE_CURRENT = "Aktuelle Position speichern...";
+    public static final String THREE_D_MENU_CAMERA_POSITIONS_RESET = "Kameraposition zurücksetzen";
     public static final String THREE_D_MENU_CAMERA_POSITIONS_MANAGE_POSITIONS = "Positionen verwalten...";
     public static final String THREE_D_SAVE_CAMERA_DIALOG_TITLE = "Kameraposition speichern...";
     public static final String THREE_D_SAVE_CAMERA_DIALOG_HEADER = "Gib einen Namen für die Kameraposition ein";
@@ -460,6 +486,7 @@ public class Strings {
     public static final String LIBRARY_MANAGER_LOAD_ASSET_LIBRARIES_DIALOG_TITLE = "Bibliotheksverzeichnis wählen";
     public static final String LIBRARY_MANAGER_NEW_ASSET_LIBRARY_NAME = "Asset-Bibliothek";
     public static final String NEW_MATERIAL_SET_NAME_PATTERN = "Material-Kollektion {0}";
+    public static final String NEW_MATERIAL_SET_IN_SO_NAME_PATTERN = "{0} in Hilfsobjekt ''{1}''";
     public static final String SELECT_TEXTURE_IMAGE_DIALOG_TITLE = "Textur für Material wählen";
     public static final String NEW_TEXTURE_NAME = "Textur {0}";
     public static final String NEW_SUPPORT_OBJECT_NAME_PATTERN = "Hilfsobjekt {0}";
@@ -467,15 +494,15 @@ public class Strings {
     public static final String SELECT_PLAN_VIEW_IMAGE_DIALOG_TITLE = "Objekt-Ansicht im Grundriss wählen";
     public static final String SELECT_OBJECT_3D_RESOURCE_DIALOG_TITLE = "3D-Ressource für Objekt wählen";
     public static final String LIBRARY_MANAGER_DIALOG_QUERY_DELETE_LIBRARIES_TITLE = "Bibliotheken löschen";
-    public static final String LIBRARY_MANAGER_DIALOG_QUERY_DELETE_LIBRARIES_HEADER_1 = "Soll die Bibliothek {0} gelöscht werden?";
-    public static final String LIBRARY_MANAGER_DIALOG_QUERY_DELETE_LIBRARIES_HEADER_N = "Sollen die Bibliotheken {0} gelöscht werden?";
+    public static final String LIBRARY_MANAGER_DIALOG_QUERY_DELETE_LIBRARIES_HEADER_1 = "Soll die Bibliothek gelöscht werden?";
+    public static final String LIBRARY_MANAGER_DIALOG_QUERY_DELETE_LIBRARIES_HEADER_N = "Sollen die Bibliotheken gelöscht werden?";
     public static final String LIBRARY_MANAGER_DIALOG_QUERY_DELETE_MATERIAL_SET_TITLE = "Material-Kollektion löschen";
-    public static final String LIBRARY_MANAGER_DIALOG_QUERY_DELETE_MATERIAL_SET_HEADER_1 = "Soll die Material-Kollektion {0} gelöscht werden?";
-    public static final String LIBRARY_MANAGER_DIALOG_QUERY_DELETE_MATERIAL_SET_HEADER_N = "Sollen die Material-Kollektionen {0} gelöscht werden?";
+    public static final String LIBRARY_MANAGER_DIALOG_QUERY_DELETE_MATERIAL_SET_HEADER_1 = "Soll die Material-Kollektion gelöscht werden?";
+    public static final String LIBRARY_MANAGER_DIALOG_QUERY_DELETE_MATERIAL_SET_HEADER_N = "Sollen die Material-Kollektionen gelöscht werden?";
     public static final String LIBRARY_MANAGER_DIALOG_QUERY_DELETE_SUPPORT_OBJECTS_TITLE = "Hilfsobjekte löschen";
-    public static final String LIBRARY_MANAGER_DIALOG_QUERY_DELETE_SUPPORT_OBJECTS_HEADER_1 = "Soll das Hilfsobjekt {0} gelöscht werden?";
-    public static final String LIBRARY_MANAGER_DIALOG_QUERY_DELETE_SUPPORT_OBJECTS_HEADER_N = "Sollen die Hilfsobjekte {0} gelöscht werden?";
-    public static final String LIBRARY_MANAGER_DIALOG_QUERY_DELETE_OBJECTS_COMMON_TEXT = "Die Dateien werden unwiderruflich vom Datenträger gelöscht";
+    public static final String LIBRARY_MANAGER_DIALOG_QUERY_DELETE_SUPPORT_OBJECTS_HEADER_1 = "Soll das Hilfsobjekt gelöscht werden?";
+    public static final String LIBRARY_MANAGER_DIALOG_QUERY_DELETE_SUPPORT_OBJECTS_HEADER_N = "Sollen die Hilfsobjekte gelöscht werden?";
+    public static final String LIBRARY_MANAGER_DIALOG_QUERY_DELETE_OBJECTS_QUERY = "Die Daten werden unwiderruflich vom Datenträger gelöscht:";
 
     public static final String LIBRARY_MANAGER_NEW_LIBRARY_TOOLTIP = "Neue Bibliothek anlegen...";
     public static final String LIBRARY_MANAGER_EDIT_LIBRARY_TOOLTIP = "Bibliothek {0} bearbeiten...";
@@ -503,7 +530,6 @@ public class Strings {
 
     public static final String LIBRARY_MANAGER_ASSET_PATH_ANCHOR_PLAN = "Plan";
     public static final String LIBRARY_MANAGER_ASSET_PATH_ANCHOR_LIBRARY = "Bibliothek {0}";
-    public static final String LIBRARY_MANAGER_ASSET_PATH_ANCHOR_SUPPORT_OBJECT = "Hilfsobjekt {0}";
 
     public static final String LIBRARY_MANAGER_CREATE_MATERIAL_SET_DIALOG_TITLE = "Neue Material-Kollektion anlegen";
     public static final String LIBRARY_MANAGER_CREATE_MATERIAL_SET_HEADER_DIALOG_HEADER = "Wähle die Bibliothek und ggf. das Hilfsobjekt, in dem die neue Material-Kollektion erstellt werden soll";

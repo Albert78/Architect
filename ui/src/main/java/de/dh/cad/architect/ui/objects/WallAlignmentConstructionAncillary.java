@@ -24,6 +24,7 @@ import java.util.Optional;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.model.wallmodel.IWall;
+import de.dh.cad.architect.ui.utils.Axis;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
 import de.dh.utils.Vector2D;
@@ -185,11 +186,11 @@ public class WallAlignmentConstructionAncillary extends Abstract2DAncillaryObjec
             return;
         }
 
-        double wallThickness2 = CoordinateUtils.lengthToCoords(mWallData.getWallThickness()) / 2;
+        double wallThickness2 = CoordinateUtils.lengthToCoords(mWallData.getWallThickness(), null) / 2;
         Position2D handlePosA = mWallData.getHandleA();
-        Vector2D handleA = new Vector2D(CoordinateUtils.lengthToCoords(handlePosA.getX()), CoordinateUtils.lengthToCoords(handlePosA.getY()));
+        Vector2D handleA = new Vector2D(CoordinateUtils.lengthToCoords(handlePosA.getX(), Axis.X), CoordinateUtils.lengthToCoords(handlePosA.getY(), Axis.Y));
         Position2D handlePosB = mWallData.getHandleB();
-        Vector2D handleB = new Vector2D(CoordinateUtils.lengthToCoords(handlePosB.getX()), CoordinateUtils.lengthToCoords(handlePosB.getY()));
+        Vector2D handleB = new Vector2D(CoordinateUtils.lengthToCoords(handlePosB.getX(), Axis.X), CoordinateUtils.lengthToCoords(handlePosB.getY(), Axis.Y));
         Vector2D middle = Vector2D.center(handleA, handleB);
         Vector2D vectorBA = handleA.minus(handleB);
         Vector2D vSide = vectorBA.getNormalCCW();

@@ -44,7 +44,6 @@ import de.dh.cad.architect.ui.objects.SupportObjectConstructionRepresentation.IM
 import de.dh.cad.architect.ui.view.AbstractPlanView;
 import de.dh.cad.architect.ui.view.AbstractUiMode;
 import de.dh.cad.architect.ui.view.IContextAction;
-import de.dh.cad.architect.ui.view.InteractionsControl;
 import de.dh.cad.architect.ui.view.ObjectReconcileOperation;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
 import de.dh.cad.architect.ui.view.construction.SupportObjectsUIElementFilter;
@@ -208,7 +207,8 @@ public class EditSelectedSupportObjectsBehavior extends AbstractConstructionBeha
     }
 
     protected void createInteractionsPane() {
-        setInteractionsControl(new InteractionsControl(mSOInfo, Strings.INTERACTIONS_TAB_SELECTED_SUPPORT_OBJECT_TITLE, false));
+        // TODO: Populate interactions control for support objects
+//        setInteractionsControl(new InteractionsControl(mSOInfo, Strings.INTERACTIONS_TAB_SELECTED_SUPPORT_OBJECT_TITLE, false));
     }
 
     protected void updateInteractionsPane() {
@@ -217,7 +217,7 @@ public class EditSelectedSupportObjectsBehavior extends AbstractConstructionBeha
     }
 
     @Override
-    protected void setDefaultUserHint() {
+    public void setDefaultUserHint() {
         setUserHint(Strings.SUPPORT_OBJECTS_EDIT_BEHAVIOR_USER_HINT);
     }
 
@@ -235,7 +235,7 @@ public class EditSelectedSupportObjectsBehavior extends AbstractConstructionBeha
     public void install(AbstractPlanView<Abstract2DRepresentation, Abstract2DAncillaryObject> view) {
         UiController uiController = view.getUiController();
         Plan plan = uiController.getPlan();
-        mFeedbackManager = new EditSupportObjectsVisualFeedbackManager((ConstructionView) view,
+        mFeedbackManager = new EditSupportObjectsVisualFeedbackManager(this, (ConstructionView) view,
             newLocationData -> {
                 List<IModelChange> changeTrace = new ArrayList<>();
                 Collection<SupportObject> positionChangedObjects = new ArrayList<>();

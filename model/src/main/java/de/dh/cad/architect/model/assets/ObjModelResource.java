@@ -22,7 +22,7 @@ import java.nio.file.Path;
 /**
  * A 3D model in form of an {@code .obj} file.
  */
-public class ObjModelResource extends FileModelResource {
+public class ObjModelResource extends ThreeDModelResource {
     public ObjModelResource() {
         // For JAXB
     }

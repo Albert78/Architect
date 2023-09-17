@@ -245,7 +245,7 @@ public class ObjectTreeControl extends BorderPane {
                 setVisibility(getObjects(selectedItems), selectedObjectVisible);
             }
         });
-        mTreeTableView.setColumnResizePolicy(TreeTableView.CONSTRAINED_RESIZE_POLICY);
+        mTreeTableView.setColumnResizePolicy(TreeTableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         ttvSelectionModel.setSelectionMode(SelectionMode.MULTIPLE);
 
         // Reflect changes from tree selection to selected objects list

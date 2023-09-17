@@ -40,6 +40,7 @@ import de.dh.cad.architect.ui.view.AbstractPlanView;
 import de.dh.cad.architect.ui.view.AbstractUiMode;
 import de.dh.cad.architect.ui.view.IContextAction;
 import de.dh.cad.architect.ui.view.InteractionsControl;
+import de.dh.cad.architect.ui.view.threed.ThreeDUIElementFilter;
 import de.dh.cad.architect.ui.view.threed.ThreeDView;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
@@ -239,6 +240,7 @@ public class PainterBehavior extends Abstract3DViewBehavior {
 
     public PainterBehavior(AbstractUiMode<Abstract3DRepresentation, Abstract3DAncillaryObject> parentMode) {
         super(parentMode);
+        setUIElementFilter(new ThreeDUIElementFilter());
     }
 
     protected void highlightSurface(ObjectSurface surface) {
@@ -293,6 +295,7 @@ public class PainterBehavior extends Abstract3DViewBehavior {
 
     @Override
     protected void configureObject(Abstract3DRepresentation repr) {
+        super.configureObject(repr);
         repr.mouseOverSurfaceProperty().removeListener(MOUSE_OVER_SURFACE_CHANGE_LISTENER);
         repr.mouseOverSurfaceProperty().addListener(MOUSE_OVER_SURFACE_CHANGE_LISTENER);
         repr.setOnMouseClicked(new EventHandler<>() {
@@ -309,6 +312,7 @@ public class PainterBehavior extends Abstract3DViewBehavior {
     protected void unconfigureObject(Abstract3DRepresentation repr, boolean objectRemoved) {
         repr.mouseOverSurfaceProperty().removeListener(MOUSE_OVER_SURFACE_CHANGE_LISTENER);
         repr.setOnMouseClicked(null);
+        super.unconfigureObject(repr, objectRemoved);
     }
 
     @Override
@@ -317,7 +321,7 @@ public class PainterBehavior extends Abstract3DViewBehavior {
     }
 
     @Override
-    protected void setDefaultUserHint() {
+    public void setDefaultUserHint() {
         setUserHint(Strings.THREE_D_PAINTER_BEHAVIOR_USER_HINT);
     }
 

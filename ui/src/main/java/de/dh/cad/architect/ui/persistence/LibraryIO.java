@@ -37,7 +37,7 @@ public class LibraryIO {
     public static final String ASSET_LIBRARY_FILE_EXTENSION = "xml";
     public static final String DEFAULT_ASSET_LIBRARY_FILE_NAME = "AssetLibrary" + "." + ASSET_LIBRARY_FILE_EXTENSION;
 
-    public static final String ASSET_LIBRARY_FILE_SCHEMA_URL = "http://www.dh-software.de/architect/v2/assetlibrary";
+    public static final String ASSET_LIBRARY_FILE_SCHEMA_URL = "http://www.dh-software.de/architect/v2.1/assetlibrary";
 
     public static void serializeAssetLibrary(AssetLibrary library, Writer writer) {
         try {

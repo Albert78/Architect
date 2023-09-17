@@ -34,12 +34,12 @@ import de.dh.cad.architect.utils.vfs.IResourceLocator;
 import de.dh.utils.ArrayUtils;
 import de.dh.utils.Vector2D;
 import de.dh.utils.io.MeshData;
+import de.dh.utils.io.MeshData.FaceNormalsData;
 import de.dh.utils.io.ObjData;
 import de.dh.utils.io.SmoothingGroups;
-import de.dh.utils.io.MeshData.FaceNormalsData;
 import de.dh.utils.io.obj.ParserUtils;
-import de.dh.utils.io.obj.RawMaterialData;
 import de.dh.utils.io.obj.ParserUtils.TokenIterator;
+import de.dh.utils.io.obj.RawMaterialData;
 import javafx.geometry.Dimension2D;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.image.Image;
@@ -53,7 +53,6 @@ import javafx.scene.shape.MeshView;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape3D;
 import javafx.scene.shape.TriangleMesh;
-import javafx.scene.transform.Scale;
 
 /**
  * Class for building JavaFX {@link MeshView} objects from {@code .obj} and {@code .mtl} file data which
@@ -66,17 +65,19 @@ import javafx.scene.transform.Scale;
  * <ul>
  * <li>
  * When transporting the object properties directly via JavaFX {@link Material} / {@link MeshView} instances,
- * overriding of materials in inherited objects, like exchanging the color of the surface of objects, cannot
- * be implemented in a straight-forward way. It is better to have a format-independent in-memory-model for
- * mesh data and material with an explicit mapping of meshes to materials.
+ * it is hard to implement an overriding semantics of materials in inherited objects, like exchanging the
+ * color of the surface of objects.
+ * Therefore, we use a format-independent in-memory-model for mesh data and material with an explicit mapping
+ * of meshes to materials.
  * </li>
  * <li>
- * The typical object reader/writer code is JavaFX specific and could not be reused for other 3D frontend libraries.
+ * The typical object reader/writer code you can find in internet is JavaFX specific and could not be reused
+ * for other 3D frontend libraries.
  * </li>
  * <li>
- * There are properties in the material specification which actually would need to be translated into properties of
- * the final {@link MeshView} object, e.g. the {@code d} command in the material file, which needs to be translated
- * to the {@link MeshView#getOpacity() opacity} of the mesh view.
+ * There are properties in the material library specification (.mtl file) which would need to be translated
+ * into properties of the final {@link MeshView} object in JavaFX, e.g. the {@code d} command in the material file,
+ * which needs to be translated to the {@link MeshView#getOpacity() opacity} of the mesh view.
  * Due to a current limitation of JavaFX (as of version 16), the {@link MeshView#getOpacity() opacity property} is not
  * supported for 3D objects, instead, we are forced to "hack" the opacity using the alpha value of the diffuse color and
  * specular color. So this third argument doesn't actually apply in the current implementation but could maybe become
@@ -351,28 +352,18 @@ public class FxMeshBuilder {
 
     public static MeshView buildMeshView(MeshData meshData) throws IOException {
         MeshView meshView = new MeshView();
-        meshView.setId(meshData.getId());
+        meshView.setId(meshData.getName());
         Mesh mesh = buildMesh(meshData);
         meshView.setMesh(mesh);
-        meshView.setCullFace(CullFace.NONE);
-
-        // JavaFX uses LHS:
-        // Z coordinate grows in direction away from the observer
-        // Y coordinate grows to the bottom
-        // OBJ format uses RHS:
-        // Z grows in direction to the observer
-        // Y grows to the top
-        // Therefore, we mirror by Z and Y to correct the object coordinates
-        Scale objToJavaFX = new Scale(1, -1, -1, 0, 0, 0);
-        meshView.getTransforms().add(objToJavaFX);
+        meshView.setCullFace(CullFace.BACK);
         return meshView;
     }
 
-    public static Collection<MeshView> buildMeshViews(Collection<MeshData> meshes, Map<String, RawMaterialData> meshIdsToMaterials, boolean failOnError) throws IOException {
+    public static Collection<MeshView> buildMeshViews(Collection<MeshData> meshes, Map<String, RawMaterialData> meshNamesToMaterials, boolean failOnError) throws IOException {
         Collection<MeshView> result = new ArrayList<>();
         for (MeshData meshData : meshes) {
             MeshView meshView = FxMeshBuilder.buildMeshView(meshData);
-            RawMaterialData materialData = meshIdsToMaterials.get(meshData.getId());
+            RawMaterialData materialData = meshNamesToMaterials.get(meshData.getName());
             configureMaterial(meshView, materialData, Optional.empty(), failOnError);
             result.add(meshView);
         }

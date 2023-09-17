@@ -32,7 +32,6 @@ import de.dh.cad.architect.ui.controller.UiController;
 import de.dh.cad.architect.ui.objects.Abstract2DRepresentation;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.DragControl;
-import de.dh.utils.Vector2D;
 import de.dh.utils.fx.FxUtils;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -48,7 +47,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.scene.text.Text;
 
-public abstract class AbstractRuler extends Pane {
+public class Ruler extends Pane {
     protected static final double GUIDE_ARROW_VISIBLE_OPACITY = 1.0;
     protected static final double GUIDE_ARROW_INVISIBLE_OPACITY = 0.3;
 
@@ -96,19 +95,18 @@ public abstract class AbstractRuler extends Pane {
     public static final int MIDDLE_SCALE_LENGTH = 7;
     public static final int TENTH_SCALE_LENGTH = 5;
 
-    public static final int GUIDE_ARROW_HEIGHT = 12;
-    public static final int GUIDE_ARROW_WIDTH = 10;
-
     protected final UiController mUIController;
+    protected final GuideLineDirection mDirection;
     protected final Group mRulerContentsArea;
     protected final Group mGuideArrowsArea;
     protected final Line mCursorMarker;
     protected final Map<String, GuideArrow> mGuideArrows = new TreeMap<>();
     protected double mScale = 1;
-    protected Vector2D mTranslation = new Vector2D(0, 0);
+    protected double mTranslation = 0;
 
-    protected AbstractRuler(UiController uiController) {
+    public Ruler(UiController uiController, GuideLineDirection direction) {
         mUIController = uiController;
+        mDirection = direction;
         mGuideArrowsArea = new Group();
         mRulerContentsArea = new Group();
         mCursorMarker = new Line();
@@ -120,11 +118,9 @@ public abstract class AbstractRuler extends Pane {
         mGuideArrowsArea.setViewOrder(1);
         mRulerContentsArea.setViewOrder(2);
 
-        configureGuideLinesArea();
+        mGuideArrowsArea.translateYProperty().bind(heightProperty().subtract(GuideArrow.GUIDE_ARROW_HEIGHT));
         ObservableList<Node> children = getChildren();
-        children.add(mGuideArrowsArea);
-        children.add(mRulerContentsArea);
-        children.add(mCursorMarker);
+        children.addAll(mGuideArrowsArea, mRulerContentsArea, mCursorMarker);
 
         setStyle("-fx-background-color: white;");
         FxUtils.addClippingToBounds(this);
@@ -137,10 +133,57 @@ public abstract class AbstractRuler extends Pane {
         };
         heightProperty().addListener(updateListener);
         widthProperty().addListener(updateListener);
+
+        setPrefHeight(RULER_WIDTH);
+
+        setOnMouseClicked(mouseEvent -> {
+            if (!mouseEvent.isStillSincePress()) {
+                return;
+            }
+            mouseEvent.consume();
+            Point2D localPoint = sceneToLocal(mouseEvent.getSceneX(), mouseEvent.getSceneY());
+            createGuideLine(localPoint.getX());
+        });
+
+        updateView();
     }
 
-    protected abstract void configureGuideLinesArea();
-    protected abstract void doUpdateView();
+    protected double getVisibleRange() {
+        return getWidth();
+    }
+
+    protected double getTextOffset(Bounds textLayoutBounds) {
+        return -textLayoutBounds.getWidth() / 2;
+    }
+
+    public void doUpdateView() {
+        for (GuideArrow guideArrow : mGuideArrows.values()) {
+            updateGuideArrow(guideArrow);
+        }
+
+        ObservableList<Node> children = mRulerContentsArea.getChildren();
+        children.clear();
+
+        double height = getHeight();
+        double width = getWidth();
+
+        children.add(new Line(0, 0, 0, height)); // Left
+        children.add(new Line(0, 0, width, 0)); // Top
+        children.add(new Line(width, 0, width, height)); // Right
+        children.add(new Line(0, height - 1, width, height - 1)); // Bottom
+        for (ScaleLabel sl : calculateScaleLabels()) {
+            double position = sl.getPosition();
+            double scaleLength = sl.getScaleLength();
+            double textPosition = sl.getTextPosition();
+            Optional<Text> oLabel = sl.getOLabel();
+            children.add(new Line(position, height - scaleLength, position, height - 1));
+            oLabel.ifPresent(label -> {
+                label.setX(textPosition);
+                label.setY(label.getLayoutBounds().getHeight());
+                children.add(label);
+            });
+        }
+    }
 
     public void updateView() {
         if (getHeight() == 0.0 || getWidth() == 0.0) {
@@ -149,10 +192,24 @@ public abstract class AbstractRuler extends Pane {
         doUpdateView();
     }
 
-    public void setTransform(double scale, Vector2D translation) {
+    public void setTransform(double scale, double translation) {
         mScale = scale;
         mTranslation = translation;
         updateView();
+    }
+
+    public void setCursorMarker(Length position) {
+        if (position == null) {
+            mCursorMarker.setVisible(false);
+        } else {
+            double height = getHeight();
+            double x = lengthToPosition(position);
+            mCursorMarker.setStartX(x);
+            mCursorMarker.setStartY(0);
+            mCursorMarker.setEndX(x);
+            mCursorMarker.setEndY(height);
+            mCursorMarker.setVisible(true);
+        }
     }
 
     protected void configureGuideArrow(GuideArrow guideArrow) {
@@ -182,33 +239,15 @@ public abstract class AbstractRuler extends Pane {
                 return;
             }
             Point2D localPoint = sceneToLocal(mouseEvent.getSceneX(), mouseEvent.getSceneY());
-            switch (guideLine.getDirection()) {
-            case Vertical:
-                if (Math.abs(localPoint.getY()) > GUIDE_ARROW_DRAG_SNAP_TO_ORIGINAL_POS_THRESHOLD) {
-                    guideArrow.setVisible(false);
-                    dragControl.setHidden(true);
-                } else {
-                    setGuideLinePosition(guideLine, localPoint.getX());
-                    if (dragControl.isHidden()) {
-                        guideArrow.setVisible(true);
-                    }
-                    dragControl.setHidden(false);
+            if (Math.abs(localPoint.getY()) > GUIDE_ARROW_DRAG_SNAP_TO_ORIGINAL_POS_THRESHOLD) {
+                guideArrow.setVisible(false);
+                dragControl.setHidden(true);
+            } else {
+                setGuideLinePosition(guideLine, localPoint.getX());
+                if (dragControl.isHidden()) {
+                    guideArrow.setVisible(true);
                 }
-                break;
-            case Horizontal:
-                if (Math.abs(localPoint.getX()) > GUIDE_ARROW_DRAG_SNAP_TO_ORIGINAL_POS_THRESHOLD) {
-                    guideArrow.setVisible(false);
-                    dragControl.setHidden(true);
-                } else {
-                    setGuideLinePosition(guideLine, localPoint.getY());
-                    if (dragControl.isHidden()) {
-                        guideArrow.setVisible(true);
-                    }
-                    dragControl.setHidden(false);
-                }
-                break;
-            default:
-                throw new RuntimeException("Unknown guide line direction '" + guideLine.getDirection() + "'");
+                dragControl.setHidden(false);
             }
         });
         guideArrow.setOnMouseEntered(mouseEvent -> {
@@ -230,12 +269,10 @@ public abstract class AbstractRuler extends Pane {
         });
     }
 
-    protected abstract void updateGuideArrowPosition(GuideArrow guideArrow, double pos);
-
     protected double updateGuideArrow(GuideArrow guideArrow) {
         GuideLine guideLine = guideArrow.getGuideLine();
         double pos = lengthToPosition(guideLine.getPosition());
-        updateGuideArrowPosition(guideArrow, pos);
+        guideArrow.setTranslateX(pos);
 
         if (mUIController.selectedObjectIds().contains(guideLine.getId())) {
             guideArrow.setFill(Abstract2DRepresentation.SELECTED_OBJECTS_COLOR);
@@ -247,12 +284,11 @@ public abstract class AbstractRuler extends Pane {
         return pos;
     }
 
-    public double addGuideLine(GuideLine guideLine) {
-        GuideArrow guideArrow = new GuideArrow(guideLine, this);
+    public void addGuideLine(GuideLine guideLine) {
+        GuideArrow guideArrow = new GuideArrow(guideLine);
         mGuideArrows.put(guideLine.getId(), guideArrow);
         mGuideArrowsArea.getChildren().add(guideArrow);
         configureGuideArrow(guideArrow);
-        return updateGuideArrow(guideArrow);
     }
 
     public void removeGuideLine(GuideLine guideLine) {
@@ -270,55 +306,50 @@ public abstract class AbstractRuler extends Pane {
         mGuideArrowsArea.getChildren().clear();
     }
 
-    public void createGuideLine(GuideLineDirection direction, double position) {
-        mUIController.createGuideLine(direction, positionToLength(position));
+    public void createGuideLine(double position) {
+        mUIController.createGuideLine(mDirection == GuideLineDirection.Horizontal
+                ? GuideLineDirection.Vertical
+                : GuideLineDirection.Horizontal, positionToLength(position));
     }
 
     public void deleteGuideLine(GuideLine guideLine) {
         mUIController.deleteGuideLine(guideLine);
     }
 
-    public abstract void setCursorMarker(Length position);
-
     protected void setGuideLinePosition(GuideLine guideLine, double position) {
         mUIController.setGuideLinePosition(guideLine, positionToLength(position));
     }
 
     protected Length positionToLength(double position) {
-        return CoordinateUtils.coordsToLength((position - getTranslation()) / mScale);
+        return CoordinateUtils.coordsToLength((position - mTranslation) / mScale, null);
     }
 
     protected double lengthToPosition(Length position) {
-        return CoordinateUtils.lengthToCoords(position) * mScale + getTranslation();
+        return CoordinateUtils.lengthToCoords(position, null) * mScale + mTranslation;
     }
 
-    protected abstract double getTranslation();
-    protected abstract double getVisibleRange();
-    protected abstract double getTextOffset(Bounds textLayoutBounds);
-
     protected List<ScaleLabel> calculateScaleLabels() {
-        double trans = getTranslation();
         double visibleRange = getVisibleRange();
 
         // Length of our visible range
-        double rangeStartPos = -trans / mScale;
-        Length rangeStart = CoordinateUtils.coordsToLength(rangeStartPos);
+        double rangeStartPos = -mTranslation / mScale;
+        Length rangeStart = CoordinateUtils.coordsToLength(rangeStartPos, null);
 
         Length scaleDelta = Length.ofMM(1);
         double minSizePerLabel = 50 / mScale;
-        while (CoordinateUtils.lengthToCoords(scaleDelta) < minSizePerLabel) {
+        while (CoordinateUtils.lengthToCoords(scaleDelta, null) < minSizePerLabel) {
             scaleDelta = scaleDelta.times(10);
         }
         LengthUnit lengthUnit = scaleDelta.getBestUnitForDisplay();
-        double scaleDeltaDiff = CoordinateUtils.lengthToCoords(scaleDelta) * mScale;
+        double scaleDeltaDiff = CoordinateUtils.lengthToCoords(scaleDelta, null) * mScale;
 
         List<ScaleLabel> result = new ArrayList<>();
-        Length x = scaleDelta.times((int) rangeStart.divideBy(scaleDelta) - 1);
+        Length p = scaleDelta.times((int) rangeStart.divideBy(scaleDelta) - 1);
         while (true) {
             // Main label
-            String label = x.toHumanReadableString(lengthUnit, true);
+            String label = p.toHumanReadableString(lengthUnit, true);
             Text text = new Text(label);
-            double currentPos = (CoordinateUtils.lengthToCoords(x) - rangeStartPos) * mScale;
+            double currentPos = (CoordinateUtils.lengthToCoords(p, null) - rangeStartPos) * mScale;
             double textStart = currentPos + getTextOffset(text.getLayoutBounds());
             if (textStart > visibleRange) {
                 break;
@@ -338,7 +369,7 @@ public abstract class AbstractRuler extends Pane {
             if (printMiddle) {
                 double middlePos = currentPos + scaleDeltaDiff/2;
                 if (printMiddleLabel) {
-                    String label2 = x.plus(scaleDelta.times(0.5)).toHumanReadableString(lengthUnit, true);
+                    String label2 = p.plus(scaleDelta.times(0.5)).toHumanReadableString(lengthUnit, true);
                     Text middleLabel = new Text(label2);
                     double middleTextStart = middlePos + getTextOffset(middleLabel.getLayoutBounds());
                     result.add(new ScaleLabel(middlePos, MIDDLE_SCALE_LENGTH, Optional.of(middleLabel), middleTextStart));
@@ -346,7 +377,7 @@ public abstract class AbstractRuler extends Pane {
                 result.add(new ScaleLabel(middlePos, MIDDLE_SCALE_LENGTH, Optional.empty(), 0));
             }
 
-            x = x.plus(scaleDelta);
+            p = p.plus(scaleDelta);
         }
         return result;
     }

@@ -27,18 +27,21 @@ import de.dh.cad.architect.ui.view.DragControl;
 import de.dh.cad.architect.ui.view.construction.Abstract2DView;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
 import de.dh.utils.fx.MouseHandlerContext;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.event.EventHandler;
 import javafx.geometry.Point2D;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.transform.Scale;
 
 /**
- * UI representation of a model object.
+ * UI representation of any UI object like model objects and ancillary objects.
  */
-// Will be subclassed for each model class (Wall, Floor, ...)
 public abstract class Abstract2DUiObject extends Group {
     public interface IDragHandler {
         void onDragEvent(Point2D origPoint, Point2D dragPoint, Point2D pointInScene);
@@ -65,8 +68,21 @@ public abstract class Abstract2DUiObject extends Group {
     protected final Collection<UnscaledNode> mUnscaledNodes = new ArrayList<>();
     protected final Abstract2DView mParentView;
 
+    protected final BooleanProperty mMouseOverProperty = new SimpleBooleanProperty(this, "isMouseOver", false);
+
+    protected final EventHandler<MouseEvent> MOUSE_ENTERED_MOUSE_OVER_LISTENER = mouseEvent -> {
+        mMouseOverProperty.set(true);
+    };
+
+    protected final EventHandler<MouseEvent> MOUSE_EXITED_MOUSE_OVER_LISTENER = mouseEvent -> {
+        mMouseOverProperty.set(false);
+    };
+
     protected Abstract2DUiObject(Abstract2DView parentView) {
         mParentView = parentView;
+
+        addEventHandler(MouseEvent.MOUSE_ENTERED, MOUSE_ENTERED_MOUSE_OVER_LISTENER);
+        addEventHandler(MouseEvent.MOUSE_EXITED, MOUSE_EXITED_MOUSE_OVER_LISTENER);
     }
 
     /**
@@ -75,10 +91,25 @@ public abstract class Abstract2DUiObject extends Group {
      */
     public void dispose() {
         // To be overridden
+
+        removeEventHandler(MouseEvent.MOUSE_EXITED, MOUSE_EXITED_MOUSE_OVER_LISTENER);
+        removeEventHandler(MouseEvent.MOUSE_ENTERED, MOUSE_ENTERED_MOUSE_OVER_LISTENER);
     }
 
     public UiController getUiController() {
         return mParentView.getUiController();
+    }
+
+    public Abstract2DView getParentView() {
+        return mParentView;
+    }
+
+    public BooleanProperty mouseOverProperty() {
+        return mMouseOverProperty;
+    }
+
+    public boolean isMouseOver() {
+        return mMouseOverProperty.get();
     }
 
     protected double getScaleCompensation() {
@@ -155,10 +186,6 @@ public abstract class Abstract2DUiObject extends Group {
         getChildren().remove(node);
     }
 
-    public Abstract2DView getParentView() {
-        return mParentView;
-    }
-
     /**
      * Utility method to configure the dragging feature of a modification control.
      */
@@ -178,7 +205,10 @@ public abstract class Abstract2DUiObject extends Group {
                 }
                 dragControl.setPoint(localPoint);
                 getScene().setCursor(dragCursor);
-                mouseEvent.consume();
+                if (mouseEvent.getButton() == MouseButton.PRIMARY) {
+                    // Only consume event for our button - others might be needed in other handlers
+                    mouseEvent.consume();
+                }
             },
             // Mouse released
             mouseEvent -> {
@@ -208,7 +238,7 @@ public abstract class Abstract2DUiObject extends Group {
                     Point2D localPoint = transformedRoot.sceneToLocal(mouseEvent.getSceneX(), mouseEvent.getSceneY());
                     onDragHandler.onDragEvent(origPoint, localPoint, new Point2D(mouseEvent.getSceneX(), mouseEvent.getSceneY()));
                 }
-                mouseEvent.consume();
+                // Don't consume event, could needed by another handler
             },
             // Mouse entered
             mouseEvent -> {
@@ -222,7 +252,7 @@ public abstract class Abstract2DUiObject extends Group {
                 if (!mouseEvent.isPrimaryButtonDown()) {
                     getScene().setCursor(Cursor.DEFAULT);
                 }
-                mouseEvent.consume();
+                // Don't consume event, could needed by another handler
             });
     }
 }

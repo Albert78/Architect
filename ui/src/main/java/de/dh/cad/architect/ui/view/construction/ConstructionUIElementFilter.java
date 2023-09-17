@@ -20,11 +20,13 @@ package de.dh.cad.architect.ui.view.construction;
 import java.util.Optional;
 
 import de.dh.cad.architect.ui.objects.Abstract2DRepresentation;
+import de.dh.cad.architect.ui.view.AbstractUIElementFilter;
 
-public class ConstructionUIElementFilter {
+public class ConstructionUIElementFilter extends AbstractUIElementFilter<Abstract2DRepresentation> {
     /**
      * Gets the opacity of the given UI element, if it's different from default.
      */
+    @Override
     protected Optional<Double> getUIElementOpacity(Abstract2DRepresentation repr) {
         return Optional.empty();
     }
@@ -32,14 +34,17 @@ public class ConstructionUIElementFilter {
     /**
      * Gets the information if the given UI element is visible.
      */
+    @Override
     public boolean isUIElementVisible(Abstract2DRepresentation repr) {
         return true;
     }
 
+    @Override
     public boolean isUIElementMouseTransparent(Abstract2DRepresentation repr) {
         return false;
     }
 
+    @Override
     public void configure(Abstract2DRepresentation repr) {
         getUIElementOpacity(repr).ifPresent(value -> {
             repr.setOpacity(value);
@@ -48,6 +53,7 @@ public class ConstructionUIElementFilter {
         repr.setMouseTransparent(isUIElementMouseTransparent(repr));
     }
 
+    @Override
     public void unconfigure(Abstract2DRepresentation repr) {
         repr.setOpacity(Abstract2DRepresentation.OPACITY_DEFAULT);
         repr.setVisible(true);

@@ -73,7 +73,7 @@ public class GroundPlanAddDimensioningBehavior extends AbstractConstructionSelec
     }
 
     @Override
-    protected void setDefaultUserHint() {
+    public void setDefaultUserHint() {
         setUserHint(Strings.GROUND_PLAN_ADD_DIMENSIONING_BEHAVIOR_DEFAULT_USER_HINT);
     }
 
@@ -119,7 +119,9 @@ public class GroundPlanAddDimensioningBehavior extends AbstractConstructionSelec
         List<IModelChange> changeTrace = new ArrayList<>();
         Position2D startPosition = mOStartDockAnchor.map(a -> a.getPosition().projectionXY()).or(() -> mOStartPosition).get();
         Position2D endPosition = oEndDockAnchor.map(a -> a.getPosition().projectionXY()).or(() -> oEndPosition).get();
-        Dimensioning dimensioning = Dimensioning.create(null, startPosition, endPosition, DIMENSIONING_LABEL_DISTANCE, getPlan(), changeTrace);
+        Dimensioning dimensioning = Dimensioning.create(
+            BaseObjectUIRepresentation.generateSimpleName(getPlan().getDimensionings().values(), Dimensioning.class),
+            startPosition, endPosition, DIMENSIONING_LABEL_DISTANCE, getPlan(), changeTrace);
         UiController uiController = getUiController();
         mOStartDockAnchor.ifPresent(startDockAnchor -> {
             uiController.doDock(dimensioning.getAnchor1(), startDockAnchor, DockConflictStrategy.SkipDock, changeTrace);

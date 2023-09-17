@@ -32,6 +32,7 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.dh.cad.architect.fx.nodes.objviewer.CoordinateSystemConfiguration;
 import de.dh.cad.architect.fx.nodes.objviewer.ThreeDObjectViewControl;
 import de.dh.cad.architect.model.assets.AssetRefPath;
 import de.dh.cad.architect.model.assets.MaterialSetDescriptor;
@@ -47,6 +48,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.SingleSelectionModel;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.util.StringConverter;
 
@@ -59,6 +61,9 @@ public class MaterialPreviewChoiceControl extends BorderPane implements Initiali
 
     @FXML
     protected ChoiceBox<RawMaterialData> mMaterialChoiceBox;
+
+    @FXML
+    protected TextField mMaterialDescriptorRefTextField;
 
     @FXML
     protected BorderPane mParentPane;
@@ -112,7 +117,7 @@ public class MaterialPreviewChoiceControl extends BorderPane implements Initiali
             }
         });
 
-        mThreeDObjectView = new ThreeDObjectViewControl();
+        mThreeDObjectView = new ThreeDObjectViewControl(CoordinateSystemConfiguration.architect());
         mThreeDObjectView.setPrefWidth(250);
         mThreeDObjectView.setPrefHeight(250);
         mThreeDObjectView.setCoordinateSystemVisible(false);
@@ -160,12 +165,14 @@ public class MaterialPreviewChoiceControl extends BorderPane implements Initiali
                 mcbSelectionModel.select(0);
             }
         } catch (IOException e) {
-            log.error("Error loading materials from <" + materialSetRef + ">");
+            log.error("Error loading materials from <" + materialSetRef + ">", e);
         }
     }
 
     protected void updateSelectdedMaterial() {
-        mSelectedMaterialProperty.set(getSelectedMaterialDescriptor());
+        MaterialDescriptor selectedMaterialDescriptor = getSelectedMaterialDescriptor();
+        mSelectedMaterialProperty.set(selectedMaterialDescriptor);
+        mMaterialDescriptorRefTextField.setText(selectedMaterialDescriptor == null ? "-" : selectedMaterialDescriptor.getMaterialRef().toPathString());
     }
 
     public SimpleObjectProperty<MaterialDescriptor> selectedMaterialProperty() {
@@ -205,10 +212,10 @@ public class MaterialPreviewChoiceControl extends BorderPane implements Initiali
         try {
             Node n = ThreeDPreview.createMaterialPreviewBox(materialDescriptor == null ? null : materialDescriptor.getMaterialRef(),
                 mAssetLoader, Optional.empty(), mFallbackToPlaceholderOnError);
-            mThreeDObjectView.setObjView(n, 200);
+            mThreeDObjectView.setObjView(n);
             notifyMaterialLoaded(materialDescriptor);
         } catch (RuntimeException e) {
-            mThreeDObjectView.setObjView(null, 200);
+            mThreeDObjectView.setObjView(null);
             notifyMaterialLoadError(materialDescriptor, new RuntimeException("Error loading material <" + materialDescriptor + ">", e));
         }
     }

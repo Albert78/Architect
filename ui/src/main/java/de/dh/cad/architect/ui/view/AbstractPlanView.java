@@ -275,6 +275,10 @@ public abstract class AbstractPlanView<TRepr extends IModelBasedObject, TAnc ext
     protected abstract Collection<TRepr> doAddUIRepresentations(Collection<? extends BaseObject> addedObjects);
     protected abstract Collection<TRepr> doRemoveUIRepresentations(Collection<? extends BaseObject> removedObjects);
 
+    public void setDirty() {
+        getUiController().getApplicationController().setDirty(true);
+    }
+
     /**
      * Adds an ancillary, temporary object to the view.
      */

@@ -69,15 +69,36 @@ public class Vector2D {
         return new Vector2D(mX.minus(other.mX), mY.minus(other.mY));
     }
 
+    public Position2D addedTo(Position2D other) {
+        return other.plus(this);
+    }
+
     public Vector2D times(double factor) {
         return new Vector2D(mX.times(factor), mY.times(factor));
     }
 
+    public Length distance(Vector2D v) {
+        return v.minus(this).getLength();
+    }
+
     /**
-     * Returns this vector rotated counter-clockwise by the given angle.
+     * Returns the angle between vector {@code a1} and {@code a2} in degrees from 0-360 degrees.
      */
-    public Vector2D rotate(double angle) {
-        double a = (angle * Math.PI) / 180;
+    public static double angleBetween(Vector2D a1, Vector2D a2) {
+        double x1 = a1.getX().inInternalFormat();
+        double y1 = a1.getY().inInternalFormat();
+        double x2 = a2.getX().inInternalFormat();
+        double y2 = a2.getY().inInternalFormat();
+
+        double res = Math.atan2(x1*y2-y1*x2,x1*x2+y1*y2) * 180/Math.PI;
+        return res < 0 ? 360 + res : res;
+    }
+
+    /**
+     * Returns a copy of this vector rotated counter-clockwise by the given angle.
+     */
+    public Vector2D rotate(double angleDeg) {
+        double a = (angleDeg * Math.PI) / 180;
         double sin = Math.sin(a);
         double cos = Math.cos(a);
         double xInternal = mX.inInternalFormat();
@@ -146,8 +167,20 @@ public class Vector2D {
         return "X=" + mX + "; Y=" + mY;
     }
 
+    public Position2D toPosition2D() {
+        return new Position2D(mX, mY);
+    }
+
     @Override
     public String toString() {
         return "Vector2D [" + axesAndCoordsToString() + "]";
+    }
+
+    public Vector2D enlarge(Length x, Length y) {
+        return new Vector2D(mX.enlarge(x), mY.enlarge(y));
+    }
+
+    public Vector2D trim(Length x, Length y) {
+        return new Vector2D(mX.gt(x) ? x : mX, mY.gt(y) ? y : mY);
     }
 }

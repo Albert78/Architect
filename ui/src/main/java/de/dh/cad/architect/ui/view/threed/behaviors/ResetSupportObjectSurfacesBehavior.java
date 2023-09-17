@@ -30,6 +30,7 @@ import de.dh.cad.architect.ui.utils.Cursors;
 import de.dh.cad.architect.ui.view.AbstractPlanView;
 import de.dh.cad.architect.ui.view.AbstractUiMode;
 import de.dh.cad.architect.ui.view.IContextAction;
+import de.dh.cad.architect.ui.view.threed.ThreeDUIElementFilter;
 import de.dh.cad.architect.ui.view.threed.ThreeDView;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -68,6 +69,7 @@ public class ResetSupportObjectSurfacesBehavior extends Abstract3DViewBehavior {
 
     public ResetSupportObjectSurfacesBehavior(AbstractUiMode<Abstract3DRepresentation, Abstract3DAncillaryObject> parentMode) {
         super(parentMode);
+        setUIElementFilter(new ThreeDUIElementFilter());
     }
 
     @Override
@@ -76,7 +78,7 @@ public class ResetSupportObjectSurfacesBehavior extends Abstract3DViewBehavior {
     }
 
     @Override
-    protected void setDefaultUserHint() {
+    public void setDefaultUserHint() {
         setUserHint(Strings.THREE_D_RESET_SUPPORT_OBJECT_SURFACES_BEHAVIOR_USER_HINT);
     }
 
@@ -87,6 +89,7 @@ public class ResetSupportObjectSurfacesBehavior extends Abstract3DViewBehavior {
 
     @Override
     protected void configureObject(Abstract3DRepresentation repr) {
+        super.configureObject(repr);
         if (repr instanceof SupportObject3DRepresentation soRepr) {
             repr.enableMouseOverSpot();
             repr.mouseOverProperty().removeListener(MOUSE_OVER_SUPPORT_OBJECT_LISTENER);
@@ -116,6 +119,7 @@ public class ResetSupportObjectSurfacesBehavior extends Abstract3DViewBehavior {
         } else {
             repr.mouseOverProperty().removeListener(MOUSE_OVER_OTHER_OBJECT_LISTENER);
         }
+        super.unconfigureObject(repr, objectRemoved);
     }
 
     @Override

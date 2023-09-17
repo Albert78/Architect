@@ -73,4 +73,42 @@ public class TextureCoordinateSystem {
         Vector3d p = mMappingTransform.transform(realPoint);
         return new Vector2D(p.getX(), p.getY());
     }
+
+    public static void main(String[] args) throws Exception {
+        Vector3d x1;
+
+        // Test:
+        // Normal, texture X coordinate und (implicit) texture Y coordinate form a LHS
+        // All tests should return roughly (1, 2)
+
+        System.out.println("Normal Z, TexX X:");
+        TextureCoordinateSystem tcsZX = TextureCoordinateSystem.create(Vector3d.Z_ONE, Vector3d.X_ONE);
+        x1 = Vector3d.xyz(1, 2, 10);
+        System.out.println("X " + x1 + " -> " + tcsZX.mapToTextureCoordinateSystem(x1));
+
+        System.out.println("Normal Z, TexX -X:");
+        TextureCoordinateSystem tcsZmX = TextureCoordinateSystem.create(Vector3d.Z_ONE, Vector3d.X_ONE.negated());
+        x1 = Vector3d.xyz(-1, -2, 10);
+        System.out.println("X " + x1 + " -> " + tcsZmX.mapToTextureCoordinateSystem(x1));
+
+        System.out.println("Normal -Z, TexX X:");
+        TextureCoordinateSystem tcsMZ = TextureCoordinateSystem.create(Vector3d.Z_ONE.negated(), Vector3d.X_ONE);
+        x1 = Vector3d.xyz(1, -2, 10);
+        System.out.println("X " + x1 + " -> " + tcsMZ.mapToTextureCoordinateSystem(x1));
+
+        System.out.println("Normal X, TexX Y:");
+        TextureCoordinateSystem tcsXY = TextureCoordinateSystem.create(Vector3d.X_ONE, Vector3d.Y_ONE);
+        x1 = Vector3d.xyz(10, 1, 2);
+        System.out.println("X " + x1 + " -> " + tcsXY.mapToTextureCoordinateSystem(x1));
+
+        System.out.println("Normal Y, TexX X:");
+        TextureCoordinateSystem tcsYX = TextureCoordinateSystem.create(Vector3d.Y_ONE, Vector3d.X_ONE);
+        x1 = Vector3d.xyz(1, 10, -2);
+        System.out.println("X " + x1 + " -> " + tcsYX.mapToTextureCoordinateSystem(x1));
+
+        System.out.println("Normal Y, TexX Z:");
+        TextureCoordinateSystem tcsYZ = TextureCoordinateSystem.create(Vector3d.Y_ONE, Vector3d.Z_ONE);
+        x1 = Vector3d.xyz(2, 10, 1);
+        System.out.println("X " + x1 + " -> " + tcsYZ.mapToTextureCoordinateSystem(x1));
+    }
 }

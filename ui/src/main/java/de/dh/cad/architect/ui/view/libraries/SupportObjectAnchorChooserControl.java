@@ -39,6 +39,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.SingleSelectionModel;
 import javafx.scene.layout.BorderPane;
 import javafx.util.StringConverter;
 
@@ -68,7 +69,6 @@ public class SupportObjectAnchorChooserControl extends BorderPane implements Ini
         Map<String, LibraryData> libraries = mAssetManager.getAssetLibraries().values()
                         .stream()
                         .collect(Collectors.<LibraryData, String, LibraryData>toMap(ld -> ld.getLibrary().getName(), Function.identity()));
-        mLibraryChoiceBox.setItems(FXCollections.observableArrayList(libraries.values()));
         mLibraryChoiceBox.setConverter(new StringConverter<AssetManager.LibraryData>() {
             @Override
             public String toString(LibraryData libraryData) {
@@ -80,12 +80,17 @@ public class SupportObjectAnchorChooserControl extends BorderPane implements Ini
                 return libraryName == null ? null : libraries.get(libraryName);
             }
         });
-        mLibraryChoiceBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<>() {
+        SingleSelectionModel<LibraryData> selectionModel = mLibraryChoiceBox.getSelectionModel();
+        selectionModel.selectedItemProperty().addListener(new ChangeListener<>() {
             @Override
             public void changed(ObservableValue<? extends LibraryData> observable, LibraryData oldValue, LibraryData newValue) {
                 updateResultAnchor();
             }
         });
+        mLibraryChoiceBox.setItems(FXCollections.observableArrayList(libraries.values()));
+        if (!libraries.isEmpty()) {
+            selectionModel.select(0);
+        }
     }
 
     public LibraryData getSelectedLibrary() {

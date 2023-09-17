@@ -95,19 +95,19 @@ public class FxUtils {
         Translate translate = new Translate();
         // Translate the object to the center
         double objWidth = objBoundsInParent.getWidth();
-        double desiredTranslateX = -objWidth / 2;
+        double middleTranslateX = -objWidth / 2;
         double currentTranslateX = objBoundsInParent.getMinX();
-        translate.setX(desiredTranslateX - currentTranslateX);
+        translate.setX(middleTranslateX - currentTranslateX);
 
         double objHeight = objBoundsInParent.getHeight();
-        double desiredTranslateY = -objHeight / 2;
+        double middleTranslateY = -objHeight / 2;
         double currentTranslateY = objBoundsInParent.getMinY();
-        translate.setY(desiredTranslateY - currentTranslateY);
+        translate.setY(middleTranslateY - currentTranslateY);
 
         double objDepth = objBoundsInParent.getDepth();
-        double desiredTranslateZ = -objDepth / 2;
+        double middleTranslateZ = -objDepth / 2;
         double currentTranslateZ = objBoundsInParent.getMinZ();
-        translate.setZ(desiredTranslateZ - currentTranslateZ);
+        translate.setZ(middleTranslateZ - currentTranslateZ);
 
         // Normalize the object's size
         double maxSize = Math.max(objBoundsInParent.getWidth(), Math.max(objBoundsInParent.getHeight(), objBoundsInParent.getDepth()));

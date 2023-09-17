@@ -46,6 +46,8 @@ import de.dh.cad.architect.utils.vfs.IResourceLocator;
 public class MtlLibraryIO {
     private static final Logger log = LoggerFactory.getLogger(MtlLibraryIO.class);
 
+    public static final String FILE_COMMENT = "Material library written by MtlLibraryIO";
+
     /**
      * Reads material entries from the given {@ .mtl} file.
      * The {@code .mtl} format uses file names to reference additional image resources so it is not possible to
@@ -69,6 +71,7 @@ public class MtlLibraryIO {
 
     public static void writeMaterialSet(Writer w, Collection<RawMaterialData> materials) throws IOException {
         try (BufferedWriter bw = new BufferedWriter(w)) {
+            bw.write("# " + FILE_COMMENT + "\n");
             for (RawMaterialData material : materials) {
                 bw.write("newmtl " + material.getName() + "\n");
                 for (String line : material.getLines()) {
@@ -114,11 +117,11 @@ public class MtlLibraryIO {
             while ((line = br.readLine()) != null) {
                 try {
                     if (line.startsWith("map_Kd ")) {
-                        String imageFileName = line.substring("map_Kd ".length());
+                        String imageFileName = line.substring("map_Kd ".length()).trim();
                         result.add(parentDirectory.resolveResource(imageFileName));
                     }
                 } catch (Exception ex) {
-                    log.error("Failed to parse line: " + line, ex);
+                    log.error("Failed to parse material file " + mtlResource + ", line: " + line, ex);
                 }
             }
         } catch (IOException ex) {

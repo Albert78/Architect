@@ -36,7 +36,6 @@ import de.dh.cad.architect.ui.view.IContextAction;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
 import de.dh.cad.architect.ui.view.construction.SelectionUIElementFilter;
 import javafx.geometry.Point2D;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
@@ -213,13 +212,12 @@ public class SelectionBehavior extends AbstractConstructionBehavior {
             finishDrag();
         });
         installDefaultSpaceToggleObjectVisibilityKeyHandler();
-        view.addEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_DELETE_SELECTED_OBJECTS);
+        installDefaultDeleteObjectsKeyHandler();
     }
 
     @Override
     public void uninstall() {
-        ConstructionView view = getView();
-        view.removeEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_DELETE_SELECTED_OBJECTS);
+        uninstallDefaultDeleteObjectsKeyHandler();
         uninstallDefaultSpaceToggleObjectVisibilityKeyHandler();
         Pane topLayer = getView().getTopLayer();
         if (mSelectionRectangle != null) {

@@ -185,10 +185,10 @@ public class MaterialSetEditControl extends AbstractAssetEditControl implements 
         stage.setHeight(800);
         stage.setWidth(1000);
 
-        dialogPane.getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        dialogPane.getButtonTypes().addAll(ButtonType.CLOSE);
 
         BooleanExpression invalidProperty = editControl.validProperty().not();
-        Node okButton = dialogPane.lookupButton(ButtonType.OK);
+        Node okButton = dialogPane.lookupButton(ButtonType.CLOSE);
         // Actually, I would bind the disableProperty to the invalidProperty but unfortunately, disableProperty is read only...
         okButton.setDisable(invalidProperty.get());
         invalidProperty.addListener(new ChangeListener<Boolean>() {

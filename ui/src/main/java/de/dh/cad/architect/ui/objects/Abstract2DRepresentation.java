@@ -17,8 +17,6 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.objects;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -32,9 +30,7 @@ import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.event.EventHandler;
 import javafx.geometry.Point2D;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Shape;
 
@@ -53,18 +49,6 @@ public abstract class Abstract2DRepresentation extends Abstract2DUiObject implem
     protected final BooleanProperty mObjectFocusedProperty = new SimpleBooleanProperty(this, "isFocused", false);
     protected final BooleanProperty mObjectEmphasizedProperty = new SimpleBooleanProperty(this, "isFocused", false);
 
-    protected final BooleanProperty mMouseOverProperty = new SimpleBooleanProperty(this, "isMouseOver", false);
-
-    protected final Collection<UnscaledNode> mUnscaledNodes = new ArrayList<>();
-
-    protected final EventHandler<MouseEvent> MOUSE_ENTERED_MOUSE_OVER_LISTENER = mouseEvent -> {
-        mMouseOverProperty.set(true);
-    };
-
-    protected final EventHandler<MouseEvent> MOUSE_EXITED_MOUSE_OVER_LISTENER = mouseEvent -> {
-        mMouseOverProperty.set(false);
-    };
-
     protected ChangeListener<Boolean> MOUSE_OVER_SPOT_LISTENER = new ChangeListener<>() {
         @Override
         public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
@@ -80,9 +64,6 @@ public abstract class Abstract2DRepresentation extends Abstract2DUiObject implem
     protected Abstract2DRepresentation(BaseObject modelObject, Abstract2DView parentView) {
         super(parentView);
         mModelObject = modelObject;
-
-        addEventHandler(MouseEvent.MOUSE_ENTERED, MOUSE_ENTERED_MOUSE_OVER_LISTENER);
-        addEventHandler(MouseEvent.MOUSE_EXITED, MOUSE_EXITED_MOUSE_OVER_LISTENER);
     }
 
     @Override
@@ -162,14 +143,6 @@ public abstract class Abstract2DRepresentation extends Abstract2DUiObject implem
     @Override
     public void setObjectEmphasized(boolean value) {
         mObjectEmphasizedProperty.set(value);
-    }
-
-    public BooleanProperty mouseOverProperty() {
-        return mMouseOverProperty;
-    }
-
-    public boolean isMouseOver() {
-        return mMouseOverProperty.get();
     }
 
     protected void configureMainBorderDefault(Shape shape) {

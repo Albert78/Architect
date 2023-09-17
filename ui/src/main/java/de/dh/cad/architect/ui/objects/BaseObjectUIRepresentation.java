@@ -41,6 +41,7 @@ import de.dh.cad.architect.ui.properties.ConstantUiProperty;
 import de.dh.cad.architect.ui.properties.UiProperty;
 import de.dh.cad.architect.ui.properties.UiProperty.PropertyType;
 import de.dh.cad.architect.ui.view.IObjectReconciler;
+import de.dh.cad.architect.utils.Namespace;
 
 public abstract class BaseObjectUIRepresentation extends AbstractObjectUIRepresentation {
     public static final String KEY_PROPERTY_TYPE = "type";
@@ -130,5 +131,17 @@ public abstract class BaseObjectUIRepresentation extends AbstractObjectUIReprese
         } else {
             return name;
         }
+    }
+
+    public static String generateSimpleName(Collection<? extends BaseObject> existingObjects, Class<? extends BaseObject> cls) {
+        return generateSimpleName(existingObjects, getObjectTypeName(cls, Cardinality.Singular));
+    }
+
+    public static String generateSimpleName(Collection<? extends BaseObject> existingObjects, String defaultName) {
+        return Namespace.generateName(defaultName + " {0}",
+            existingObjects
+                .stream()
+                .map(bo -> bo.getName())
+                .toList(), 1);
     }
 }

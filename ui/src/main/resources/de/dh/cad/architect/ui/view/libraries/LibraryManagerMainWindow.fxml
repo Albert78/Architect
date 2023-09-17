@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 
-<SplitPane fx:id="mRoot" dividerPositions="0.2" prefHeight="800.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+<SplitPane fx:id="mRoot" dividerPositions="0.2" prefHeight="800.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <items>
       <BorderPane maxWidth="500.0" minWidth="100.0" prefWidth="200.0" SplitPane.resizableWithParent="false">
          <center>
@@ -78,48 +78,6 @@
       </BorderPane>
       <TabPane side="BOTTOM" tabClosingPolicy="UNAVAILABLE">
         <tabs>
-          <Tab fx:id="mMaterialSetsTab" text="Material-Kollektionen">
-               <content>
-                  <BorderPane fx:id="mMaterialSetsParentPane">
-                     <bottom>
-                        <HBox spacing="5.0" BorderPane.alignment="CENTER">
-                            <children>
-                               <Button fx:id="mNewMaterialSetButton" mnemonicParsing="false">
-                                 <graphic>
-                                    <ImageView fitHeight="16" fitWidth="16">
-                                       <image>
-                                          <Image url="@plus.png" />
-                                       </image>
-                                    </ImageView>
-                                 </graphic>
-                              </Button>
-                               <Button fx:id="mEditMaterialSetButton" mnemonicParsing="false">
-                                 <graphic>
-                                    <ImageView fitHeight="16" fitWidth="16">
-                                       <image>
-                                          <Image url="@edit.png" />
-                                       </image>
-                                    </ImageView>
-                                 </graphic>
-                              </Button>
-                               <Button fx:id="mDeleteMaterialSetsButton" mnemonicParsing="false">
-                                 <graphic>
-                                    <ImageView fitHeight="16" fitWidth="16">
-                                       <image>
-                                          <Image url="@trash.png" />
-                                       </image>
-                                    </ImageView>
-                                 </graphic>
-                              </Button>
-                           </children>
-                           <padding>
-                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                           </padding>
-                        </HBox>
-                     </bottom>
-                  </BorderPane>
-               </content>
-            </Tab>
             <Tab fx:id="mSupportObjectsTab" text="Möbel/Hilfsobjekte">
                <content>
                   <BorderPane fx:id="mSupportObjectsParentPane">
@@ -145,6 +103,48 @@
                                  </graphic>
                               </Button>
                                <Button fx:id="mDeleteSupportObjectsButton" mnemonicParsing="false">
+                                 <graphic>
+                                    <ImageView fitHeight="16" fitWidth="16">
+                                       <image>
+                                          <Image url="@trash.png" />
+                                       </image>
+                                    </ImageView>
+                                 </graphic>
+                              </Button>
+                           </children>
+                           <padding>
+                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                           </padding>
+                        </HBox>
+                     </bottom>
+                  </BorderPane>
+               </content>
+            </Tab>
+          <Tab fx:id="mMaterialSetsTab" text="Material-Kollektionen">
+               <content>
+                  <BorderPane fx:id="mMaterialSetsParentPane">
+                     <bottom>
+                        <HBox spacing="5.0" BorderPane.alignment="CENTER">
+                            <children>
+                               <Button fx:id="mNewMaterialSetButton" mnemonicParsing="false">
+                                 <graphic>
+                                    <ImageView fitHeight="16" fitWidth="16">
+                                       <image>
+                                          <Image url="@plus.png" />
+                                       </image>
+                                    </ImageView>
+                                 </graphic>
+                              </Button>
+                               <Button fx:id="mEditMaterialSetButton" mnemonicParsing="false">
+                                 <graphic>
+                                    <ImageView fitHeight="16" fitWidth="16">
+                                       <image>
+                                          <Image url="@edit.png" />
+                                       </image>
+                                    </ImageView>
+                                 </graphic>
+                              </Button>
+                               <Button fx:id="mDeleteMaterialSetsButton" mnemonicParsing="false">
                                  <graphic>
                                     <ImageView fitHeight="16" fitWidth="16">
                                        <image>

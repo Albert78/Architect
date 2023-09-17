@@ -20,6 +20,7 @@ package de.dh.cad.architect.ui.assets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.prefs.BackingStoreException;
@@ -33,6 +34,7 @@ import org.apache.commons.lang3.StringUtils;
 public class AssetManagerConfiguration {
     protected static final String KEY_NUM_OPEN_ASSET_LIBRARIES = "NumOpenAssetLibraries";
     protected static final String KEY_ASSET_LIBRARY_PREFIX = "AssetLibrary";
+    protected static final String KEY_CHECKED_LIBRARIES = "CheckedLibraries";
     protected static final String KEY_LAST_ASSET_LIBRARY_PATH = "LastAssetLibraryPath";
     protected static final String KEY_LAST_3D_RESOURCE_PATH = "Last3DResourcePath";
     protected static final String KEY_LAST_MATERIAL_PATH = "LastMaterialPath";
@@ -78,6 +80,19 @@ public class AssetManagerConfiguration {
             mPrefs.put(KEY_ASSET_LIBRARY_PREFIX + i, path.toString());
             i++;
         }
+    }
+
+    public void setCheckedLibraries(Collection<String> libraryIds) {
+        mPrefs.put(KEY_CHECKED_LIBRARIES, StringUtils.join(libraryIds, ";"));
+    }
+
+    /**
+     * Gets the ids of all libraries which are checked in the library manager.
+     * The function to "check" or "uncheck" a library is a convenience funtion to speed up loading of all libraries
+     * when a user is just working on few of them.
+     */
+    public Collection<String> getCheckedLibraries() {
+        return Arrays.asList(mPrefs.get(KEY_CHECKED_LIBRARIES, "").split(";"));
     }
 
     protected Optional<Path> readOptionalPathStr(String key) {

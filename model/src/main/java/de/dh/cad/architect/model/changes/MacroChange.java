@@ -51,7 +51,8 @@ public class MacroChange implements IModelChange {
         }
 
         // When consolidating additions and removals, it is important to identify objects which
-        // between
+        // were initially present (and have not between deleted and added again and thus only modified), "initiallyPresent"
+        // and which were really added by the macro change (and have not been added and deleted again and thus obsolete), "initialAdditions"
         Set<BaseObject> initialAdditions = new HashSet<>(); // Objects which were not present before
         Set<BaseObject> initiallyPresent = new HashSet<>(); // Objects which were present before
 
@@ -69,20 +70,22 @@ public class MacroChange implements IModelChange {
             Collection<BaseObject> reallyAdded = CollectionUtils.subtract(additions, initiallyPresent); // Those were not present before
             initialAdditions.addAll(reallyAdded);
 
+            mergedAdditions.addAll(additions);
             mergedAdditions.removeAll(removals);
             mergedRemovals.addAll(removals);
             mergedRemovals.removeAll(additions);
-            mergedAdditions.addAll(additions);
-            mergedModifications.removeAll(removals);
+
             mergedModifications.addAll(modifications);
         }
 
         mergedAdditions.removeAll(initiallyPresent);
 
+        mergedRemovals.removeAll(initialAdditions);
+
         mergedModifications.addAll(initiallyPresent); // Those were not added because they were present before, but changed during the consolidation
         mergedModifications.removeAll(mergedAdditions);
+        mergedModifications.removeAll(mergedRemovals);
 
-        mergedRemovals.removeAll(initialAdditions);
         return new MacroChange(consolidatedChanges, mergedAdditions, mergedModifications, mergedRemovals);
     }
 

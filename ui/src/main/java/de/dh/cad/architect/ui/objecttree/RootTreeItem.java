@@ -18,7 +18,6 @@
 package de.dh.cad.architect.ui.objecttree;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -288,12 +287,14 @@ public class RootTreeItem extends TreeItem<ITreeItemData> {
             if (newOwnerGroupIds.isEmpty()) {
                 // We need a Top level group item
                 if (!mCurrentTopLevelGroups.containsKey(objId)) {
-                    TreeItem<ITreeItemData> item = new TreeItem<>(new GroupsTreeItemData(obj));
-                    mObjectGroupsItem.getChildren().add(item);
-                    mIdsToItems.put(objId, item);
-                    mCurrentTopLevelGroups.put(objId, item);
+                    TreeItem<ITreeItemData> groupItem = new TreeItem<>(new GroupsTreeItemData(obj));
+                    mObjectGroupsItem.getChildren().add(groupItem);
+                    mIdsToItems.put(objId, groupItem);
+                    mCurrentTopLevelGroups.put(objId, groupItem);
                 }
             } else {
+                // If a former top-level group was inserted in a new parent group,
+                // we need to remove it from the top level items
                 TreeItem<ITreeItemData> tlgItem = mCurrentTopLevelGroups.get(objId);
                 if (tlgItem != null) {
                     tlgItem.getParent().getChildren().remove(tlgItem);
@@ -400,23 +401,34 @@ public class RootTreeItem extends TreeItem<ITreeItemData> {
         }
     }
 
-    protected void removeTreeItem(BaseObject obj) {
-        String id = obj.getId();
+    protected void removeSingleItem(TreeItem<ITreeItemData> item) {
+        for (TreeItem<ITreeItemData> child : new ArrayList<>(item.getChildren())) {
+            removeSingleItem(child);
+        }
+        if (item.getValue() instanceof IObjectTreeItemData otid) {
+            String id = otid.getId();
+            mIdsToItems.get(id).remove(item);
+        }
+        TreeItem<ITreeItemData> parent = item.getParent();
+        if (parent != null) {
+            parent.getChildren().remove(item);
+        }
+    }
+
+    protected void removeTreeItem(String id) {
         Collection<TreeItem<ITreeItemData>> items = getTreeItemsByObjectId(id);
-        for (TreeItem<ITreeItemData> item : items) {
-            TreeItem<ITreeItemData> parent = item.getParent();
-            if (parent != null) {
-                parent.getChildren().remove(item);
-                fireChangeEvents(Arrays.asList(parent));
-            }
+        for (TreeItem<ITreeItemData> item : new ArrayList<>(items)) {
+            removeSingleItem(item);
         }
         mIdsToItems.remove(id);
+        // If we are a top-level group
+        mCurrentTopLevelGroups.remove(id);
     }
 
     public void objectsRemoved(Collection<BaseObject> removedObjects) {
         // This also handles toplevel groups, no special treatment necessary
         for (BaseObject obj : removedObjects) {
-            removeTreeItem(obj);
+            removeTreeItem(obj.getId());
         }
     }
 

@@ -2,13 +2,22 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.VBox?>
 
-<fx:root fx:id="mParentPane" prefHeight="230" prefWidth="300" type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+<fx:root fx:id="mParentPane" prefHeight="350.0" prefWidth="300" type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <top>
-      <ChoiceBox fx:id="mMaterialChoiceBox" maxWidth="300.0" minWidth="100.0">
+      <VBox>
          <BorderPane.margin>
             <Insets bottom="5.0" />
-         </BorderPane.margin></ChoiceBox>
+         </BorderPane.margin>
+         <children>
+            <ChoiceBox fx:id="mMaterialChoiceBox" maxWidth="300.0" minWidth="100.0" />
+            <Label text="Asset-Ref-Path" />
+            <TextField fx:id="mMaterialDescriptorRefTextField" editable="false" styleClass="copyable-label" />
+         </children>
+      </VBox>
    </top>
 </fx:root>

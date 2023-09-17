@@ -35,7 +35,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
-import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 
@@ -50,11 +50,11 @@ import de.dh.cad.architect.model.assets.AssetRefPath;
 import de.dh.cad.architect.model.assets.AssetRefPath.IAssetPathAnchor;
 import de.dh.cad.architect.model.assets.AssetRefPath.LibraryAssetPathAnchor;
 import de.dh.cad.architect.model.assets.AssetRefPath.PlanAssetPathAnchor;
-import de.dh.cad.architect.model.assets.AssetRefPath.SupportObjectAssetPathAnchor;
 import de.dh.cad.architect.model.assets.AssetType;
 import de.dh.cad.architect.model.assets.FileModelResource;
 import de.dh.cad.architect.model.assets.MaterialSetDescriptor;
 import de.dh.cad.architect.model.assets.SupportObjectDescriptor;
+import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.ui.assets.AssetLoader.ThreeDResourceImportMode;
 import de.dh.cad.architect.ui.persistence.AssetDescriptorsIO;
 import de.dh.cad.architect.ui.persistence.LibraryIO;
@@ -127,159 +127,58 @@ public class AssetManager {
         }
     }
 
-    // TODO: Consolidate/unify method signatures (e.g. unify relative/absolute path arguments)
-    public class AssetCollection {
+    /**
+     * Cached filesystem which represents the root of an asset tree (can be an asset library or a plan).
+     * An asset collection is always the root of an asset tree and thus is defined by an asset path anchor.
+     */
+    // TODO: Implement cache
+    public static class AssetCollection {
+        protected final IAssetPathAnchor mAnchor;
         protected final IDirectoryLocator mBaseDirectory;
         protected Map<String, AssetCollectionCacheEntry<MaterialSetDescriptor>> mRootMaterialSetsCache = null; // Ids to cache entries
         protected Map<String, AssetCollectionCacheEntry<SupportObjectDescriptor>> mSupportObjectsCache = null; // Ids to cache entries
         protected Map<String, Image> mImagesCache = null; // Relative asset collection paths to images
 
-        public AssetCollection(IDirectoryLocator baseDirectory) {
+        public AssetCollection(IAssetPathAnchor anchor, IDirectoryLocator baseDirectory) {
+            mAnchor = anchor;
             mBaseDirectory = baseDirectory;
+        }
+
+        public IAssetPathAnchor getAnchor() {
+            return mAnchor;
         }
 
         public IDirectoryLocator getBaseDirectory() {
             return mBaseDirectory;
         }
-
-        public IDirectoryLocator getAssetBaseDirectory(Path relativeAssetBasePath) {
-            return mBaseDirectory.resolveDirectory(relativeAssetBasePath);
-        }
-
-        // TODO: Cache
-        protected SupportObjectDescriptor loadSupportObjectDescriptor(Path supportObjectBaseDirectoryPath, AssetRefPath supportObjectDescriptorRef) throws IOException {
-            IResourceLocator resourceLocator = getAssetBaseDirectory(supportObjectBaseDirectoryPath).resolveResource(SUPPORT_OBJECT_DESCRIPTOR_NAME);
-            try (Reader reader = new BufferedReader(new InputStreamReader(resourceLocator.inputStream()))) {
-                return AssetDescriptorsIO.deserializeSupportObjectDescriptor(reader, supportObjectDescriptorRef);
-            }
-        }
-
-        // TODO: Cache
-        protected MaterialSetDescriptor loadMaterialSetDescriptor(Path materialSetBaseDirectoryPath, AssetRefPath materialDescriptorRef) throws IOException {
-            IResourceLocator resourceLocator = getAssetBaseDirectory(materialSetBaseDirectoryPath).resolveResource(MATERIAL_SET_DESCRIPTOR_NAME);
-            try (Reader reader = new BufferedReader(new InputStreamReader(resourceLocator.inputStream()))) {
-                return AssetDescriptorsIO.deserializeMaterialSetDescriptor(reader, materialDescriptorRef);
-            }
-        }
-
-        // TODO: Cache
-        public void saveSupportObjectDescriptor(Path supportObjectBaseDirectoryPath, SupportObjectDescriptor descriptor) throws IOException {
-            IDirectoryLocator baseDirectory = getAssetBaseDirectory(supportObjectBaseDirectoryPath);
-            baseDirectory.mkDirs();
-            IResourceLocator resourceLocator = baseDirectory.resolveResource(SUPPORT_OBJECT_DESCRIPTOR_NAME);
-            try (Writer writer = new BufferedWriter(new OutputStreamWriter(resourceLocator.outputStream()))) {
-                AssetDescriptorsIO.serializeSupportObjectDescriptor(descriptor, writer);
-            }
-        }
-
-        // TODO: Cache
-        public void saveMaterialSetDescriptor(Path materialSetBaseDirectoryPath, MaterialSetDescriptor descriptor) throws IOException {
-            IDirectoryLocator baseDirectory = getAssetBaseDirectory(materialSetBaseDirectoryPath);
-            baseDirectory.mkDirs();
-            IResourceLocator resourceLocator = baseDirectory.resolveResource(MATERIAL_SET_DESCRIPTOR_NAME);
-            try (Writer writer = new BufferedWriter(new OutputStreamWriter(resourceLocator.outputStream()))) {
-                AssetDescriptorsIO.serializeMaterialSetDescriptor(descriptor, writer);
-            }
-        }
-
-        // TODO: Cache
-        public Image loadImage(Path imageFileRelativePathInAssetCollection) throws IOException {
-            IResourceLocator resourceLocator = getAssetResourceLocator(imageFileRelativePathInAssetCollection);
-            return AssetManager.loadImage(resourceLocator);
-        }
-
-        // TODO: Cache
-        public void saveImage(Path imageFileRelativePathInAssetCollection, Image image) throws IOException {
-            IResourceLocator resourceLocator = getAssetResourceLocator(imageFileRelativePathInAssetCollection);
-            AssetManager.saveImage(resourceLocator, image);
-        }
-
-        public void saveMaterialsToMtl(Path mtlFileRelativePathInAssetCollection, Collection<RawMaterialData> materials) throws IOException {
-            IResourceLocator resourceLocator = getAssetResourceLocator(mtlFileRelativePathInAssetCollection);
-            AssetManager.saveMaterials(resourceLocator, materials);
-        }
-
-        // Should we cache this too?
-        public void importResource(Path resourceFileRelativePathInAssetCollection, IResourceLocator sourceResource) throws IOException {
-            IResourceLocator targetResourceLocator = getAssetResourceLocator(resourceFileRelativePathInAssetCollection);
-            try (InputStream inputStream = sourceResource.inputStream()) {
-                targetResourceLocator.copyFrom(inputStream);
-            }
-        }
-
-        public void importResourceDirectory(Path resourceDirectoryRelativePathInAssetCollection, IDirectoryLocator sourceDirectory) throws IOException {
-            IDirectoryLocator targetDirectoryLocator = getAssetDirectoryLocator(resourceDirectoryRelativePathInAssetCollection);
-            sourceDirectory.copyContentsTo(targetDirectoryLocator);
-        }
-
         // Raw access to an asset resource - not cached
-        public IResourceLocator getAssetResourceLocator(Path assetFileRelativePathInAssetCollection) {
-            return mBaseDirectory.resolveResource(assetFileRelativePathInAssetCollection);
+        public IResourceLocator resolveResourceLocator(Path relativePathInAssetCollection) {
+            return mBaseDirectory.resolveResource(relativePathInAssetCollection);
         }
 
         // Raw access to an asset directory - not cached
-        public IDirectoryLocator getAssetDirectoryLocator(Path assetDirectoryRelativePathInAssetCollection) {
-            return mBaseDirectory.resolveDirectory(assetDirectoryRelativePathInAssetCollection);
+        public IDirectoryLocator resolveDirectoryLocator(Path relativePathInAssetCollection) {
+            return mBaseDirectory.resolveDirectory(relativePathInAssetCollection);
+        }
+
+        /**
+         * Gets the base directory of the support objects of this asset collection.
+         */
+        public AssetLocation resolveSOBaseDirectory() {
+            return new AssetLocation(this, Path.of(SUPPORT_OBJECTS_DIRECTORY));
+        }
+
+        /**
+         * Gets the base directory of the root material sets of this asset collection.
+         */
+        public AssetLocation resolveMSBaseDirectory() {
+            return new AssetLocation(this, Path.of(MATERIAL_SETS_DIRECTORY));
         }
 
         public void clearCache() {
             mRootMaterialSetsCache = null;
             mSupportObjectsCache = null;
             mImagesCache = null;
-        }
-
-        // TODO: Update cache entries
-        protected <T extends AbstractAssetDescriptor> Collection<T> loadAssetDescriptors(Path relativeBasePath,
-            AssetType assetType, String assetTypeSubDirectoryName, IAssetPathAnchor anchor, BiFunction<Path, AssetRefPath, T> descriptorLoader) throws IOException {
-            IDirectoryLocator rootDirectory = mBaseDirectory.resolveDirectory(relativeBasePath);
-            IDirectoryLocator assetTypeDirectory = rootDirectory.resolveDirectory(assetTypeSubDirectoryName);
-            Path assetTypeBasePath = relativeBasePath.resolve(assetTypeSubDirectoryName);
-            try {
-                return assetTypeDirectory.exists()
-                                ? assetTypeDirectory
-                                    .list(pl -> pl instanceof IDirectoryLocator)
-                                    .stream()
-                                    .map(pl -> {
-                                        String assetId = pl.getFileName();
-                                        Path filePath = assetTypeBasePath.resolve(assetId);
-                                        AssetRefPath ref = new AssetRefPath(assetType, anchor, filePath);
-                                        return descriptorLoader.apply(filePath, ref);
-                                    })
-                                    .filter(ad -> ad != null)
-                                    .collect(Collectors.toList())
-                                : Collections.emptyList();
-            } catch (IOException e) {
-                throw new IOException("Error listing support objects from root path '" + anchor + "', path '" + assetTypeBasePath + "'", e);
-            }
-        }
-
-        // In fact, parameter relativeBasePath is not necessary for this method because there are no ramified locations for support objects like for material sets.
-        // But to make the API easier for the caller below, we provide that parameter.
-        public Collection<SupportObjectDescriptor> loadSupportObjectDescriptors(Path relativeBasePath, IAssetPathAnchor anchor) throws IOException {
-            return loadAssetDescriptors(relativeBasePath, AssetType.SupportObject, SUPPORT_OBJECTS_DIRECTORY, anchor, (assetBaseDirectory, assetRefPath) -> {
-                try {
-                    return loadSupportObjectDescriptor(assetBaseDirectory, assetRefPath);
-                } catch (IOException e) {
-                    log.warn("Error loading support object descriptor '" + assetRefPath + "' from path '" + assetBaseDirectory + "'");
-                    return null; // null value will be filtered out from caller loadAssetDescriptors(...)
-                }
-            });
-        }
-
-        public Collection<MaterialSetDescriptor> loadMaterialSetDescriptors(Path relativeBasePath, IAssetPathAnchor anchor) throws IOException {
-            return loadAssetDescriptors(relativeBasePath, AssetType.MaterialSet, MATERIAL_SETS_DIRECTORY, anchor, (assetBaseDirectory, assetRefPath) -> {
-                try {
-                    return loadMaterialSetDescriptor(assetBaseDirectory, assetRefPath);
-                } catch (IOException e) {
-                    log.warn("Error loading material set descriptor '" + assetRefPath + "' from path '" + assetBaseDirectory + "'");
-                    return null; // null value will be filtered out from caller loadAssetDescriptors(...)
-                }
-            });
-        }
-
-        public void deleteAsset(Path assetBaseDirectoryPath) throws IOException {
-            IDirectoryLocator assetDirectory = getAssetBaseDirectory(assetBaseDirectoryPath);
-            assetDirectory.deleteRecursively();
         }
     }
 
@@ -291,19 +190,22 @@ public class AssetManager {
         public LibraryData(AssetLibrary library, IDirectoryLocator libraryRootDirectory) {
             mLibrary = library;
             mRootDirectory = libraryRootDirectory;
-            mAssetCollection = new AssetCollection(mRootDirectory);
+            mAssetCollection = new AssetCollection(new LibraryAssetPathAnchor(library.getId()), mRootDirectory);
         }
 
         public AssetLibrary getLibrary() {
             return mLibrary;
         }
 
+        public IAssetPathAnchor getLibraryAnchor() {
+            return mAssetCollection.getAnchor();
+        }
+
         public IDirectoryLocator getRootDirectory() {
             return mRootDirectory;
         }
 
-        // Not accessible to the outside
-        protected AssetCollection getAssetCollection() {
+        public AssetCollection getAssetCollection() {
             return mAssetCollection;
         }
 
@@ -337,15 +239,26 @@ public class AssetManager {
         }
     }
 
-    protected class PlanContext {
+    protected static class PlanContext {
+        protected final String mPlanId;
         protected final IDirectoryLocator mPlanFileDirectory;
         protected final AssetCollection mAssetCollection;
 
-        public PlanContext(IDirectoryLocator planFileDirectory, AssetCollection assetCollection) {
+        public PlanContext(String planId, IDirectoryLocator planFileDirectory, AssetCollection assetCollection) {
+            mPlanId = planId;
             mPlanFileDirectory = planFileDirectory;
             mAssetCollection = assetCollection;
         }
 
+        public String getPlanId() {
+            return mPlanId;
+        }
+
+        /**
+         * Gets the directory where the plan file is located; this is intentionally stored separately from the
+         * plan's local asset collection to make the location of the plan's local asset collection independent from
+         * the directory where the plan file exists.
+         */
         public IDirectoryLocator getPlanFileDirectory() {
             return mPlanFileDirectory;
         }
@@ -355,7 +268,10 @@ public class AssetManager {
         }
     }
 
-    public class AssetLocation {
+    /**
+     * Represents a directory in an asset collection and provides methods to access asset descriptors and asset resource files.
+     */
+    public static class AssetLocation {
         protected final AssetCollection mAssetCollection;
         protected final Path mRelativePathInAssetCollection;
 
@@ -370,6 +286,186 @@ public class AssetManager {
 
         public Path getRelativePathInAssetCollection() {
             return mRelativePathInAssetCollection;
+        }
+
+        public IDirectoryLocator getDirectoryLocator() {
+            return mAssetCollection.resolveDirectoryLocator(mRelativePathInAssetCollection);
+        }
+
+        public IResourceLocator resolveResource(String fileNameOrPath) {
+            return mAssetCollection.resolveResourceLocator(mRelativePathInAssetCollection.resolve(fileNameOrPath));
+        }
+
+        public IResourceLocator resolveResource(Path filePath) {
+            return mAssetCollection.resolveResourceLocator(mRelativePathInAssetCollection.resolve(filePath));
+        }
+
+        public IAssetPathAnchor getAnchor() {
+            return mAssetCollection.getAnchor();
+        }
+
+        /**
+         * Resolves the given path at this asset location.
+         */
+        public AssetLocation resolvePath(String relativePath) {
+            return new AssetLocation(mAssetCollection, mRelativePathInAssetCollection.resolve(relativePath));
+        }
+
+        /**
+         * Resolves the given path at this asset location.
+         */
+        public AssetLocation resolvePath(Path relativePath) {
+            return new AssetLocation(mAssetCollection, mRelativePathInAssetCollection.resolve(relativePath));
+        }
+
+        /**
+         * To be called on an asset's base directory.
+         * @return Resources folder of the asset.
+         */
+        public AssetLocation resolveResourcesDirectory() {
+            return resolvePath(RESOURCES_DIRECTORY_NAME);
+        }
+
+        /**
+         * To be called on a support object's base directory.
+         * @return Local material sets directory.
+         */
+        public AssetLocation resolveLocalMaterialSetsDirectory() {
+            return resolvePath(MATERIAL_SETS_DIRECTORY);
+        }
+
+        /**
+         * To be called on a support object's base directory.
+         * @return Local material set directory of the given material set.
+         */
+        public AssetLocation resolveLocalMaterialSetDirectory(String materialSetId) {
+            return resolvePath(MATERIAL_SETS_DIRECTORY + "/" + materialSetId);
+        }
+
+        // TODO: Cache in AssetCollection
+        protected SupportObjectDescriptor loadSupportObjectDescriptor() throws IOException {
+            IResourceLocator resourceLocator = resolveResource(SUPPORT_OBJECT_DESCRIPTOR_NAME);
+            try (Reader reader = new BufferedReader(new InputStreamReader(resourceLocator.inputStream()))) {
+                AssetRefPath supportObjectDescriptorRef = new AssetRefPath(AssetType.SupportObject, getAnchor(), mRelativePathInAssetCollection);
+                return AssetDescriptorsIO.deserializeSupportObjectDescriptor(reader, supportObjectDescriptorRef);
+            }
+        }
+
+        // TODO: Cache in AssetCollection
+        protected MaterialSetDescriptor loadMaterialSetDescriptor() throws IOException {
+            IResourceLocator resourceLocator = resolveResource(MATERIAL_SET_DESCRIPTOR_NAME);
+            try (Reader reader = new BufferedReader(new InputStreamReader(resourceLocator.inputStream()))) {
+                AssetRefPath materialDescriptorRef = new AssetRefPath(AssetType.MaterialSet, getAnchor(), mRelativePathInAssetCollection);
+                return AssetDescriptorsIO.deserializeMaterialSetDescriptor(reader, materialDescriptorRef);
+            }
+        }
+
+        // TODO: Cache in AssetCollection
+        public void saveSupportObjectDescriptor(SupportObjectDescriptor descriptor) throws IOException {
+            IDirectoryLocator baseDirectory = getDirectoryLocator();
+            baseDirectory.mkDirs();
+            IResourceLocator resourceLocator = baseDirectory.resolveResource(SUPPORT_OBJECT_DESCRIPTOR_NAME);
+            try (Writer writer = new BufferedWriter(new OutputStreamWriter(resourceLocator.outputStream()))) {
+                AssetDescriptorsIO.serializeSupportObjectDescriptor(descriptor, writer);
+            }
+        }
+
+        // TODO: Cache in AssetCollection
+        public void saveMaterialSetDescriptor(MaterialSetDescriptor descriptor) throws IOException {
+            IDirectoryLocator baseDirectory = getDirectoryLocator();
+            baseDirectory.mkDirs();
+            IResourceLocator resourceLocator = baseDirectory.resolveResource(MATERIAL_SET_DESCRIPTOR_NAME);
+            try (Writer writer = new BufferedWriter(new OutputStreamWriter(resourceLocator.outputStream()))) {
+                AssetDescriptorsIO.serializeMaterialSetDescriptor(descriptor, writer);
+            }
+        }
+
+        // TODO: Cache in AssetCollection
+        public Image loadImage(String imageFileName) throws IOException {
+            IResourceLocator resourceLocator = resolveResource(imageFileName);
+            return AssetManager.loadImage(resourceLocator);
+        }
+
+        // TODO: Cache in AssetCollection
+        public void saveImage(Image image, String imageFileName) throws IOException {
+            IResourceLocator resourceLocator = resolveResource(imageFileName);
+            AssetManager.saveImage(resourceLocator, image);
+        }
+
+        public void saveMaterialsToMtl(Collection<RawMaterialData> materials, String materialLibraryFileName) throws IOException {
+            IResourceLocator resourceLocator = resolveResource(materialLibraryFileName);
+            AssetManager.saveMaterials(resourceLocator, materials);
+        }
+
+        // Should we cache this too?
+        public void importResource(IResourceLocator sourceResource, String resourceFileName) throws IOException {
+            IResourceLocator targetResourceLocator = resolveResource(resourceFileName);
+            try (InputStream inputStream = sourceResource.inputStream()) {
+                targetResourceLocator.copyFrom(inputStream);
+            }
+        }
+
+        public void importResourceDirectory(IDirectoryLocator sourceDirectory) throws IOException {
+            IDirectoryLocator targetDirectoryLocator = getDirectoryLocator();
+            sourceDirectory.copyContentsTo(targetDirectoryLocator);
+        }
+
+        // TODO: Update cache entries
+        protected <T extends AbstractAssetDescriptor> Collection<T> loadAssetDescriptors(
+            AssetType assetType, Function<AssetLocation, T> descriptorLoader) throws IOException {
+            IDirectoryLocator assetTypeDirectory = getDirectoryLocator(); // Corresponds to mRelativePathInAssetCollection
+            try {
+                return assetTypeDirectory.exists()
+                                ? assetTypeDirectory
+                                    .list(pl -> pl instanceof IDirectoryLocator)
+                                    .stream()
+                                    .map(pl -> {
+                                        String assetId = pl.getFileName();
+                                        Path relativeAssetPath = mRelativePathInAssetCollection.resolve(assetId);
+                                        return descriptorLoader.apply(new AssetLocation(mAssetCollection, relativeAssetPath));
+                                    })
+                                    .filter(ad -> ad != null)
+                                    .collect(Collectors.toList())
+                                : Collections.emptyList();
+            } catch (IOException e) {
+                throw new IOException("Error listing asset descriptors from '" + assetTypeDirectory + "'", e);
+            }
+        }
+
+        /**
+         * To be called on the support object's folder of an asset collection.
+         */
+        public Collection<SupportObjectDescriptor> loadSupportObjectDescriptors() throws IOException {
+            return loadAssetDescriptors(AssetType.SupportObject, assetLocation -> {
+                try {
+                    return assetLocation.loadSupportObjectDescriptor();
+                } catch (IOException e) {
+                    log.warn("Error loading support object descriptor from '" + assetLocation.getDirectoryLocator() + "'");
+                    return null; // null value will be filtered out from caller loadAssetDescriptors(...)
+                }
+            });
+        }
+
+        /**
+         * To be called on the material set's folder of an asset collection or on a local material set's folder of a support object..
+         */
+        public Collection<MaterialSetDescriptor> loadMaterialSetDescriptors() throws IOException {
+            return loadAssetDescriptors(AssetType.MaterialSet, assetLocation -> {
+                try {
+                    return assetLocation.loadMaterialSetDescriptor();
+                } catch (IOException e) {
+                    log.warn("Error loading material set descriptor from '" + assetLocation.getDirectoryLocator() + "'");
+                    return null; // null value will be filtered out from caller loadAssetDescriptors(...)
+                }
+            });
+        }
+
+        /**
+         * To be called on an asset's base directory.
+         */
+        public void deleteAssetDirectory() throws IOException {
+            IDirectoryLocator assetDirectory = getDirectoryLocator();
+            assetDirectory.deleteRecursively();
         }
     }
 
@@ -417,14 +513,18 @@ public class AssetManager {
         return mOPlanContext.map(pc -> pc.getPlanFileDirectory());
     }
 
+    public Optional<String> getPlanId() {
+        return mOPlanContext.map(pc -> pc.getPlanId());
+    }
+
     /**
      * Sets the path to the current plan file. This is necessary to resolve plan-local assets.
      */
-    public void setPlanBaseDirectory(IDirectoryLocator value) {
-        if (value == null) {
+    public void setCurrentPlan(String planId, IDirectoryLocator planBaseDirectory) {
+        if (planBaseDirectory == null) {
             mOPlanContext = Optional.empty();
         }
-        mOPlanContext = Optional.of(new PlanContext(value, new AssetCollection(value)));
+        mOPlanContext = Optional.of(new PlanContext(planId, planBaseDirectory, new AssetCollection(new PlanAssetPathAnchor(planId), planBaseDirectory)));
     }
 
     /**
@@ -475,38 +575,43 @@ public class AssetManager {
 
     //////////////////////////////////////////////////////// Directory computation /////////////////////////////////////////////////////
 
-    // TODO: Document, see usages
-    protected AssetLocation getAssetLocation(IAssetPathAnchor anchor, Path assetBasePath) throws IOException {
+    public AssetCollection resolveAssetCollection(IAssetPathAnchor anchor) throws IOException {
         if (anchor instanceof PlanAssetPathAnchor) {
-            AssetCollection assetCollection = mOPlanContext.map(pc -> pc.getAssetCollection()).orElseThrow(() -> planAnchorPathNotAvailableException());
-            return new AssetLocation(assetCollection, assetBasePath);
+            return mOPlanContext.map(pc -> pc.getAssetCollection()).orElseThrow(() -> planAnchorPathNotAvailableException());
         } else if (anchor instanceof LibraryAssetPathAnchor libraryPathAnchor) {
             String libraryId = libraryPathAnchor.getLibraryId();
             LibraryData libraryData = mAssetLibraries.get(libraryId);
             if (libraryData == null) {
                 throw libraryIdUnknownException(libraryId);
             }
-            return new AssetLocation(libraryData.getAssetCollection(), assetBasePath);
-        } else if (anchor instanceof SupportObjectAssetPathAnchor supportObjectPathAnchor) {
-            AssetLocation baseAssetLocation = getAssetLocation(supportObjectPathAnchor.getSupportObjectRef());
-            return new AssetLocation(baseAssetLocation.getAssetCollection(), baseAssetLocation.getRelativePathInAssetCollection().resolve(assetBasePath));
+            return libraryData.getAssetCollection();
         } else {
             throw new NotImplementedException("Resolving of asset path anchor <" + anchor + "> is not implemented");
         }
     }
 
-    /**
-     * Gets the base location of the asset for the given asset reference path.
-     */
-    public AssetLocation getAssetLocation(AssetRefPath ref) throws IOException {
-        return getAssetLocation(ref.getAnchor(), ref.getAssetBasePath());
+    protected AssetLocation resolveAssetLocation(IAssetPathAnchor anchor, Path assetLocationPath) throws IOException {
+        return new AssetLocation(resolveAssetCollection(anchor), assetLocationPath);
     }
 
+    /**
+     * Gets the base location of the asset for the given asset reference path.
+     * @throws IOException
+     */
+    public AssetLocation resolveAssetLocation(AssetRefPath ref) throws IOException {
+        return resolveAssetLocation(ref.getAnchor(), ref.getAssetBasePath());
+    }
+
+    /**
+     * Gets the resource locator for the given asset's model.
+     * @param assetLocation Base folder of the asset whose model should be resolved.
+     * @param model Model descriptor whose resource should be resolved.
+     * @throws FileNotFoundException If the given model's resource does not exist.
+     */
     public static IResourceLocator resolveResourcesModel(AssetLocation assetLocation, FileModelResource model) throws FileNotFoundException {
-        Path modelPath = Paths.get(RESOURCES_DIRECTORY_NAME).resolve(model.getRelativePath());
-        IResourceLocator result = assetLocation.getAssetCollection().getAssetResourceLocator(assetLocation.getRelativePathInAssetCollection().resolve(modelPath));
+        IResourceLocator result = assetLocation.resolveResourcesDirectory().resolveResource(model.getRelativePath());
         if (!result.exists()) {
-            throw new FileNotFoundException("Resource '" + modelPath + "' is not present");
+            throw new FileNotFoundException("Resource '" + result + "' is not present");
         }
         return result;
     }
@@ -664,25 +769,25 @@ public class AssetManager {
     ///////////////////////////////////////////////////// Descriptor methods ////////////////////////////////////////////////////////////
 
     public SupportObjectDescriptor loadSupportObjectDescriptor(AssetRefPath supportObjectDescriptorRef) throws IOException {
-        AssetLocation assetLocation = getAssetLocation(supportObjectDescriptorRef);
-        return assetLocation.getAssetCollection().loadSupportObjectDescriptor(assetLocation.getRelativePathInAssetCollection(), supportObjectDescriptorRef);
+        AssetLocation assetLocation = resolveAssetLocation(supportObjectDescriptorRef);
+        return assetLocation.loadSupportObjectDescriptor();
     }
 
     public MaterialSetDescriptor loadMaterialSetDescriptor(AssetRefPath materialSetDescriptorRef) throws IOException {
-        AssetLocation assetLocation = getAssetLocation(materialSetDescriptorRef);
-        return assetLocation.getAssetCollection().loadMaterialSetDescriptor(assetLocation.getRelativePathInAssetCollection(), materialSetDescriptorRef);
+        AssetLocation assetLocation = resolveAssetLocation(materialSetDescriptorRef);
+        return assetLocation.loadMaterialSetDescriptor();
     }
 
     public void saveMaterialSetDescriptor(MaterialSetDescriptor descriptor) throws IOException {
         AssetRefPath refPath = descriptor.getSelfRef();
-        AssetLocation assetLocation = getAssetLocation(refPath);
-        assetLocation.getAssetCollection().saveMaterialSetDescriptor(assetLocation.getRelativePathInAssetCollection(), descriptor);
+        AssetLocation assetLocation = resolveAssetLocation(refPath);
+        assetLocation.saveMaterialSetDescriptor(descriptor);
     }
 
     public void saveSupportObjectDescriptor(SupportObjectDescriptor descriptor) throws IOException {
         AssetRefPath refPath = descriptor.getSelfRef();
-        AssetLocation assetLocation = getAssetLocation(refPath);
-        assetLocation.getAssetCollection().saveSupportObjectDescriptor(assetLocation.getRelativePathInAssetCollection(), descriptor);
+        AssetLocation assetLocation = resolveAssetLocation(refPath);
+        assetLocation.saveSupportObjectDescriptor(descriptor);
     }
 
     public void saveAssetDescriptor(AbstractAssetDescriptor descriptor) throws IOException {
@@ -696,13 +801,25 @@ public class AssetManager {
     }
 
     public Collection<SupportObjectDescriptor> loadSupportObjectDescriptors(IAssetPathAnchor anchor) throws IOException {
-        AssetLocation assetLocation = getAssetLocation(anchor, Paths.get(""));
-        return assetLocation.getAssetCollection().loadSupportObjectDescriptors(assetLocation.getRelativePathInAssetCollection(), anchor);
+        AssetLocation assetLocation = resolveAssetCollection(anchor).resolveSOBaseDirectory();
+        return assetLocation.loadSupportObjectDescriptors();
     }
 
-    public Collection<MaterialSetDescriptor> loadMaterialSetDescriptors(IAssetPathAnchor anchor) throws IOException {
-        AssetLocation assetLocation = getAssetLocation(anchor, Paths.get(""));
-        return assetLocation.getAssetCollection().loadMaterialSetDescriptors(assetLocation.getRelativePathInAssetCollection(), anchor);
+    public Collection<MaterialSetDescriptor> loadSupportObjectMaterialSetDescriptors(SupportObjectDescriptor supportObjectDescriptor) throws IOException {
+        return resolveAssetLocation(supportObjectDescriptor.getSelfRef()).resolveLocalMaterialSetsDirectory().loadMaterialSetDescriptors();
+    }
+
+    public Collection<MaterialSetDescriptor> loadMaterialSetDescriptors(IAssetPathAnchor anchor, boolean includeLocalMaterials) throws IOException {
+        AssetCollection assetCollection = resolveAssetCollection(anchor);
+        Collection<MaterialSetDescriptor> result = new ArrayList<>(assetCollection.resolveMSBaseDirectory().loadMaterialSetDescriptors());
+        if (!includeLocalMaterials) {
+            return result;
+        }
+        Collection<SupportObjectDescriptor> supportObjectDescriptors = assetCollection.resolveSOBaseDirectory().loadSupportObjectDescriptors();
+        for (SupportObjectDescriptor supportObjectDescriptor : supportObjectDescriptors) {
+            result.addAll(loadSupportObjectMaterialSetDescriptors(supportObjectDescriptor));
+        }
+        return result;
     }
 
     public Collection<SupportObjectDescriptor> loadAllLibrarySupportObjectDescriptors() throws IOException {
@@ -716,19 +833,35 @@ public class AssetManager {
     public Collection<MaterialSetDescriptor> loadAllLibraryRootMaterialSetDescriptors() throws IOException {
         Collection<MaterialSetDescriptor> result = new ArrayList<>();
         for (String libraryId : mAssetLibraries.keySet()) {
-            result.addAll(loadMaterialSetDescriptors(new LibraryAssetPathAnchor(libraryId)));
+            result.addAll(loadMaterialSetDescriptors(new LibraryAssetPathAnchor(libraryId), false));
         }
         return result;
     }
 
-    public MaterialSetDescriptor createMaterialSet(IAssetPathAnchor anchor) throws IOException {
-        String materialSetDescriptorId = IdGenerator.generateUniqueId(MaterialSetDescriptor.class);
-        return createMaterialSet_PredefinedId(anchor, materialSetDescriptorId);
+    public MaterialSetDescriptor createRootMaterialSet(String libraryId) throws IOException {
+        AssetLocation assetLocation = resolveAssetLocation(new LibraryAssetPathAnchor(libraryId), Path.of(""))
+                        .resolveLocalMaterialSetsDirectory();
+        return createMaterialSet(assetLocation);
     }
 
-    public MaterialSetDescriptor createMaterialSet_PredefinedId(IAssetPathAnchor anchor, String materialSetDescriptorId) throws IOException {
-        Path filePath = Paths.get(MATERIAL_SETS_DIRECTORY + "/" + materialSetDescriptorId);
-        AssetRefPath arp = new AssetRefPath(AssetType.MaterialSet, anchor, filePath);
+    public MaterialSetDescriptor createSupportObjectMaterialSet(AssetRefPath supportObjectRefPath) throws IOException {
+        AssetLocation assetLocation = resolveAssetLocation(supportObjectRefPath)
+                        .resolveLocalMaterialSetsDirectory();
+        return createMaterialSet(assetLocation);
+    }
+
+    /**
+     * Creates a new material set in the given material sets folder.
+     * @param materialSetsAssetLocation Asset location pointing to a root material sets location or
+     * to a support object local material sets location.
+     */
+    public MaterialSetDescriptor createMaterialSet(AssetLocation materialSetsAssetLocation) throws IOException {
+        String materialSetDescriptorId = IdGenerator.generateUniqueId(MaterialSetDescriptor.class);
+        return createMaterialSet_PredefinedId(materialSetsAssetLocation, materialSetDescriptorId);
+    }
+
+    public MaterialSetDescriptor createMaterialSet_PredefinedId(AssetLocation materialSetsAssetLocation, String materialSetDescriptorId) throws IOException {
+        AssetRefPath arp = new AssetRefPath(AssetType.MaterialSet, materialSetsAssetLocation.getAssetCollection().getAnchor(), materialSetsAssetLocation.getRelativePathInAssetCollection().resolve(materialSetDescriptorId));
         MaterialSetDescriptor result = new MaterialSetDescriptor(materialSetDescriptorId, arp);
         saveMaterialSetDescriptor(result); // Creates the directory structure
 
@@ -761,6 +894,10 @@ public class AssetManager {
         assetLoader.importSupportObject3DViewObjResource(result, getClassLoaderResourceLocator(AssetLoader.TEMPLATE_SUPPORT_OBJECT_MODEL), Optional.empty(),
             ThreeDResourceImportMode.ObjFile, Optional.of(OBJ_FILE_DEFAULT_NAME));
 
+        result.setWidth(Length.ofM(1));
+        result.setHeight(Length.ofM(1));
+        result.setDepth(Length.ofM(1));
+
         saveSupportObjectDescriptor(result);
         return result;
     }
@@ -769,10 +906,10 @@ public class AssetManager {
         if (assetRefPath.getOMaterialName().isPresent()) {
             throw new IllegalArgumentException("Single material in material set cannot be deleted separately (material set ref path: '" + assetRefPath + "')");
         }
-        AssetLocation assetLocation = getAssetLocation(assetRefPath);
+        AssetLocation assetLocation = resolveAssetLocation(assetRefPath);
         Path assetBaseDirectoryPath = assetLocation.getRelativePathInAssetCollection();
         try {
-            assetLocation.getAssetCollection().deleteAsset(assetBaseDirectoryPath);
+            assetLocation.deleteAssetDirectory();
         } catch (IOException e) {
             throw new IOException("Error deleting asset '" + assetRefPath + "' from path '" + assetBaseDirectoryPath + "'", e);
         }
@@ -782,7 +919,7 @@ public class AssetManager {
 
     protected static IResourceLocator getClassLoaderResourceLocator(String localResourceName) {
         return new ClassLoaderFileSystemResourceLocator(Path.of(
-            LOCAL_RESOURCE_BASE + "/" + localResourceName), AssetLoader.class.getModule());
+            LOCAL_RESOURCE_BASE + "/" + localResourceName), AssetLoader.class);
     }
 
     public static Image loadImage(IResourceLocator imageFileLocator) throws IOException {

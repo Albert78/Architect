@@ -39,7 +39,6 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.geometry.Point2D;
-import javafx.geometry.Point3D;
 import javafx.scene.AmbientLight;
 import javafx.scene.Group;
 import javafx.scene.LightBase;
@@ -60,23 +59,29 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Scale;
+import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
 
 public class ThreeDObjectViewControl extends StackPane {
+    public static enum ZoomDirection {
+        IN, OUT;
+    }
+
     private static final int PERSPECTIVE_CAMERA_TRANSLATE_Z = -200; // To avoid clipping at near clip
     private static final int PARALLEL_CAMERA_TRANSLATE_Z = 0; // Center camera at object's position because the clipping range for parallel camera seems to be very small / hard coded?
 
     // We normalize the extents of the object via a scale transform to simplify the interaction between the different aspects like
     // the light indicator, the camera's field of view and its clipping panes, default scale parameters etc.
-    private static final int NORMALIZED_OBJECT_SIZE = 100;
-    private static final int NORMALIZED_LIGHT_DRAG_INDICATOR_SIZE = 50;
+    private static final int NORMALIZED_OBJECT_SIZE = 250;
+    private static final int NORMALIZED_LIGHT_DRAG_INDICATOR_SIZE = 100;
 
     private static Logger log = LoggerFactory.getLogger(ThreeDObjectViewControl.class);
 
     protected EventHandler<ScrollEvent> mZoomEventHandler = new EventHandler<>() {
         @Override
         public void handle(ScrollEvent event) {
-            zoom(-event.getDeltaY());
+            ZoomDirection val = event.getDeltaY() < 0 ? ZoomDirection.IN : ZoomDirection.OUT;
+            zoom(val);
         }
     };
     protected Group mRootGroup;
@@ -87,9 +92,7 @@ public class ThreeDObjectViewControl extends StackPane {
     protected PerspectiveCamera mPerspectiveCamera;
     protected ParallelCamera mParallelCamera;
 
-    protected Scale mObjectSizeCompensationScale = new Scale();
-
-    protected Group mTransformRoot;
+    protected Group mScaledRoot;
 
     protected final ObjectProperty<CameraType> mCameraTypeProperty = new SimpleObjectProperty<>(CameraType.Perspective);
 
@@ -107,17 +110,21 @@ public class ThreeDObjectViewControl extends StackPane {
 
     protected final Rotate mXRotate = new Rotate(0, Rotate.X_AXIS);
     protected final Rotate mYRotate = new Rotate(0, Rotate.Y_AXIS);
+    protected final Scale mScale = new Scale();
 
+    protected final CoordinateSystemConfiguration mCoordinateSystemConfiguration;
+
+    protected boolean mShowCoordinateSystem = false;
     protected CoordinateSystemNode mCoordinateSystem = null;
 
     protected Node mObjView;
+    protected Group mObjGroup;
 
-    protected final Scale mScale = new Scale();
-
-    public ThreeDObjectViewControl() {
+    public ThreeDObjectViewControl(CoordinateSystemConfiguration coordinateSystemConfiguration) {
+        mCoordinateSystemConfiguration = coordinateSystemConfiguration;
         mLightDragIndicator = loadFlashlight();
 
-        mTransformRoot = new Group();
+        mScaledRoot = new Group();
 
         mPointLight = new PointLight();
         mPointLightGroup = new Group(mPointLight, mLightDragIndicator);
@@ -140,8 +147,8 @@ public class ThreeDObjectViewControl extends StackPane {
         mPointLightIntensityProperty.addListener(new LightIntensityToLightColorMapper(mPointLight));
         mAmbientLightIntensityProperty.addListener(new LightIntensityToLightColorMapper(mAmbientLight));
 
-        mRootGroup = new Group(mTransformRoot, mAmbientLight, mPointLightGroup);
-        mRootGroup.getTransforms().add(mObjectSizeCompensationScale);
+        mRootGroup = new Group(mScaledRoot, mAmbientLight, mPointLightGroup);
+        mScaledRoot.getTransforms().add(mScale);
         mSubScene = new SubScene(mRootGroup, 0, 0, true, SceneAntialiasing.BALANCED);
 
         DoubleBinding halfViewportWidthProperty = mSubScene.widthProperty().divide(2);
@@ -223,12 +230,13 @@ public class ThreeDObjectViewControl extends StackPane {
         mPointLight.getTransforms().add(lightTranslate);
         Translate lightDragIndicatorTranslate = new Translate();
         lightDragIndicatorTranslate.yProperty().bind(mLightDistance.negate());
-        mLightDragIndicator.getTransforms().add(0, lightDragIndicatorTranslate);
+        ObservableList<Transform> lightDragIndicatorTransforms = mLightDragIndicator.getTransforms();
+        lightDragIndicatorTransforms.add(0, lightDragIndicatorTranslate);
         mPointLightGroup.getTransforms().addAll(lightXRotate, lightZRotate, mScale);
 
-        mXRotate.angleProperty().bind(mRotationAngleX);
+        mXRotate.angleProperty().bind(mRotationAngleX.add(90)); // Without that additional 90 degrees, Y points to the top. With it, Z points to the top.
         mYRotate.angleProperty().bind(mRotationAngleY);
-        mTransformRoot.getTransforms().addAll(mXRotate, mYRotate, mScale);
+        mRootGroup.getTransforms().addAll(mXRotate, mYRotate);
 
         mScale.setPivotX(0);
         mScale.setPivotY(0);
@@ -254,8 +262,6 @@ public class ThreeDObjectViewControl extends StackPane {
 
     protected static Pane createInfoPane() {
         Button infoButton = new Button("i");
-        infoButton.setLayoutX(10);
-        infoButton.setLayoutY(10);
         infoButton.setOnAction(event -> {
             Tooltip tt = new Tooltip(StringUtils.join(getToolTipInfoLines(), "\n"));
 
@@ -268,6 +274,11 @@ public class ThreeDObjectViewControl extends StackPane {
         AnchorPane result = new AnchorPane(infoButton);
         AnchorPane.setRightAnchor(infoButton, 10d);
         AnchorPane.setBottomAnchor(infoButton, 10d);
+
+        // Since the anchor pane only works as layout container but should not block the
+        // mouse event from being delivered to the underlaying 3D object, it is necessary
+        // to set pick on bounds to false
+        result.setPickOnBounds(false);
         return result;
     }
 
@@ -276,7 +287,7 @@ public class ThreeDObjectViewControl extends StackPane {
         try {
             lightDragIndicator = Flashlight.create();
             FxUtils.normalizeAndCenter(lightDragIndicator, NORMALIZED_LIGHT_DRAG_INDICATOR_SIZE, true);
-            Rotate rotate = new Rotate(90, new Point3D(1, 0, 0));
+            Rotate rotate = new Rotate(-90, Rotate.X_AXIS);
             lightDragIndicator.getTransforms().add(0, rotate);
         } catch (IOException e) {
             log.warn("Error loading light drag indicator", e);
@@ -509,29 +520,32 @@ public class ThreeDObjectViewControl extends StackPane {
     /**
      * Sets the object for this view.
      * @param value The 3D object to be shown.
-     * @param normalizeToSize The size the object should be stretched to in its maximum extent.
-     * This is normally a bit less then the the minimum X/Y extend of the desired size of this control.
+     * @return Bounds of the normalized object, in the coordinate system of the {@link #getScaledRoot() scaled root group}.
      */
-    public void setObjView(Node value, int normalizeToSize) {
-        double scale = normalizeToSize / NORMALIZED_OBJECT_SIZE;
-        mObjectSizeCompensationScale.setX(scale);
-        mObjectSizeCompensationScale.setY(scale);
-        mObjectSizeCompensationScale.setZ(scale);
-
-        ObservableList<Node> children = mTransformRoot.getChildren();
-        if (mObjView != null) {
-            children.remove(mObjView);
+    public void setObjView(Node value) {
+        ObservableList<Node> children = mScaledRoot.getChildren();
+        if (mObjGroup != null) {
+            children.remove(mObjGroup);
         }
         mObjView = value;
+        mObjGroup = null;
         if (mObjView != null) {
-            children.add(mObjView);
-            FxUtils.normalizeAndCenter(mObjView, NORMALIZED_OBJECT_SIZE, true);
+            mObjGroup = new Group(value);
+            children.add(mObjGroup);
+            FxUtils.normalizeAndCenter(mObjGroup, NORMALIZED_OBJECT_SIZE, true);
+            ObservableList<Transform> transforms = mObjGroup.getTransforms();
+            transforms.add(0, mCoordinateSystemConfiguration.getCoordinateTransform());
         }
     }
 
     public boolean isCoordinateSystemVisible() {
         return mCoordinateSystem != null;
     }
+
+    public CoordinateSystemConfiguration getCoordinateSystemConfiguration() {
+        return mCoordinateSystemConfiguration;
+    }
+
 
     public void setCoordinateSystemVisible(boolean value) {
         boolean visible = mCoordinateSystem != null;
@@ -544,14 +558,13 @@ public class ThreeDObjectViewControl extends StackPane {
             mCoordinateSystem = null;
         }
         if (value) {
-            mCoordinateSystem = new CoordinateSystemNode();
+            mCoordinateSystem = new CoordinateSystemNode(mCoordinateSystemConfiguration);
             rootChildren.add(mCoordinateSystem);
-            mCoordinateSystem.getTransforms().addAll(mXRotate, mYRotate);
         }
     }
 
-    protected void zoom(double value) {
-        double val = value < 0 ? 0.9 : 1.1;
+    protected void zoom(ZoomDirection direction) {
+        double val = direction == ZoomDirection.OUT ? 0.9 : 1.1;
         scale(val);
     }
 
@@ -565,18 +578,18 @@ public class ThreeDObjectViewControl extends StackPane {
 
     public Image takeSnapshot(int imageWidth, int imageHeight, Color backgroundColor) {
         // Borrow object for snapshot
-        ObservableList<Node> children = mTransformRoot.getChildren();
-        children.remove(mObjView);
-        Group root = new Group(mObjView);
+        ObservableList<Node> children = mScaledRoot.getChildren();
+        children.remove(mObjGroup);
+        Group tempRoot = new Group(mObjGroup);
         try {
-            root.getTransforms().addAll(mXRotate, mYRotate);
-            return ImageUtils.takeSnapshot(root, imageWidth, imageHeight, backgroundColor, getCameraType(),
+            tempRoot.getTransforms().addAll(mXRotate, mYRotate);
+            return ImageUtils.takeSnapshot(tempRoot, imageWidth, imageHeight, backgroundColor, getCameraType(),
                 new LightConfiguration(isPointLightOn(), lightIntensityToColor(getPointLightIntensity()),
                     getLightAngleX(), getLightAngleZ(), getLightDistance()),
                 new LightConfiguration(isAmbientLightOn(), lightIntensityToColor(getAmbientLightIntensity())));
         } finally {
-            root.getChildren().remove(mObjView);
-            children.add(mObjView);
+            tempRoot.getChildren().remove(mObjGroup);
+            children.add(mObjGroup);
         }
     }
 }

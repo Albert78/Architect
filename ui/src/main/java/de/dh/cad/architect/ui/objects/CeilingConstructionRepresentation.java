@@ -30,6 +30,7 @@ import de.dh.cad.architect.model.objects.Ceiling;
 import de.dh.cad.architect.ui.Constants;
 import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.objects.IntermediatePoint.IntermediatePointCallback;
+import de.dh.cad.architect.ui.utils.Axis;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.construction.Abstract2DView;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
@@ -106,13 +107,13 @@ public class CeilingConstructionRepresentation extends AbstractAnchoredObjectCon
 
         public void setPosition(Position3D position) {
             positionHook(position);
-            mCross.setTranslateX(CoordinateUtils.lengthToCoords(position.getX()));
-            mCross.setTranslateY(CoordinateUtils.lengthToCoords(position.getY()));
+            mCross.setTranslateX(CoordinateUtils.lengthToCoords(position.getX(), Axis.X));
+            mCross.setTranslateY(CoordinateUtils.lengthToCoords(position.getY(), Axis.Y));
         }
 
         protected void positionHook(Position3D position) {
-            double x = CoordinateUtils.lengthToCoords(position.getX());
-            double y = CoordinateUtils.lengthToCoords(position.getY());
+            double x = CoordinateUtils.lengthToCoords(position.getX(), Axis.X);
+            double y = CoordinateUtils.lengthToCoords(position.getY(), Axis.Y);
 
             double scaleCompensation = getScaleCompensation();
 
@@ -199,8 +200,8 @@ public class CeilingConstructionRepresentation extends AbstractAnchoredObjectCon
         Ceiling ceiling = getCeiling();
         for (Anchor anchor : ceiling.getEdgeHandleAnchors()) {
             Position2D position = anchor.requirePosition2D();
-            points.add(CoordinateUtils.lengthToCoords(position.getX()));
-            points.add(CoordinateUtils.lengthToCoords(position.getY()));
+            points.add(CoordinateUtils.lengthToCoords(position.getX(), Axis.X));
+            points.add(CoordinateUtils.lengthToCoords(position.getY(), Axis.Y));
         }
         mShape.getPoints().setAll(points);
 

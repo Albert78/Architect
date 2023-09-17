@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.dh.cad.architect.model.coords.Position2D;
+import de.dh.cad.architect.ui.utils.Axis;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
 import javafx.scene.shape.Polyline;
@@ -60,8 +61,8 @@ public class BasePolylineShapeAncillary extends Abstract2DAncillaryObject {
     public void updatePositions(List<Position2D> points, StrokeType strokeType) {
         List<Double> coords = new ArrayList<>();
         for (Position2D pos : points) {
-            coords.add(CoordinateUtils.lengthToCoords(pos.getX()));
-            coords.add(CoordinateUtils.lengthToCoords(pos.getY()));
+            coords.add(CoordinateUtils.lengthToCoords(pos.getX(), Axis.X));
+            coords.add(CoordinateUtils.lengthToCoords(pos.getY(), Axis.Y));
         }
         updateCoords(coords, strokeType);
     }

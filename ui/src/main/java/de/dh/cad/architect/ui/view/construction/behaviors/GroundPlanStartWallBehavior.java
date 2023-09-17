@@ -106,7 +106,7 @@ public class GroundPlanStartWallBehavior extends AbstractGroundPlanCreateWallBeh
     }
 
     @Override
-    protected void setDefaultUserHint() {
+    public void setDefaultUserHint() {
         setUserHint(Strings.GROUND_PLAN_START_WALL_BEHAVIOR_DEFAULT_USER_HINT);
     }
 

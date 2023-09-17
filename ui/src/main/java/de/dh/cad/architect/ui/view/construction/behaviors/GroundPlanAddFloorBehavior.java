@@ -92,7 +92,7 @@ public class GroundPlanAddFloorBehavior extends AbstractConstructionSelectAnchor
     }
 
     @Override
-    protected void setDefaultUserHint() {
+    public void setDefaultUserHint() {
         setUserHint(Strings.GROUND_PLAN_ADD_FLOOR_BEHAVIOR_DEFAULT_USER_HINT);
     }
 
@@ -125,7 +125,8 @@ public class GroundPlanAddFloorBehavior extends AbstractConstructionSelectAnchor
             return;
         }
         List<IModelChange> changeTrace = new ArrayList<>();
-        Floor floor = Floor.create(mLevel, mHeight, null,
+        Floor floor = Floor.create(mLevel, mHeight,
+            BaseObjectUIRepresentation.generateSimpleName(getPlan().getFloors().values(), Floor.class),
             mPositions
                 .stream()
                 .map(afp -> afp.getPosition())

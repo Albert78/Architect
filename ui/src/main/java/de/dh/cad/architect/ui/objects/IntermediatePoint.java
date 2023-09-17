@@ -20,6 +20,7 @@ package de.dh.cad.architect.ui.objects;
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.model.objects.Anchor;
 import de.dh.cad.architect.ui.Constants;
+import de.dh.cad.architect.ui.utils.Axis;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.DragControl;
 import de.dh.cad.architect.ui.view.construction.Abstract2DView;
@@ -219,8 +220,8 @@ public class IntermediatePoint extends Abstract2DAncillaryObject {
         }
         Position2D positionAfter = mAnchorAfter.getPosition().projectionXY();
         Position2D positionBefore = mAnchorBefore.getPosition().projectionXY();
-        double x = CoordinateUtils.lengthToCoords(positionAfter.getX().plus(positionBefore.getX()).times(0.5));
-        double y = CoordinateUtils.lengthToCoords(positionAfter.getY().plus(positionBefore.getY()).times(0.5));
+        double x = CoordinateUtils.lengthToCoords(positionAfter.getX().plus(positionBefore.getX()).times(0.5), Axis.X);
+        double y = CoordinateUtils.lengthToCoords(positionAfter.getY().plus(positionBefore.getY()).times(0.5), Axis.Y);
         mShape.setCenterX(x);
         mShape.setCenterY(y);
         mScaleCompensation.setPivotX(x);

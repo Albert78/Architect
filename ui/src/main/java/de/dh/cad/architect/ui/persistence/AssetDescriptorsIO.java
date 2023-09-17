@@ -34,7 +34,7 @@ import de.dh.cad.architect.utils.jaxb.IDeserializationHandler;
 import de.dh.cad.architect.utils.jaxb.JAXBUtility;
 
 public class AssetDescriptorsIO {
-    public static final String ASSET_FILE_SCHEMA_URL = "http://www.dh-software.de/architect/v2/assets";
+    public static final String ASSET_FILE_SCHEMA_URL = "http://www.dh-software.de/architect/v2.1/assets";
 
     public static void serializeSupportObjectDescriptor(SupportObjectDescriptor descriptor, Writer writer) {
         try {

@@ -27,9 +27,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,23 +47,59 @@ import de.dh.utils.io.ObjData;
  * Obj file reader creating {@link ObjData} and {@link RawMaterialData} objects.
  */
 public class ObjReader {
+    public static class ObjDataRaw {
+        protected final Collection<MeshData> mMeshes; // Mesh names must be unique
+        protected final Map<String, String> mMeshNamesToMaterialNames; // Mesh names to material - not all mesh names need to have a mapping, in that case, value is null
+        protected final Collection<String> mUsedMaterialLibraries;
+
+        public ObjDataRaw(Collection<MeshData> meshes, Map<String, String> meshNamesToMaterialNames, Collection<String> usedMaterialLibraries) {
+            mMeshes = meshes;
+            mMeshNamesToMaterialNames = meshNamesToMaterialNames;
+            mUsedMaterialLibraries = usedMaterialLibraries;
+        }
+
+        public static ObjDataRaw of(Collection<Pair<MeshData, String>> meshesWithMaterial, Collection<String> usedMaterialLibraries) {
+            Collection<MeshData> meshes = new ArrayList<>();
+            Map<String, String> meshNamesToMaterialNames = new TreeMap<>();
+            for (Pair<MeshData, String> pair : meshesWithMaterial) {
+                MeshData mesh = pair.getLeft();
+                String materialName = pair.getRight();
+                String meshName = mesh.getName();
+                meshes.add(mesh);
+                meshNamesToMaterialNames.put(meshName, materialName);
+            }
+            return new ObjDataRaw(meshes, meshNamesToMaterialNames, usedMaterialLibraries);
+        }
+
+        public Collection<MeshData> getMeshes() {
+            return mMeshes;
+        }
+
+        public Map<String, String> getMeshNamesToMaterialNames() {
+            return mMeshNamesToMaterialNames;
+        }
+
+        public Collection<String> getUsedMaterialLibraries() {
+            return mUsedMaterialLibraries;
+        }
+    }
+
     protected static final String DEFAULT_MESH_NAME = "Mesh";
 
     /**
      * Builder class which collects mesh data until a new mesh data object can be created.
      */
     protected static class MeshDataBuilder {
-        protected final Namespace<Void> mNamespace = new Namespace<>(); // Used to create unique names when object name is not defined
-        protected final Namespace<Void> mIdNamespace = new Namespace<>(); // Used to create stable ids
+        protected final Namespace<Void> mNamespace = new Namespace<>(); // Used to create unique names when object name is not defined. This also ensures that the names are stable among different reads of the same obj file.
 
         protected List<Integer> mFaces = new ArrayList<>();
         protected List<Integer> mFaceNormals = new ArrayList<>();
         protected List<Integer> mSmoothingGroups = new ArrayList<>();
 
+        protected String mMaterialName = "white"; // Default material for .mtl files
         protected int mCurrentSmoothGroup;
         protected String mName;
         protected Collection<String> mGroups;
-        protected String mMaterialName;
 
         public MeshDataBuilder() {
             reset();
@@ -202,18 +241,6 @@ public class ObjReader {
                 }
             }
 
-            String id = mName;
-            if (id == null && !mGroups.isEmpty()) {
-                id = mGroups.iterator().next();
-            }
-            if (id == null) {
-                id = DEFAULT_MESH_NAME;
-            }
-            if (mIdNamespace.contains(id)) {
-                id = mIdNamespace.generateName(id);
-            }
-            mIdNamespace.add(id, null);
-
             // We separate name and id by design; name is not necessarily unique but id is.
             // The code is redundant by design - the id generation code must remain stable while the code to generate the name may change.
 
@@ -230,7 +257,7 @@ public class ObjReader {
             mNamespace.add(name, null);
 
             String materialName = mMaterialName;
-            MeshData result = new MeshData(id, name, mGroups, newVertices, newUVs,
+            MeshData result = new MeshData(name, mGroups, newVertices, newUVs,
                 new ArrayList<>(mFaces), new ArrayList<>(mSmoothingGroups),
                 useNormals ? Optional.of(new MeshData.FaceNormalsData(newNormals, new ArrayList<>(mFaceNormals))) : Optional.empty(),
                 materialName);
@@ -267,28 +294,47 @@ public class ObjReader {
         }
     }
 
-    protected static boolean mFlatXZ = false;
-
-    public static void setFlatXZ(boolean flatXZ) {
-        ObjReader.mFlatXZ = flatXZ;
-    }
-
     public static ObjData readObj(IResourceLocator resourceLocator) throws IOException {
         return readObj(resourceLocator, Collections.emptyMap());
     }
 
     /**
      * Reads an {@code .obj} file from the given resource.
-     * Note that the generated {@link ObjData} will always yield the same {@link MeshData#getId() mesh ids} and {@link MeshData#getName() names}
+     * Note that the generated {@link ObjData} will always yield the same {@link MeshData#getName() names}
      * among different calls for the same object file.
      */
     public static ObjData readObj(IResourceLocator objFileLocator, Map<String, RawMaterialData> defaultMaterials) throws IOException {
-        IDirectoryLocator basePath = objFileLocator.getParentDirectory();
         Map<String, RawMaterialData> materialLibrary = new TreeMap<>(defaultMaterials);
 
+        IDirectoryLocator basePath = objFileLocator.getParentDirectory();
+
+        ObjDataRaw objDataRaw = readObjRaw(objFileLocator);
+
+        for (String filename : objDataRaw.getUsedMaterialLibraries()) {
+            try {
+                Map<String, RawMaterialData> materialSet = MtlLibraryIO.readMaterialSet(basePath.resolveResource(filename));
+                materialLibrary.putAll(materialSet);
+            } catch (IOException e) {
+                log.error("Failed to read material library '" + filename + "'", e);
+            }
+        }
+
+        Map<String, RawMaterialData> meshNamesToMaterials = new TreeMap<>();
+        for (Entry<String, String> entry : objDataRaw.getMeshNamesToMaterialNames().entrySet()) {
+            String meshName = entry.getKey();
+            String materialName = entry.getValue();
+            RawMaterialData materialData = StringUtils.isEmpty(materialName) ? null : materialLibrary.get(materialName);
+            meshNamesToMaterials.put(meshName, materialData);
+        }
+
+        return new ObjData(objDataRaw.getMeshes(), meshNamesToMaterials);
+    }
+
+    public static ObjDataRaw readObjRaw(IResourceLocator objFileLocator) throws IOException {
         log.debug("Reading object file " + objFileLocator);
         try (BufferedReader br = new BufferedReader(new InputStreamReader(objFileLocator.inputStream()))) {
             Collection<Pair<MeshData, String>> meshesWithMaterial = new ArrayList<>();
+            Collection<String> usedMaterialLibraries = new ArrayList<>();
 
             // Those lists grow over the reading process and span all meshes;
             // the generated meshes are independent from each other and don't share
@@ -299,6 +345,7 @@ public class ObjReader {
 
             // Those are mesh specific and are cleared for each new mesh
             MeshDataBuilder meshBuilder = new MeshDataBuilder();
+            Pattern SPACE = Pattern.compile(" +");
             String line;
             while ((line = br.readLine()) != null) {
                 try {
@@ -316,7 +363,7 @@ public class ObjReader {
                             .ifPresent(meshAndMaterial -> meshesWithMaterial.add(meshAndMaterial));
                         if (line.length() > 2) {
                             String groupsStr = line.substring(2);
-                            meshBuilder.setGroups(Arrays.asList(groupsStr.split(" +")));
+                            meshBuilder.setGroups(Arrays.asList(SPACE.split(groupsStr)));
                         }
                     } else if (line.startsWith("usemtl ")) {
                         meshBuilder.tryFinishMesh(sharedVertices, sharedTexCoords, sharedNormals)
@@ -325,32 +372,25 @@ public class ObjReader {
                         meshBuilder.setMaterialName(line.substring(7).trim());
                     } else if (line.startsWith("mtllib ")) {
                         // setting materials lib
-                        String[] split = line.substring(7).trim().split(" +");
+                        String[] split = SPACE.split(line.substring(7).trim());
 
-                        for (String filename : split) {
-                            materialLibrary.putAll(MtlLibraryIO.readMaterialSet(basePath.resolveResource(filename)));
-                        }
+                        usedMaterialLibraries.addAll(Arrays.asList(split));
                     } else if (line.startsWith("v ")) {
-                        String[] split = line.substring(2).trim().split(" +");
+                        String[] split = SPACE.split(line.substring(2).trim());
                         float x = Float.parseFloat(split[0]);
                         float y = Float.parseFloat(split[1]);
                         float z = Float.parseFloat(split[2]);
                         sharedVertices.add(x);
                         sharedVertices.add(y);
                         sharedVertices.add(z);
-
-                        if (mFlatXZ) {
-                            sharedTexCoords.add(x);
-                            sharedTexCoords.add(z);
-                        }
                     } else if (line.startsWith("vt ")) {
-                        String[] split = line.substring(3).trim().split(" +");
+                        String[] split = SPACE.split(line.substring(3).trim());
                         float u = Float.parseFloat(split[0]);
                         float v = Float.parseFloat(split[1]);
                         sharedTexCoords.add(u);
                         sharedTexCoords.add(1 - v);
                     } else if (line.startsWith("f ")) {
-                        String[] split = line.substring(2).trim().split(" +");
+                        String[] split = SPACE.split(line.substring(2).trim());
                         int[][] data = new int[split.length][];
                         boolean uvProvided = true;
                         boolean normalProvided = true;
@@ -382,7 +422,7 @@ public class ObjReader {
                         int v1 = vertexIndex(data[0][0], numVertices);
                         int uv1 = -1;
                         int n1 = -1;
-                        if (uvProvided && !mFlatXZ) {
+                        if (uvProvided) {
                             uv1 = uvIndex(data[0][1], numUvs);
                             if (uv1 < 0) {
                                 uvProvided = false;
@@ -402,7 +442,7 @@ public class ObjReader {
                             int uv3 = -1;
                             int n2 = -1;
                             int n3 = -1;
-                            if (uvProvided && !mFlatXZ) {
+                            if (uvProvided) {
                                 uv2 = uvIndex(data[i][1], numUvs);
                                 uv3 = uvIndex(data[i + 1][1], numUvs);
                             }
@@ -424,7 +464,7 @@ public class ObjReader {
                             meshBuilder.setCurrentSmoothGroup(Integer.parseInt(line.substring(2)));
                         }
                     } else if (line.startsWith("vn ")) {
-                        String[] split = line.substring(2).trim().split(" +");
+                        String[] split = SPACE.split(line.substring(2).trim());
                         float x = Float.parseFloat(split[0]);
                         float y = Float.parseFloat(split[1]);
                         float z = Float.parseFloat(split[2]);
@@ -441,7 +481,7 @@ public class ObjReader {
             meshBuilder.tryFinishMesh(sharedVertices, sharedTexCoords, sharedNormals)
                 .ifPresent(meshAndMaterial -> meshesWithMaterial.add(meshAndMaterial));
 
-            return ObjData.of(meshesWithMaterial, materialLibrary);
+            return ObjDataRaw.of(meshesWithMaterial, usedMaterialLibraries);
         }
     }
 
@@ -450,10 +490,11 @@ public class ObjReader {
         result.add(objFileLocator);
         IDirectoryLocator baseDirectoryLocator = objFileLocator.getParentDirectory();
         try (BufferedReader br = new BufferedReader(new InputStreamReader(objFileLocator.inputStream()))) {
+            Pattern SPACE = Pattern.compile(" +");
             String line;
             while ((line = br.readLine()) != null) {
                 if (line.startsWith("mtllib ")) {
-                    String[] split = line.substring("mtllib ".length()).trim().split(" +");
+                    String[] split = SPACE.split(line.substring("mtllib ".length()).trim());
 
                     for (String fileName : split) {
                         result.addAll(MtlLibraryIO.getAllFiles(baseDirectoryLocator.resolveResource(fileName)));

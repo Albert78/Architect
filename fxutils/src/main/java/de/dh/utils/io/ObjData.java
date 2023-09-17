@@ -17,13 +17,8 @@
  *******************************************************************************/
 package de.dh.utils.io;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
-import java.util.TreeMap;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 
 import de.dh.utils.io.obj.RawMaterialData;
 import javafx.scene.paint.Material;
@@ -35,52 +30,39 @@ import javafx.scene.shape.Shape3D;
  * to separate the parsing/loading of object files from the creation of the final 3D shape object in our 3D library.
  * This allows us to override the mesh materials, which are defined in the object file, via user configuration. So we can for example
  * redefine the materials of the meshes of a piece of furniture to change the color or the surface of the object.
- * This would not be possible so easily if we would translate the object data directly to objects in the final 3D library format
+ * This would not be possible so easily if we would translate the object and material data directly to objects in the final 3D library format
  * (e.g. {@link Shape3D} with {@link Material} instances), like it is done in several libraries available in the net.
  *
- * We use a separate map {@link #getMeshIdsToMaterials()} to indirectly assign mesh objects to materials via the artificial mesh id
+ * We use a separate map {@link #getMeshNamesToMaterials()} to indirectly assign mesh objects to materials via the artificial mesh's name
  * (instead of using the material name from the {@link MeshData} as mapping key). This allows us to define a material for each individual
  * mesh instead of just exchanging a given material (which potentially could be mapped to multiple meshes).
  *
  * Depending on the input data, each concept has its pros and cons; while well designed objects would have assigned the same material for
- * similar surfaces (where the material is defined by name), we use the more flexible concept in this class (mapping of materials via mesh ids),
+ * similar surfaces (where the material is defined by name), we use the more flexible concept in this class (mapping of materials via mesh names),
  * which allows to overide the material for each individual mesh, independent from the object file definition.
- * Note that this model requires the {@link MeshData#getId() mesh id} to be stable among different readings of the same object
- * if we want to use the described overriding mechanism.
+ * Note that this model requires the {@link MeshData#getName() mesh names} to be stable among different readings of the same object
+ * if we want to use the described overriding mechanism. So the reader has to ensure that the names are unique, attaching a unique prefix string,
+ * if necessary.
  *
- * Typically, the user defined material assignment (mesh ids -> material) is persisted between different sessions by the application.
- * For that usage scenario, we use the mesh id as stable connection/key between the object file mesh objects and the assigned materials.
+ * Typically, the user defined material assignment (mesh names -> material) is persisted between different sessions by the application.
+ * For that usage scenario, we use the mesh names as stable connection/key between the object file mesh objects and the assigned materials.
  * Thus, because the object data is loaded repeatedly from the same object file, the object file reader will/should generate stable
- * ids among different file loadings.
+ * names among different file loadings.
  */
 public class ObjData {
-    protected final Collection<MeshData> mMeshes; // Mesh ids must be unique, names don't need to
-    protected final Map<String, RawMaterialData> mMaterials; // Mesh ids to material - not all mesh ids need to have a mapping
+    protected final Collection<MeshData> mMeshes; // Mesh names must be unique
+    protected final Map<String, RawMaterialData> mMeshNamesToMaterials; // Mesh names to material - not all mesh names need to have a mapping
 
     public ObjData(Collection<MeshData> meshes, Map<String, RawMaterialData> materials) {
         mMeshes = meshes;
-        mMaterials = materials;
-    }
-
-    public static ObjData of(Collection<Pair<MeshData, String>> meshesWithMaterial, Map<String, RawMaterialData> materialLibrary) {
-        Collection<MeshData> meshes = new ArrayList<>();
-        Map<String, RawMaterialData> meshIdsToMaterials = new TreeMap<>();
-        for (Pair<MeshData, String> pair : meshesWithMaterial) {
-            MeshData mesh = pair.getLeft();
-            String materialName = pair.getRight();
-            String meshId = mesh.getId();
-            meshes.add(mesh);
-            RawMaterialData materialData = StringUtils.isEmpty(materialName) ? null : materialLibrary.get(materialName);
-            meshIdsToMaterials.put(meshId, materialData);
-        }
-        return new ObjData(meshes, meshIdsToMaterials);
+        mMeshNamesToMaterials = materials;
     }
 
     public Collection<MeshData> getMeshes() {
         return mMeshes;
     }
 
-    public Map<String, RawMaterialData> getMeshIdsToMaterials() {
-        return mMaterials;
+    public Map<String, RawMaterialData> getMeshNamesToMaterials() {
+        return mMeshNamesToMaterials;
     }
 }

@@ -9,8 +9,12 @@ import de.dh.cad.architect.model.objects.BaseObject;
 public abstract class ObjectModificationChange implements IModelChange {
     protected final Collection<BaseObject> mTargetObjects;
 
-    protected ObjectModificationChange(BaseObject... targetObject) {
-        mTargetObjects = Arrays.asList(targetObject);
+    protected ObjectModificationChange(Collection<BaseObject> targetObjects) {
+        mTargetObjects = targetObjects;
+    }
+
+    protected ObjectModificationChange(BaseObject... targetObjects) {
+        this(Arrays.asList(targetObjects));
     }
 
     public Collection<BaseObject> getTargetObjects() {

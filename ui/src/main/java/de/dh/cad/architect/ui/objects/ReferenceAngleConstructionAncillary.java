@@ -55,7 +55,7 @@ public class ReferenceAngleConstructionAncillary extends Abstract2DAncillaryObje
         mLineScale.setPivotX(centerX);
         mLineScale.setPivotY(centerY);
 
-        double angleDeg = angle.getAngleDeg();
+        double angleDeg = -angle.getAngleDeg();
 
         mLineScale.setPivotX(centerPoint.getX());
         mLineScale.setPivotY(centerPoint.getY());

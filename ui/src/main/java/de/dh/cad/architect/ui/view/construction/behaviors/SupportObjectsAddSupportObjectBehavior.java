@@ -93,7 +93,7 @@ public class SupportObjectsAddSupportObjectBehavior extends AbstractConstruction
     }
 
     @Override
-    protected void setDefaultUserHint() {
+    public void setDefaultUserHint() {
         setUserHint(Strings.ADD_SUPPORT_OBJECT_BEHAVIOR_DEFAULT_USER_HINT);
     }
 

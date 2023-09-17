@@ -32,7 +32,7 @@ module de.dh.cad.architect.fxutils {
 
     requires transitive javafx.base;
     requires transitive javafx.graphics;
-    requires javafx.swing; // Necessary for image IO utilities
+    requires transitive javafx.swing; // Necessary for image IO utilities
     requires javafx.controls;
     requires org.slf4j;
     requires transitive de.dh.cad.architect.utils;

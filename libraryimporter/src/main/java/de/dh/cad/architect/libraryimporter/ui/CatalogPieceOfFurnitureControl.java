@@ -28,11 +28,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.dh.cad.architect.fx.nodes.objviewer.CoordinateSystemConfiguration;
 import de.dh.cad.architect.fx.nodes.objviewer.ThreeDObjectViewControl;
 import de.dh.cad.architect.libraryimporter.ObjectLoader;
 import de.dh.cad.architect.libraryimporter.sh3d.furniture.CatalogPieceOfFurniture;
+import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.ui.assets.AssetLoader;
 import de.dh.cad.architect.ui.assets.AssetManager;
+import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.utils.vfs.IResourceLocator;
 import de.dh.utils.io.obj.RawMaterialData;
 import javafx.beans.value.ChangeListener;
@@ -41,8 +44,8 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
-import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
@@ -128,7 +131,7 @@ public class CatalogPieceOfFurnitureControl extends BorderPane implements Initia
 
     protected void createThreeDResourcePane() {
         boolean coordinateSystemInitiallyVisible = true;
-        mThreeDObjectView = new ThreeDObjectViewControl();
+        mThreeDObjectView = new ThreeDObjectViewControl(CoordinateSystemConfiguration.architect());
         mThreeDObjectView.setPrefWidth(250);
         mThreeDObjectView.setPrefHeight(250);
         mThreeDObjectView.setCoordinateSystemVisible(coordinateSystemInitiallyVisible);
@@ -143,11 +146,11 @@ public class CatalogPieceOfFurnitureControl extends BorderPane implements Initia
         HBox.setMargin(l, new Insets(0, 5, 0, 0));
         Label widthLabel = new Label(lengthOrDefault(mPieceOfFurniture.getWidth()));
         boxChildren.add(new HBox(l, widthLabel));
-        l = new Label("Höhe (Y):");
+        l = new Label("Höhe (Z):");
         HBox.setMargin(l, new Insets(0, 5, 0, 0));
         Label heightLabel = new Label(lengthOrDefault(mPieceOfFurniture.getHeight()));
         boxChildren.add(new HBox(l, heightLabel));
-        l = new Label("Tiefe (Z):");
+        l = new Label("Tiefe (Y):");
         HBox.setMargin(l, new Insets(0, 5, 0, 0));
         Label depthLabel = new Label(lengthOrDefault(mPieceOfFurniture.getDepth()));
         boxChildren.add(new HBox(l, depthLabel));
@@ -198,12 +201,19 @@ public class CatalogPieceOfFurnitureControl extends BorderPane implements Initia
     }
 
     protected void update3DObjectView() {
-        Node objView = ObjectLoader.load3DResource(mPieceOfFurniture.getModel(), mPieceOfFurniture.getModelRotationJavaFX(), mDefaultMaterials);
+        Node objView = ObjectLoader.load3DResource(mPieceOfFurniture.getModel(), mPieceOfFurniture.getModelRotationArchitect(), mDefaultMaterials);
+
         if (objView == null) {
-            Group g = new Group();
-            g.getChildren().addAll(AssetLoader.loadBroken3DResource().getSurfaceMeshViews());
-            objView = g;
+            objView = AssetLoader.loadBroken3DResource().getObject();
+        } else {
+            Bounds bounds = objView.getBoundsInParent();
+            double width = CoordinateUtils.lengthToCoords(Length.ofCM(mPieceOfFurniture.getWidth()), null);
+            double height = CoordinateUtils.lengthToCoords(Length.ofCM(mPieceOfFurniture.getHeight()), null);
+            double depth = CoordinateUtils.lengthToCoords(Length.ofCM(mPieceOfFurniture.getDepth()), null);
+            objView.setScaleX(width / bounds.getWidth());
+            objView.setScaleY(height / bounds.getDepth());
+            objView.setScaleZ(depth / bounds.getHeight());
         }
-        mThreeDObjectView.setObjView(objView, 100);
+        mThreeDObjectView.setObjView(objView);
     }
 }

@@ -22,6 +22,7 @@ import java.util.Optional;
 
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.coords.Position2D;
+import de.dh.cad.architect.ui.utils.Axis;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.DragControl;
 import de.dh.utils.Vector2D;
@@ -117,7 +118,7 @@ public class DimensioningVisual {
             Point2D localPoint = transformedRoot.sceneToLocal(mouseEvent.getSceneX(), mouseEvent.getSceneY());
             Point2D delta = localPoint.subtract(dragControl.getPoint());
 
-            double dist = dragControl.vDistance.dotProduct(new Vector2D(delta.getX(), delta.getY()));
+            double dist = -dragControl.vDistance.dotProduct(new Vector2D(delta.getX(), delta.getY()));
             setLabelDistance(dragControl.initialLabelDistance + dist);
         });
         mText.setOnMouseEntered(mouseEvent -> {
@@ -189,13 +190,13 @@ public class DimensioningVisual {
     }
 
     protected void updateShape(Position2D position1, Position2D position2, Optional<String> oLabel, double scaleCompensation) {
-        double labelDistance = getLabelDistance();
+        double labelDistance = -getLabelDistance();
 
         // Points
-        double x1 = CoordinateUtils.lengthToCoords(position1.getX());
-        double y1 = CoordinateUtils.lengthToCoords(position1.getY());
-        double x2 = CoordinateUtils.lengthToCoords(position2.getX());
-        double y2 = CoordinateUtils.lengthToCoords(position2.getY());
+        double x1 = CoordinateUtils.lengthToCoords(position1.getX(), Axis.X);
+        double y1 = CoordinateUtils.lengthToCoords(position1.getY(), Axis.Y);
+        double x2 = CoordinateUtils.lengthToCoords(position2.getX(), Axis.X);
+        double y2 = CoordinateUtils.lengthToCoords(position2.getY(), Axis.Y);
 
         mP1 = new Vector2D(x1, y1);
         mP2 = new Vector2D(x2, y2);
@@ -226,20 +227,20 @@ public class DimensioningVisual {
         Vector2D dp2AngularP = mP2.plus(vAngular45p);
         Vector2D dp2AngularM = mP2.plus(vAngular45m);
 
-        mBorderLine1.setStartX(x1);
-        mBorderLine1.setStartY(y1);
-        mBorderLine1.setEndX(dp1Overhang.getX());
-        mBorderLine1.setEndY(dp1Overhang.getY());
+        mBorderLine1.setStartX(dp1Overhang.getX());
+        mBorderLine1.setStartY(dp1Overhang.getY());
+        mBorderLine1.setEndX(x1);
+        mBorderLine1.setEndY(y1);
         DoubleBinding strokeWidth = mStrokeWidthProperty.multiply(scaleCompensation);
         mBorderLine1.strokeWidthProperty().bind(strokeWidth);
 
-        mBorderLine2.setStartX(x2);
-        mBorderLine2.setStartY(y2);
-        mBorderLine2.setEndX(dp2Overhang.getX());
-        mBorderLine2.setEndY(dp2Overhang.getY());
+        mBorderLine2.setStartX(dp2Overhang.getX());
+        mBorderLine2.setStartY(dp2Overhang.getY());
+        mBorderLine2.setEndX(x2);
+        mBorderLine2.setEndY(y2);
         mBorderLine2.strokeWidthProperty().bind(strokeWidth);
 
-        Length length = CoordinateUtils.coordsToLength(distance);
+        Length length = CoordinateUtils.coordsToLength(distance, null);
         String lengthStr = length.toNormalPlanString();
         if (oLabel.isPresent()) {
             mText.setText(MessageFormat.format(oLabel.get(), lengthStr));

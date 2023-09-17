@@ -25,9 +25,8 @@ import java.util.ResourceBundle;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import de.dh.cad.architect.model.assets.AssetRefPath.IAssetPathAnchor;
+import de.dh.cad.architect.model.assets.AssetRefPath;
 import de.dh.cad.architect.model.assets.AssetRefPath.LibraryAssetPathAnchor;
-import de.dh.cad.architect.model.assets.AssetRefPath.SupportObjectAssetPathAnchor;
 import de.dh.cad.architect.model.assets.SupportObjectDescriptor;
 import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.assets.AssetManager;
@@ -45,14 +44,22 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.SingleSelectionModel;
 import javafx.scene.layout.BorderPane;
 import javafx.util.StringConverter;
 
-public class MaterialSetAnchorChooserControl extends BorderPane implements Initializable {
-    public static final String FXML = "MaterialSetAnchorChooserControl.fxml";
+public class MaterialSetLocationChooserControl extends BorderPane implements Initializable {
+    public static interface IMaterialSetLocation {
+        // Just a marker interface for the record types
+    }
+
+    public static record LibraryRootMaterialSetLocation(String LibraryId) implements IMaterialSetLocation {}
+    public static record SupportObjectMaterialSetLocation(AssetRefPath supportObjectRefPath) implements IMaterialSetLocation {}
+
+    public static final String FXML = "MaterialSetLocationChooserControl.fxml";
 
     protected final AssetManager mAssetManager;
-    protected final SimpleObjectProperty<IAssetPathAnchor> mMaterialSetAnchorProperty = new SimpleObjectProperty<>();
+    protected final SimpleObjectProperty<IMaterialSetLocation> mMaterialSetLocationProperty = new SimpleObjectProperty<>();
 
     @FXML
     protected ChoiceBox<LibraryData> mLibraryChoiceBox;
@@ -63,9 +70,9 @@ public class MaterialSetAnchorChooserControl extends BorderPane implements Initi
     @FXML
     protected ChoiceBox<SupportObjectDescriptor> mSupportObjectChoiceBox;
 
-    public MaterialSetAnchorChooserControl(AssetManager assetManager) {
+    public MaterialSetLocationChooserControl(AssetManager assetManager) {
         mAssetManager = assetManager;
-        FXMLLoader fxmlLoader = new FXMLLoader(MaterialSetAnchorChooserControl.class.getResource(FXML));
+        FXMLLoader fxmlLoader = new FXMLLoader(MaterialSetLocationChooserControl.class.getResource(FXML));
         fxmlLoader.setController(this);
         fxmlLoader.setRoot(this);
         try {
@@ -80,7 +87,6 @@ public class MaterialSetAnchorChooserControl extends BorderPane implements Initi
         Map<String, LibraryData> libraries = mAssetManager.getAssetLibraries().values()
                         .stream()
                         .collect(Collectors.<LibraryData, String, LibraryData>toMap(ld -> ld.getLibrary().getName(), Function.identity()));
-        mLibraryChoiceBox.setItems(FXCollections.observableArrayList(libraries.values()));
         mLibraryChoiceBox.setConverter(new StringConverter<AssetManager.LibraryData>() {
             @Override
             public String toString(LibraryData libraryData) {
@@ -92,24 +98,30 @@ public class MaterialSetAnchorChooserControl extends BorderPane implements Initi
                 return libraryName == null ? null : libraries.get(libraryName);
             }
         });
-        mLibraryChoiceBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<>() {
+        SingleSelectionModel<LibraryData> libraryChoiceBoxSelectionModel = mLibraryChoiceBox.getSelectionModel();
+        libraryChoiceBoxSelectionModel.selectedItemProperty().addListener(new ChangeListener<>() {
             @Override
             public void changed(ObservableValue<? extends LibraryData> observable, LibraryData oldValue, LibraryData newValue) {
                 checkUpdateSupportObjects();
-                updateResultAnchor();
+                updateResultLocation();
             }
         });
+        mLibraryChoiceBox.setItems(FXCollections.observableArrayList(libraries.values()));
+        if (!libraries.isEmpty()) {
+            libraryChoiceBoxSelectionModel.select(0);
+        }
+
         mCreateUnderSupportObjectCheckBox.selectedProperty().addListener(new ChangeListener<>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
                 checkUpdateSupportObjects();
-                updateResultAnchor();
+                updateResultLocation();
             }
         });
         mSupportObjectChoiceBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<>() {
             @Override
             public void changed(ObservableValue<? extends SupportObjectDescriptor> observable, SupportObjectDescriptor oldValue, SupportObjectDescriptor newValue) {
-                updateResultAnchor();
+                updateResultLocation();
             }
         });
         checkUpdateSupportObjects();
@@ -131,12 +143,17 @@ public class MaterialSetAnchorChooserControl extends BorderPane implements Initi
         return isCreateUnderSupportObject() ? Optional.ofNullable(getSelectedSupportObject()) : Optional.empty();
     }
 
-    public ReadOnlyObjectProperty<IAssetPathAnchor> materialSetAnchorProperty() {
-        return mMaterialSetAnchorProperty;
+    public ReadOnlyObjectProperty<IMaterialSetLocation> materialSetRootLocationProperty() {
+        return mMaterialSetLocationProperty;
     }
 
-    public IAssetPathAnchor getMaterialSetAnchor() {
-        return mMaterialSetAnchorProperty.get();
+    /**
+     * Asset location either pointing to an asset collection's root folder or to a support object's asset folder.
+     * To finish the process of adding the new material set, the material sets directory and the new material set's ID have to be added to the
+     * returned path.
+     */
+    public IMaterialSetLocation getMaterialSetLocation() {
+        return mMaterialSetLocationProperty.get();
     }
 
     protected void checkUpdateSupportObjects() {
@@ -151,7 +168,7 @@ public class MaterialSetAnchorChooserControl extends BorderPane implements Initi
         }
     }
 
-    protected Optional<IAssetPathAnchor> calculateResultAnchor() {
+    protected Optional<? extends IMaterialSetLocation> calculateResultRootLocation() {
         LibraryData library = getSelectedLibrary();
         if (library == null) {
             return Optional.empty();
@@ -161,15 +178,15 @@ public class MaterialSetAnchorChooserControl extends BorderPane implements Initi
             if (supportObject == null) {
                 return Optional.empty();
             }
-            return Optional.of(new SupportObjectAssetPathAnchor(supportObject.getSelfRef()));
+            return Optional.of(new SupportObjectMaterialSetLocation(supportObject.getSelfRef()));
         } else {
-            return Optional.of(new LibraryAssetPathAnchor(library.getLibrary().getId()));
+            return Optional.of(new LibraryRootMaterialSetLocation(library.getLibrary().getId()));
         }
     }
 
-    protected void updateResultAnchor() {
-        Optional<IAssetPathAnchor> oResultAnchor = calculateResultAnchor();
-        mMaterialSetAnchorProperty.set(oResultAnchor.orElse(null));
+    protected void updateResultLocation() {
+        Optional<? extends IMaterialSetLocation> oResultLocation = calculateResultRootLocation();
+        mMaterialSetLocationProperty.set(oResultLocation.orElse(null));
     }
 
     protected static String getNameForDescriptor(SupportObjectDescriptor descriptor) {
@@ -181,8 +198,7 @@ public class MaterialSetAnchorChooserControl extends BorderPane implements Initi
             Map<String, SupportObjectDescriptor> descriptors = mAssetManager
                             .loadSupportObjectDescriptors(new LibraryAssetPathAnchor(libraryId))
                             .stream()
-                            .collect(Collectors.toMap(MaterialSetAnchorChooserControl::getNameForDescriptor, Function.identity()));
-            mSupportObjectChoiceBox.setItems(FXCollections.observableArrayList(descriptors.values()));
+                            .collect(Collectors.toMap(MaterialSetLocationChooserControl::getNameForDescriptor, Function.identity()));
             mSupportObjectChoiceBox.setConverter(new StringConverter<SupportObjectDescriptor>() {
                 @Override
                 public String toString(SupportObjectDescriptor descriptor) {
@@ -194,6 +210,10 @@ public class MaterialSetAnchorChooserControl extends BorderPane implements Initi
                     return descriptorName == null ? null : descriptors.get(descriptorName);
                 }
             });
+            mSupportObjectChoiceBox.setItems(FXCollections.observableArrayList(descriptors.values()));
+            if (!descriptors.isEmpty()) {
+                mSupportObjectChoiceBox.getSelectionModel().select(0);
+            }
         } catch (IOException e) {
             new Alert(AlertType.ERROR, Strings.ERROR_LOADING_DATA).showAndWait();
         }

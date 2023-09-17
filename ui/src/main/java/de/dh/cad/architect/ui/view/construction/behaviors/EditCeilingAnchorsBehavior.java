@@ -89,7 +89,7 @@ public class EditCeilingAnchorsBehavior extends AbstractConstructionBehavior {
     }
 
     @Override
-    protected void setDefaultUserHint() {
+    public void setDefaultUserHint() {
         setUserHint(Strings.EDIT_CEILING_ANCHORS_USER_HINT);
     }
 

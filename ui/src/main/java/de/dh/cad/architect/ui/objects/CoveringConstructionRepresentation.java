@@ -25,6 +25,7 @@ import de.dh.cad.architect.model.coords.Position3D;
 import de.dh.cad.architect.model.objects.Anchor;
 import de.dh.cad.architect.model.objects.Covering;
 import de.dh.cad.architect.ui.Constants;
+import de.dh.cad.architect.ui.utils.Axis;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.construction.Abstract2DView;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
@@ -87,8 +88,8 @@ public class CoveringConstructionRepresentation extends AbstractAnchoredObjectCo
         Covering covering = getCovering();
         for (Anchor anchor : covering.getAnchors()) {
             Position3D position = anchor.requirePosition3D();
-            points.add(CoordinateUtils.lengthToCoords(position.getX()));
-            points.add(CoordinateUtils.lengthToCoords(position.getY()));
+            points.add(CoordinateUtils.lengthToCoords(position.getX(), Axis.X));
+            points.add(CoordinateUtils.lengthToCoords(position.getY(), Axis.Y));
         }
         mShape.getPoints().setAll(points);
     }

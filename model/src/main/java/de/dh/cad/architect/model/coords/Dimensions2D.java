@@ -18,9 +18,8 @@
 package de.dh.cad.architect.model.coords;
 
 /**
- * Defines a 2D extend, i.e. a width and a height (or X and Y extend), without a start location.
- * In fact, {@link Dimensions2D} and {@link Position2D} are almost identical but {@link Position2D}
- * represents a point in a plane while {@link Dimensions2D} represents an extend.
+ * Defines a 2D extend, i.e. a width and a height (or X and Y extend, or 2D size), without a start location.
+ * In fact, {@link Dimensions2D} and {@link Vector2D} are almost identical but with a different meaning.
  */
 public class Dimensions2D {
     protected static final Dimensions2D EMPTY = new Dimensions2D(Length.ZERO, Length.ZERO);
@@ -35,6 +34,15 @@ public class Dimensions2D {
 
     public static Dimensions2D empty() {
         return EMPTY;
+    }
+
+    /**
+     * Returns a dimensions object of the (absolute) size of the given vector.
+     * For both X and Y components of the vector the absolute length is used to
+     * build the dimensions object.
+     */
+    public static Dimensions2D ofAbs(Vector2D v) {
+        return new Dimensions2D(v.getX().abs(), v.getY().abs());
     }
 
     public Length getX() {
@@ -59,6 +67,10 @@ public class Dimensions2D {
 
     public Dimensions2D scale(double factor) {
         return new Dimensions2D(mX.times(factor), mY.times(factor));
+    }
+
+    public Vector2D toVector() {
+        return new Vector2D(mX, mY);
     }
 
     @Override

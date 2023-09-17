@@ -87,7 +87,7 @@ public abstract class BaseObject implements Comparable<BaseObject> {
         return mGroups;
     }
 
-    @XmlAttribute(name = "name")
+    @XmlTransient
     public String getName() {
         return mName;
     }
@@ -98,7 +98,7 @@ public abstract class BaseObject implements Comparable<BaseObject> {
         changeTrace.add(new ObjectModificationChange(this) {
             @Override
             public void undo(List<IModelChange> undoChangeTrace) {
-                setName(oldName, changeTrace);
+                setName(oldName, undoChangeTrace);
             }
         });
     }
@@ -107,7 +107,7 @@ public abstract class BaseObject implements Comparable<BaseObject> {
      * Returns the information whether this object is hidden from the view.
      */
     // We use "hidden" and not "visible" to express that the hidden state is something special
-    @XmlElement(name = "Hidden")
+    @XmlTransient
     public boolean isHidden() {
         return mHidden;
     }
@@ -118,7 +118,7 @@ public abstract class BaseObject implements Comparable<BaseObject> {
         changeTrace.add(new ObjectModificationChange(this) {
             @Override
             public void undo(List<IModelChange> undoChangeTrace) {
-                setHidden(oldHidden, changeTrace);
+                setHidden(oldHidden, undoChangeTrace);
             }
         });
     }
@@ -148,6 +148,24 @@ public abstract class BaseObject implements Comparable<BaseObject> {
 
     public void setId_JAXB(String value) {
         mId = value;
+    }
+
+    @XmlAttribute(name = "name")
+    public String getName_JAXB() {
+        return mName;
+    }
+
+    public void setName_JAXB(String value) {
+        mName = value;
+    }
+
+    @XmlElement(name = "Hidden")
+    public boolean isHidden_JAXB() {
+        return mHidden;
+    }
+
+    public void setHidden_JAXB(boolean value) {
+        mHidden = value;
     }
 
     protected String attrsToString() {

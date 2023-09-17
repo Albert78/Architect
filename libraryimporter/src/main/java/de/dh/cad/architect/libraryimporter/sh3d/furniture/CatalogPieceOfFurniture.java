@@ -17,7 +17,11 @@
  *******************************************************************************/
 package de.dh.cad.architect.libraryimporter.sh3d.furniture;
 
+import java.util.Optional;
+
+import de.dh.cad.architect.ui.assets.AssetLoader;
 import de.dh.cad.architect.utils.vfs.IResourceLocator;
+import javafx.scene.transform.Transform;
 
 /**
  * A catalog piece of furniture.
@@ -265,41 +269,25 @@ public class CatalogPieceOfFurniture {
 
   /**
    * Returns the rotation 3 by 3 matrix of this piece of furniture that ensures
-   * its model is correctly oriented. This rotation is defined in a left-handed coordinate system.
+   * its model is correctly oriented. This rotation is defined in a right-handed coordinate system.
    * Values: {@code mij = modelRotation[i][j]}
    */
-  public float [][] getModelRotationJavaFX() {
-    return convertRotationToJavaFX(modelRotation);
+  public float [][] getModelRotationArchitect() {
+    return convertRotationToArchitectFormat(modelRotation);
   }
 
-  public static float[][] convertRotationToJavaFX(float[][] modelRotation) {
-      if (modelRotation == null) {
-          return null;
+  public static float[][] convertRotationToArchitectFormat(float[][] modelRotation) {
+      Optional<Transform> oTransform = AssetLoader.createTransform(modelRotation);
+      Transform transform;
+      Transform o2a = AssetLoader.createTransformObjToArchitect();
+      if (oTransform.isPresent()) {
+          transform = oTransform.get();
+          transform.createConcatenation(o2a);
+      } else {
+          transform = o2a;
       }
-      // JavaFX uses LHS:
-      // Z coordinate grows in direction away from the observer
-      // Y coordinate grows to the bottom
-      // SweetHome3D / Obj file format use RHS:
-      // Z grows in direction to the observer
-      // Y grows to the top
 
-      // Let mi be the original model coordinates read by the Obj file reader.
-      // Our object format reader already converts the raw model coordinates from Obj file format to JavaFX:
-      // T = Scale(x = 1, y = -1, z = -1); // Transform from Obj format to JavaFX. This transform gets applied by the Obj reader.
-      // Let ji be the converted model coordinates for JavaFX:
-      // ji = T * mi
-      // Unfortunately, the model rotation for the SH3D model must be applied first, so we have to revert T first, then apply the model rotation, then
-      // We have: T = T^-1
-      // Let R be the rotation matrix.
-      // Then we calculate the final rotated model coords like this:
-      // T * R * T^-1 * ji = T * R * T^-1 * T * mi
-      // So we have to apply:
-      // T * R * T^-1:
-      return new float[][] {
-          {modelRotation[0][0], -modelRotation[0][1], -modelRotation[0][2]},
-          {-modelRotation[1][0], modelRotation[1][1], modelRotation[1][2]},
-          {-modelRotation[2][0], modelRotation[2][1], modelRotation[2][2]}
-      };
+      return AssetLoader.createRotationMatrix(transform);
   }
 
   /**

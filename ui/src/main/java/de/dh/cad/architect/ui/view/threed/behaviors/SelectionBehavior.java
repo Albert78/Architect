@@ -27,10 +27,12 @@ import de.dh.cad.architect.ui.objects.Abstract3DAncillaryObject;
 import de.dh.cad.architect.ui.objects.Abstract3DRepresentation;
 import de.dh.cad.architect.ui.view.AbstractUiMode;
 import de.dh.cad.architect.ui.view.IContextAction;
+import de.dh.cad.architect.ui.view.threed.ThreeDUIElementFilter;
 
 public class SelectionBehavior extends Abstract3DViewBehavior {
     public SelectionBehavior(AbstractUiMode<Abstract3DRepresentation, Abstract3DAncillaryObject> parentMode) {
         super(parentMode);
+        setUIElementFilter(new ThreeDUIElementFilter());
     }
 
     @Override
@@ -39,7 +41,7 @@ public class SelectionBehavior extends Abstract3DViewBehavior {
     }
 
     @Override
-    protected void setDefaultUserHint() {
+    public void setDefaultUserHint() {
         setUserHint(Strings.THREE_D_SELECTION_BEHAVIOR_USER_HINT);
     }
 
@@ -55,5 +57,17 @@ public class SelectionBehavior extends Abstract3DViewBehavior {
         actions.add(createCameraPositionsMenuAction());
 
         mActionsList.setAll(actions);
+    }
+
+    @Override
+    protected void installDefaultViewHandlers() {
+        super.installDefaultViewHandlers();
+        installDefaultDeleteObjectsKeyHandler();
+    }
+
+    @Override
+    protected void uninstallDefaultViewHandlers() {
+        uninstallDefaultDeleteObjectsKeyHandler();
+        super.uninstallDefaultViewHandlers();
     }
 }

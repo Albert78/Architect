@@ -48,7 +48,6 @@ public class MeshData {
         }
     }
 
-    protected final String mId;
     protected final String mName;
     protected final Collection<String> mGroups;
     protected final List<Float> mVertices;
@@ -62,10 +61,9 @@ public class MeshData {
      * Creates a new mesh data object.
      * ATTENTION: Id and name should be stable among different readings of the same file.
      */
-    public MeshData(String id, String name, Collection<String> groups, List<Float> vertices, List<Float> texCoords,
+    public MeshData(String name, Collection<String> groups, List<Float> vertices, List<Float> texCoords,
         List<Integer> faces, List<Integer> smoothingGroups, Optional<FaceNormalsData> oFaceNormalsData,
         String materialName) {
-        mId = id;
         mName = name;
         mGroups = groups;
         mVertices = vertices;
@@ -74,14 +72,6 @@ public class MeshData {
         mSmoothingGroups = smoothingGroups;
         mOFaceNormalsData = oFaceNormalsData;
         mMaterialName = materialName;
-    }
-
-    /**
-     * Gets the id of this mesh data, which is unique in the set of meshes in the object file.
-     * The id remains stable among different reads of the same object file.
-     */
-    public String getId() {
-        return mId;
     }
 
     /**
@@ -124,7 +114,7 @@ public class MeshData {
 
     @Override
     public int hashCode() {
-        return Objects.hash(mId);
+        return Objects.hash(mName);
     }
 
     @Override
@@ -136,11 +126,11 @@ public class MeshData {
         if (getClass() != obj.getClass())
             return false;
         MeshData other = (MeshData) obj;
-        return Objects.equals(mId, other.mId);
+        return Objects.equals(mName, other.mName);
     }
 
     @Override
     public String toString() {
-        return "MeshData [id=" + mId + ", name=" + mName + ", #faces=" + mFaces.size() + "]";
+        return "MeshData [name=" + mName + ", #faces=" + mFaces.size() + "]";
     }
 }

@@ -40,7 +40,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import javafx.scene.shape.StrokeType;
-import javafx.scene.transform.Rotate;
 
 public class SupportObjectConstructionRepresentation extends AbstractAnchoredObjectConstructionRepresentation {
     public interface IMoveHandler {
@@ -125,11 +124,10 @@ public class SupportObjectConstructionRepresentation extends AbstractAnchoredObj
         Point2D center = CoordinateUtils.positionToPoint2D(supportObject.getHandleAnchor().getPosition().projectionXY());
         Vector2D size = CoordinateUtils.dimensions2DToUiVector2D(supportObject.getSize());
         Point2D tl = new Point2D(center.getX() - size.getX() / 2, center.getY() - size.getY() / 2);
-        Point2D tr = new Point2D(center.getX() + size.getX() / 2, center.getY() - size.getY() / 2);
-        Point2D bl = new Point2D(center.getX() - size.getX() / 2, center.getY() + size.getY() / 2);
-        Point2D br = new Point2D(center.getX() + size.getX() / 2, center.getY() + size.getY() / 2);
         Point3D rotationAxis = new Point3D(0, 0, 1);
-        float rotationDeg = supportObject.getRotationDeg();
+        // Rotation direction is negated against global coordinate system
+        float rotationDeg = -supportObject.getRotationDeg();
+
         mSpotRectangle.setX(tl.getX());
         mSpotRectangle.setY(tl.getY());
         mSpotRectangle.setWidth(size.getX());
@@ -142,12 +140,6 @@ public class SupportObjectConstructionRepresentation extends AbstractAnchoredObj
         mImage.setFitHeight(size.getY());
         mImage.setRotationAxis(rotationAxis);
         mImage.setRotate(rotationDeg);
-
-        Rotate r = new Rotate(rotationDeg, center.getX(), center.getY(), 0, rotationAxis);
-        tl = r.transform(tl);
-        tr = r.transform(tr);
-        bl = r.transform(bl);
-        br = r.transform(br);
     }
 
     public void enableCollectiveMove(IMoveHandler moveHandler) {

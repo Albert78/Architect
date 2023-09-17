@@ -367,7 +367,7 @@ public class Wall extends BaseSolidObject implements IObjectsContainer {
             new ObjectChange() {
                 @Override
                 public void undo(List<IModelChange> undoChangeTrace) {
-                    removeWallHole_Internal(wallHole, undoChangeTrace);
+                    addWallHole_Internal(wallHole, undoChangeTrace);
                 }
             }
             .objectRemoved(wallHole)

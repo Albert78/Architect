@@ -63,4 +63,9 @@ public class BaseObjectTreeItemData implements IObjectTreeItemData {
     public BaseObject getObject() {
         return mObject;
     }
+
+    @Override
+    public String toString() {
+        return mObject.toString();
+    }
 }

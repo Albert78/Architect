@@ -256,7 +256,7 @@ public class EditSelectedAnchorBehavior extends AbstractConstructionBehavior {
     }
 
     @Override
-    protected void setDefaultUserHint() {
+    public void setDefaultUserHint() {
         setUserHint(
             MessageFormat.format(Strings.GROUND_PLAN_EDIT_ANCHOR_USER_HINT,
                 BaseObjectUIRepresentation.getObjName(mEditAnchorRepr.getAnchor())));

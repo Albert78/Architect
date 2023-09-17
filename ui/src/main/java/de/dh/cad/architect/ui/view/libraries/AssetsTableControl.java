@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.ResourceBundle;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -35,7 +36,6 @@ import de.dh.cad.architect.model.assets.AssetLibrary;
 import de.dh.cad.architect.model.assets.AssetRefPath.IAssetPathAnchor;
 import de.dh.cad.architect.model.assets.AssetRefPath.LibraryAssetPathAnchor;
 import de.dh.cad.architect.model.assets.AssetRefPath.PlanAssetPathAnchor;
-import de.dh.cad.architect.model.assets.AssetRefPath.SupportObjectAssetPathAnchor;
 import de.dh.cad.architect.model.assets.AssetType;
 import de.dh.cad.architect.model.assets.MaterialSetDescriptor;
 import de.dh.cad.architect.model.assets.SupportObjectDescriptor;
@@ -54,12 +54,14 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableColumn;
@@ -134,6 +136,8 @@ public class AssetsTableControl<T extends AbstractAssetDescriptor> extends Borde
     protected final AssetLoader mAssetLoader;
     protected final AssetType mAssetType;
 
+    protected Collection<AssetLibrary> mLibraries = Collections.emptyList();
+
     protected ObservableList<TableEntry> mBackingList = FXCollections.observableArrayList();
     protected FilteredList<TableEntry> mFilteredList = new FilteredList<>(mBackingList);
 
@@ -144,6 +148,9 @@ public class AssetsTableControl<T extends AbstractAssetDescriptor> extends Borde
 
     @FXML
     protected Button mClearAssetsFilterButton;
+
+    @FXML
+    protected CheckBox mAlsoShowLocalMaterials;
 
     @FXML
     protected TableView<TableEntry> mAssetsTableView;
@@ -196,8 +203,6 @@ public class AssetsTableControl<T extends AbstractAssetDescriptor> extends Borde
             LibraryData libraryData = mAssetLoader.getAssetManager().getAssetLibraries().get(libraryId);
             String libraryName = libraryData == null ? libraryId : libraryData.getLibrary().getName();
             return MessageFormat.format(Strings.LIBRARY_MANAGER_ASSET_PATH_ANCHOR_LIBRARY, libraryName);
-        } else if (pathAnchor instanceof SupportObjectAssetPathAnchor supportObjectPathAnchor) {
-            return MessageFormat.format(Strings.LIBRARY_MANAGER_ASSET_PATH_ANCHOR_SUPPORT_OBJECT, supportObjectPathAnchor.getSupportObjectRef());
         } else {
             throw new NotImplementedException("Handling of asset path anchor <" + pathAnchor + "> is not implemented");
         }
@@ -205,15 +210,20 @@ public class AssetsTableControl<T extends AbstractAssetDescriptor> extends Borde
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        mNameColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getAssetDescriptor().getName()));
         mIconColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(loadIcon(param.getValue().getAssetDescriptor())));
+        mNameColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getAssetDescriptor().getName()));
+        mNameColumn.setSortable(true);
         mCategoryColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getAssetDescriptor().getCategory()));
+        mCategoryColumn.setSortable(true);
         mTypeColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getAssetDescriptor().getType()));
+        mTypeColumn.setSortable(true);
         mIdColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getAssetDescriptor().getId()));
+        mIdColumn.setSortable(true);
         mLocationColumn.setCellValueFactory(param -> {
             IAssetPathAnchor anchor = param.getValue().getAssetDescriptor().getSelfRef().getAnchor();
             return new SimpleStringProperty(buildAnchorStr(anchor));
         });
+        mLocationColumn.setSortable(true);
 
         mAssetsTableView.setOnMouseClicked(event -> {
             if (!event.getButton().equals(MouseButton.PRIMARY)) {
@@ -263,7 +273,17 @@ public class AssetsTableControl<T extends AbstractAssetDescriptor> extends Borde
             mAssetsFilterTextField.setText("");
         });
 
-        mAssetsTableView.setItems(mFilteredList);
+        mAlsoShowLocalMaterials.setVisible(mAssetType == AssetType.MaterialSet);
+        mAlsoShowLocalMaterials.selectedProperty().addListener(new ChangeListener<>() {
+            @Override
+            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                reloadLibraries_progress_async();
+            }
+        });
+
+        SortedList<TableEntry> sortedListWrapper = new SortedList<>(mFilteredList);
+        sortedListWrapper.comparatorProperty().bind(mAssetsTableView.comparatorProperty());
+        mAssetsTableView.setItems(sortedListWrapper);
 
         mAssetsFilterTextField.textProperty().addListener(new ChangeListener<>() {
             @Override
@@ -272,19 +292,19 @@ public class AssetsTableControl<T extends AbstractAssetDescriptor> extends Borde
             }
         });
 
-        if (AssetType.MaterialSet.equals(mAssetType)) {
+        switch (mAssetType) {
+        case MaterialSet:
             mAssetsTableView.setPlaceholder(new Label(Strings.LIBRARY_MANAGER_NO_MATERIAL_SET_IN_TABLE_HINT));
-        } else if (AssetType.SupportObject.equals(mAssetType)) {
+            break;
+        case SupportObject:
             mAssetsTableView.setPlaceholder(new Label(Strings.LIBRARY_MANAGER_NO_SUPPORT_OBJECTS_IN_TABLE_HINT));
-        } else {
-            throw new NotImplementedException("Asset table placeholder for asset type '" + mAssetType + "' is not implemented");
+            break;
         }
     }
 
     protected void updateFilterPredicate() {
         Predicate<TableEntry> predicate = buildFilterPredicate(mAssetsFilterTextField.getText());
         mFilteredList.setPredicate(predicate);
-        mAssetsTableView.sort(); // Seems to be necessary so ensure a sorted table after the filter text was changed
     }
 
     protected void fireAssetChoosen() {
@@ -358,6 +378,10 @@ public class AssetsTableControl<T extends AbstractAssetDescriptor> extends Borde
         return (currentLibrary + currentDescriptor / (double) numDescriptors) / numLibraries;
     }
 
+    public void reloadLibraries_progress_async() {
+        loadLibraries_progress_async(mLibraries);
+    }
+
     public void loadLibraries_progress_async(Collection<AssetLibrary> libraries) {
         Scene scene = getScene();
         if (scene == null) {
@@ -373,6 +397,7 @@ public class AssetsTableControl<T extends AbstractAssetDescriptor> extends Borde
     }
 
     protected void loadLibraries(Collection<AssetLibrary> libraries, Window window) {
+        mLibraries = libraries;
         mConcurrentUpdater.startUpdate(new Task<>() {
             protected volatile boolean mCancelled = false;
 
@@ -399,7 +424,7 @@ public class AssetsTableControl<T extends AbstractAssetDescriptor> extends Borde
                     try {
                         Collection<T> assets;
                         if (AssetType.MaterialSet.equals(mAssetType)) {
-                            assets = (Collection) assetManager.loadMaterialSetDescriptors(libraryAnchor);
+                            assets = (Collection) assetManager.loadMaterialSetDescriptors(libraryAnchor, mAlsoShowLocalMaterials.isSelected());
                         } else if (AssetType.SupportObject.equals(mAssetType)) {
                             assets = (Collection) assetManager.loadSupportObjectDescriptors(libraryAnchor);
                         } else {

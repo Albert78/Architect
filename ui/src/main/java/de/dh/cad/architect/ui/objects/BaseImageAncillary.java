@@ -20,6 +20,7 @@ package de.dh.cad.architect.ui.objects;
 import java.util.function.Consumer;
 
 import de.dh.cad.architect.model.coords.Position2D;
+import de.dh.cad.architect.ui.utils.Axis;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
 import de.dh.utils.fx.MouseHandlerContext;
@@ -51,7 +52,7 @@ public class BaseImageAncillary extends Abstract2DAncillaryObject {
      * Sets the center position of the image.
      */
     public void setPosition(Position2D pos) {
-        setPosition(new Point2D(CoordinateUtils.lengthToCoords(pos.getX()), CoordinateUtils.lengthToCoords(pos.getY())));
+        setPosition(new Point2D(CoordinateUtils.lengthToCoords(pos.getX(), Axis.X), CoordinateUtils.lengthToCoords(pos.getY(), Axis.Y)));
     }
 
     /**

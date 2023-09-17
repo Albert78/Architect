@@ -17,6 +17,11 @@
  *******************************************************************************/
 package de.dh.utils.fx;
 
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Shape;
+import java.awt.font.GlyphVector;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -58,7 +63,7 @@ public class ImageUtils {
 
     public static ImageView loadIcon(Class<?> origin, String resourceName, int sizeX, int sizeY) {
         try (InputStream is = origin.getResourceAsStream(resourceName)) {
-            ImageView result = new ImageView(new Image(is));
+            ImageView result = new ImageView(new Image(is, sizeX, sizeY, false, false));
             result.setFitWidth(sizeX);
             result.setFitHeight(sizeY);
             return result;
@@ -333,6 +338,34 @@ public class ImageUtils {
         }
 
         return result;
+    }
+
+    public static void addImageOverlay(BufferedImage image, String overlayText) {
+        int imageWidth = image.getWidth();
+        int imageHeight = image.getHeight();
+        Font baseFont = new Font("Arial", Font.BOLD, 18);
+
+        Graphics g = image.getGraphics();
+
+        FontMetrics metrics = g.getFontMetrics(baseFont);
+        GlyphVector vector = baseFont.createGlyphVector(metrics.getFontRenderContext(), overlayText);
+
+        Shape outline = vector.getOutline(0, 0);
+        double textWidth = outline.getBounds().getWidth();
+        double textHeight = outline.getBounds().getHeight();
+
+        double widthBasedFontSize = (baseFont.getSize2D()*image.getWidth())/(textWidth * 3);
+        double heightBasedFontSize = (baseFont.getSize2D()*image.getHeight())/(textHeight * 3);
+
+        double newFontSize = widthBasedFontSize < heightBasedFontSize ? widthBasedFontSize : heightBasedFontSize;
+        Font font = baseFont.deriveFont(baseFont.getStyle(), (float) newFontSize);
+
+        g.setFont(font);
+        g.setColor(java.awt.Color.BLACK);
+        metrics = g.getFontMetrics(font);
+        int positionX = ((int) (imageWidth * 0.9)) - metrics.stringWidth(overlayText);
+        int positionY = ((int) (imageHeight * 0.9));
+        g.drawString(overlayText, positionX, positionY);
     }
 
     public static void saveImage(Image image, String extension, Path imagePath) throws IOException {

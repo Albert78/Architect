@@ -40,8 +40,8 @@ public class Flashlight extends Group {
 
     public static Flashlight create() throws IOException {
         IResourceLocator flashLightResourceLocator = new ClassLoaderFileSystemResourceLocator(
-            Path.of(FLASHLIGHT_RESOURCE_BASE, FLASHLIGHT_OBJ_NAME), Flashlight.class.getModule());
+            Path.of(FLASHLIGHT_RESOURCE_BASE, FLASHLIGHT_OBJ_NAME), Flashlight.class);
         ObjData data = ObjReader.readObj(flashLightResourceLocator);
-        return new Flashlight(FxMeshBuilder.buildMeshViews(data.getMeshes(), data.getMeshIdsToMaterials(), true));
+        return new Flashlight(FxMeshBuilder.buildMeshViews(data.getMeshes(), data.getMeshNamesToMaterials(), true));
     }
 }

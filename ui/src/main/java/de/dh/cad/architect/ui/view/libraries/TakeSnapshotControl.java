@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import de.dh.cad.architect.fx.nodes.objviewer.CoordinateSystemConfiguration;
 import de.dh.cad.architect.fx.nodes.objviewer.ThreeDObjectViewConfiguration;
 import de.dh.cad.architect.fx.nodes.objviewer.ThreeDObjectViewConfiguration.CameraType;
 import de.dh.cad.architect.fx.nodes.objviewer.ThreeDObjectViewControl;
@@ -168,20 +169,20 @@ public class TakeSnapshotControl extends BorderPane implements Initializable {
     @SuppressWarnings("unchecked")
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        mThreeDObjectView = new ThreeDObjectViewControl();
+        mThreeDObjectView = new ThreeDObjectViewControl(CoordinateSystemConfiguration.architect());
         mThreeDObjectViewParent.setCenter(mThreeDObjectView);
 
         mDirectionXButton.setOnAction(event -> {
-            mThreeDObjectView.setRotationAngleX(0);
+            mThreeDObjectView.setRotationAngleX(-90);
             mThreeDObjectView.setRotationAngleY(90); // Other side: -90
         });
         mDirectionYButton.setOnAction(event -> {
-            mThreeDObjectView.setRotationAngleX(90);
+            mThreeDObjectView.setRotationAngleX(0);
             mThreeDObjectView.setRotationAngleY(0);
         });
         mDirectionZButton.setOnAction(event -> {
-            mThreeDObjectView.setRotationAngleX(0);
-            mThreeDObjectView.setRotationAngleY(0); // Other side: 180
+            mThreeDObjectView.setRotationAngleX(-90);
+            mThreeDObjectView.setRotationAngleY(0);
         });
         mCameraChoiceBox.setItems(FXCollections.observableArrayList(
             new ObjectStringAdapter<>(ThreeDObjectViewConfiguration.CameraType.Perspective, Strings.PERSPECTIVE_RENDERING),
@@ -243,8 +244,8 @@ public class TakeSnapshotControl extends BorderPane implements Initializable {
         mImageHeightValueFactory.setValue(mDefaultPlanViewImageHeight);
     }
 
-    public void setObject(Node value, int normalized3DSize, int defaultPlanViewImageWidth, int defaultPlanViewImageHeight) {
-        mThreeDObjectView.setObjView(value, normalized3DSize);
+    public void setObject(Node value, int defaultPlanViewImageWidth, int defaultPlanViewImageHeight) {
+        mThreeDObjectView.setObjView(value);
         mDefaultPlanViewImageWidth = defaultPlanViewImageWidth;
         mDefaultPlanViewImageHeight = defaultPlanViewImageHeight;
     }

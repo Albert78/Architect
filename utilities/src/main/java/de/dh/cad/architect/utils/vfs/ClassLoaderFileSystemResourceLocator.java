@@ -28,11 +28,11 @@ public class ClassLoaderFileSystemResourceLocator extends ClassLoaderFileSystemP
      * Creates a new {@link ClassLoaderFileSystemResourceLocator} for a resource which is accessible by the classloader
      * of the given module.
      * @param path Path of the resource, e.g. {@code "/de/dh/x/y/z/resource.png"}.
-     * @param module Module which contains the resource, i.e. whose classloader is able to access the resource of the given name.
+     * @param base Class whose module contains the resource, i.e. whose classloader is able to access the resource of the given name.
      * @see ClassLoaderFileSystemPathLocator#ClassLoaderFileSystemPathLocator(Path, Module)
      */
-    public ClassLoaderFileSystemResourceLocator(Path path, Module module) {
-        super(path, module);
+    public ClassLoaderFileSystemResourceLocator(Path path, Class<?> base) {
+        super(path, base);
     }
 
     @Override

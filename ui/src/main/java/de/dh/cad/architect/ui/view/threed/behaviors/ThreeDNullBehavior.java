@@ -36,7 +36,7 @@ public class ThreeDNullBehavior extends Abstract3DViewBehavior {
     }
 
     @Override
-    protected void setDefaultUserHint() {
+    public void setDefaultUserHint() {
         // Do nothing
     }
 

@@ -25,6 +25,7 @@ import java.util.ResourceBundle;
 
 import org.apache.commons.lang3.StringUtils;
 
+import de.dh.cad.architect.fx.nodes.objviewer.CoordinateSystemConfiguration;
 import de.dh.cad.architect.fx.nodes.objviewer.ThreeDObjectViewControl;
 import de.dh.cad.architect.model.assets.AssetRefPath;
 import de.dh.cad.architect.model.assets.SupportObjectDescriptor;
@@ -33,11 +34,9 @@ import de.dh.cad.architect.model.coords.LengthUnit;
 import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.assets.AssetLoader;
 import de.dh.cad.architect.ui.assets.ThreeDObject;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.geometry.Bounds;
 import javafx.scene.Group;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
@@ -46,8 +45,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
-import javafx.scene.transform.Transform;
-import javafx.scene.transform.Translate;
 
 public class ShowSupportObjectControl extends BorderPane implements Initializable {
     public static final String FXML = "ShowSupportObjectControl.fxml";
@@ -121,15 +118,15 @@ public class ShowSupportObjectControl extends BorderPane implements Initializabl
         mDescriptionTextArea.setText(StringUtils.trimToEmpty(mAssetDescriptor.getDescription()));
 
         updateIconImage();
-        mThreeDObjectView = new ThreeDObjectViewControl();
+        mThreeDObjectView = new ThreeDObjectViewControl(CoordinateSystemConfiguration.architect());
         mThreeDObjectView.setPrefWidth(250);
         mThreeDObjectView.setPrefHeight(250);
         mThreeDObjectView.setCoordinateSystemVisible(true);
         mThreeDResourceParent.getChildren().add(mThreeDObjectView);
 
         mWidthLabel.setText(MessageFormat.format(Strings.SUPPORT_OBJECT_CONTROL_WIDTH_X_0, lengthOrError(mAssetDescriptor.getWidth())));
-        mHeightLabel.setText(MessageFormat.format(Strings.SUPPORT_OBJECT_CONTROL_HEIGHT_Y_0, lengthOrError(mAssetDescriptor.getHeight())));
-        mDepthLabel.setText(MessageFormat.format(Strings.SUPPORT_OBJECT_CONTROL_DEPTH_Z_0, lengthOrError(mAssetDescriptor.getDepth())));
+        mDepthLabel.setText(MessageFormat.format(Strings.SUPPORT_OBJECT_CONTROL_DEPTH_Y_0, lengthOrError(mAssetDescriptor.getDepth())));
+        mHeightLabel.setText(MessageFormat.format(Strings.SUPPORT_OBJECT_CONTROL_HEIGHT_Z_0, lengthOrError(mAssetDescriptor.getHeight())));
         mElevationLabel.setText(MessageFormat.format(Strings.SUPPORT_OBJECT_CONTROL_ELEVATION_Y_0, lengthOrError(mAssetDescriptor.getElevation())));
 
         update3DObjectView();
@@ -143,13 +140,7 @@ public class ShowSupportObjectControl extends BorderPane implements Initializabl
     protected void update3DObjectView() {
         SupportObjectDescriptor soDescriptor = mAssetDescriptor;
         ThreeDObject obj = mAssetLoader.loadSupportObject3DObject(soDescriptor, Optional.empty(), true);
-        Group group = new Group();
-        group.getChildren().addAll(obj.getSurfaceMeshViews());
-        Bounds boundsInParent = group.getBoundsInParent();
-        Optional<Transform> oTrans = obj.getORootTransformation();
-        ObservableList<Transform> transforms = group.getTransforms();
-        transforms.add(new Translate(-boundsInParent.getCenterX(), -boundsInParent.getCenterY(), -boundsInParent.getCenterZ()));
-        oTrans.ifPresent(trans -> transforms.add(trans));
-        mThreeDObjectView.setObjView(group, 200);
+        Group group = obj.getObject();
+        mThreeDObjectView.setObjView(group);
     }
 }

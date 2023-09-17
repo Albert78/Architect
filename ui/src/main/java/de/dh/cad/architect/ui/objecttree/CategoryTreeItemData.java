@@ -28,4 +28,9 @@ public abstract class CategoryTreeItemData implements ITreeItemData {
     public String getTitle() {
         return mTitle;
     }
+
+    @Override
+    public String toString() {
+        return mTitle;
+    }
 }

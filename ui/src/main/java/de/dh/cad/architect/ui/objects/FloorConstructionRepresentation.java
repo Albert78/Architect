@@ -30,6 +30,7 @@ import de.dh.cad.architect.model.objects.Floor;
 import de.dh.cad.architect.ui.Constants;
 import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.objects.IntermediatePoint.IntermediatePointCallback;
+import de.dh.cad.architect.ui.utils.Axis;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.construction.Abstract2DView;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
@@ -100,8 +101,8 @@ public class FloorConstructionRepresentation extends AbstractAnchoredObjectConst
         List<Double> points = new ArrayList<>();
         Floor floor = getFloor();
         for (Position2D position : floor.getEdgePositions()) {
-            double x = CoordinateUtils.lengthToCoords(position.getX());
-            double y = CoordinateUtils.lengthToCoords(position.getY());
+            double x = CoordinateUtils.lengthToCoords(position.getX(), Axis.X);
+            double y = CoordinateUtils.lengthToCoords(position.getY(), Axis.Y);
             points.add(x);
             points.add(y);
         }
@@ -111,9 +112,9 @@ public class FloorConstructionRepresentation extends AbstractAnchoredObjectConst
         mAreaText.setText(floor.getAreaString());
         double textWidth2 = mAreaText.getLayoutBounds().getWidth() / 2;
         Position2D middlePoint = MathUtils.calculateCentroid(floor.getEdgePositions());
-        double middleX = CoordinateUtils.lengthToCoords(middlePoint.getX());
+        double middleX = CoordinateUtils.lengthToCoords(middlePoint.getX(), Axis.X);
         mAreaText.setX(middleX - textWidth2);
-        double middleY = CoordinateUtils.lengthToCoords(middlePoint.getY());
+        double middleY = CoordinateUtils.lengthToCoords(middlePoint.getY(), Axis.Y);
         mAreaText.setY(middleY);
         mAreaTextScaleCorrection.setPivotX(middleX);
         mAreaTextScaleCorrection.setPivotY(middleY);

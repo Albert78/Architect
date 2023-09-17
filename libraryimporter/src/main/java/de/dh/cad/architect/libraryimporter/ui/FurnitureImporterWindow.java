@@ -39,6 +39,7 @@ import de.dh.cad.architect.libraryimporter.sh3d.furniture.CatalogPieceOfFurnitur
 import de.dh.cad.architect.libraryimporter.sh3d.furniture.DefaultFurnitureCatalog;
 import de.dh.cad.architect.libraryimporter.sh3d.furniture.DefaultFurnitureCatalog.SH3DFurnitureLibrary;
 import de.dh.cad.architect.model.assets.SupportObjectDescriptor;
+import de.dh.cad.architect.ui.assets.AssetLoader;
 import de.dh.cad.architect.ui.assets.AssetManager;
 import de.dh.cad.architect.ui.assets.AssetManager.LibraryData;
 import de.dh.cad.architect.ui.assets.AssetManagerConfiguration;
@@ -111,6 +112,7 @@ public class FurnitureImporterWindow implements Initializable {
 
     protected Stage mStage = null;
     protected final AssetManager mAssetManager;
+    protected final AssetLoader mAssetLoader;
     protected SH3DFurnitureLibrary mCurrentLibrary = null;
     protected CatalogPieceOfFurnitureControl mCurrentSOControl = null;
     protected Collection<SupportObjectTreeEntry> mTreeEntries = new ArrayList<>();
@@ -159,6 +161,8 @@ public class FurnitureImporterWindow implements Initializable {
 
     protected FurnitureImporterWindow(AssetManager assetManager) {
         mAssetManager = assetManager;
+        mAssetLoader = assetManager.buildAssetLoader();
+
         FXMLLoader fxmlLoader = new FXMLLoader(FurnitureImporterWindow.class.getResource(FXML));
         fxmlLoader.setController(this);
         try {
@@ -421,7 +425,7 @@ public class FurnitureImporterWindow implements Initializable {
                         continue;
                     }
                     ExternalSupportObjectDescriptor soDescriptor = supportObjectTreeEntry.getSODescriptor();
-                    SupportObjectDescriptor desc = soDescriptor.importSupportObject(targetLibrary, mAssetManager);
+                    SupportObjectDescriptor desc = soDescriptor.importSupportObject(targetLibrary, mAssetLoader);
                     if (desc == null) {
                         mNumErroneous++;
                     } else {

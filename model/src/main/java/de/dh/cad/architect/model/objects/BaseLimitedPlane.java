@@ -122,7 +122,7 @@ public abstract class BaseLimitedPlane extends BaseSolidObject {
             new ObjectModificationChange(this) {
                 @Override
                 public void undo(List<IModelChange> undoChangeTrace) {
-                    addEdgeAnchorType_Internal(index, edgeAnchorTypeId, changeTrace);
+                    addEdgeAnchorType_Internal(index, edgeAnchorTypeId, undoChangeTrace);
                 }
             });
     }

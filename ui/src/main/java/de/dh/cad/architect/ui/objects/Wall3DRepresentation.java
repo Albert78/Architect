@@ -19,7 +19,6 @@ package de.dh.cad.architect.ui.objects;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -43,10 +42,12 @@ import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.threed.Abstract3DView;
 import de.dh.cad.architect.ui.view.threed.ThreeDView;
 import de.dh.utils.Vector2D;
-import de.dh.utils.csg.SurfaceAwareCSG;
-import de.dh.utils.csg.SurfaceAwareCSG.ExtrusionSurfaceDataProvider;
+import de.dh.utils.csg.CSGSurfaceAwareAddon;
+import de.dh.utils.csg.CSGs;
+import de.dh.utils.csg.CSGs.ExtrusionSurfaceDataProvider;
 import de.dh.utils.io.MeshData;
 import de.dh.utils.io.fx.FxMeshBuilder;
+import eu.mihosoft.jcsg.CSG;
 import eu.mihosoft.vvecmath.Vector3d;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -67,6 +68,7 @@ public class Wall3DRepresentation extends Abstract3DRepresentation {
             // 3D wall model consists of multiple MeshViews, one for each surface type. This allows us to assign
             // different materials and to match mouse clicks to a surface.
             MeshView meshView = sd.getMeshView();
+            meshView.getTransforms().add(0, CoordinateUtils.createTransformArchitectToJavaFx());
             add(meshView);
             markSurfaceNode(meshView, new ObjectSurface(this, surfaceTypeId) {
                 @Override
@@ -152,18 +154,17 @@ public class Wall3DRepresentation extends Abstract3DRepresentation {
         return true;
     }
 
-    // Attention: basePointsCW will be modified in this method
-    protected SurfaceAwareCSG<WallSurface> createWallCSGNegatedZ(Wall wall, List<WallOutlineCorner> basePointsCW) {
-        if (!cleanupWallOutlineCorners(basePointsCW)) {
+    protected CSG createWallCSG(Wall wall, List<WallOutlineCorner> outlineCornersCW) {
+        if (!cleanupWallOutlineCorners(outlineCornersCW)) {
             return null;
         }
 
         // We later work on the reverted points direction, so here we're interested in the index AFTER the surface change.
         // That's why we check the surfaces at the opposite side.
-        WallSurface lastSurface = basePointsCW.get(0).getNext().getSurface();
+        WallSurface lastSurface = outlineCornersCW.get(0).getNext().getSurface();
         int firstSurfaceChange = -1;
-        for (int i = 0; i < basePointsCW.size(); i++) {
-            WallOutlineConnection currentConnection = basePointsCW.get(i).getPrevious();
+        for (int i = 0; i < outlineCornersCW.size(); i++) {
+            WallOutlineConnection currentConnection = outlineCornersCW.get(i).getPrevious();
             if (firstSurfaceChange == -1 && currentConnection.getSurface() != lastSurface) {
                 firstSurfaceChange = i; // Found the first surface change - this is the start index for the extrusion process
             }
@@ -172,13 +173,13 @@ public class Wall3DRepresentation extends Abstract3DRepresentation {
             firstSurfaceChange = 0; // No surface change, start at index 0
         }
 
-        double heightA = CoordinateUtils.lengthToCoords(wall.getHeightA());
-        double heightB = CoordinateUtils.lengthToCoords(wall.getHeightB());
+        double heightA = CoordinateUtils.lengthToCoords(wall.getHeightA(), null);
+        double heightB = CoordinateUtils.lengthToCoords(wall.getHeightB(), null);
         Position2D handleA = wall.getAnchorWallHandleA().getPosition().projectionXY();
         Position2D handleB = wall.getAnchorWallHandleB().getPosition().projectionXY();
 
-        Vector3d handleAPos = CoordinateUtils.position2DToVecMathVector3d(handleA);
-        Vector3d handleBPos = CoordinateUtils.position2DToVecMathVector3d(handleB);
+        Vector3d handleAPos = CoordinateUtils.position2DToVecMathVector3d(handleA, false);
+        Vector3d handleBPos = CoordinateUtils.position2DToVecMathVector3d(handleB, false);
 
         Vector3d wallDirectionAB = CoordinateUtils.vector2DToVecMathVector3d(handleB.minus(handleA));
         double wallLength = wallDirectionAB.magnitude();
@@ -197,41 +198,43 @@ public class Wall3DRepresentation extends Abstract3DRepresentation {
 
         double baseExtrudeHeight = Math.max(heightA, heightB);
 
-        List<Vector3d> topPolygonPointsCCW = new ArrayList<>();
-        List<Vector3d> bottomPolygonPointsCCW = new ArrayList<>();
-        List<Position2D> basePointsCCW = basePointsCW
+        // Those are in the coordinate system of JavaFX
+        List<Vector3d> topPolygonPointsCW = new ArrayList<>();
+        List<Vector3d> bottomPolygonPointsCW = new ArrayList<>();
+
+        // This is in model coordinate system
+        List<Position2D> basePointsCW = outlineCornersCW
                         .stream()
                         .map(corner -> corner.getPosition())
                         .collect(Collectors.toCollection(ArrayList::new));
-        Collections.reverse(basePointsCCW);
 
-        for (Position2D pos : basePointsCCW) {
-            Vector2D vv = new Vector2D(CoordinateUtils.lengthToCoords(pos.getX()), CoordinateUtils.lengthToCoords(pos.getY()));
+        for (Position2D pos : basePointsCW) {
+            Vector2D vv = new Vector2D(CoordinateUtils.lengthToCoords(pos.getX(), null), CoordinateUtils.lengthToCoords(pos.getY(), null));
 
             // Calculate top level; projection of top points to a plane which spans between the two upper handle positions.
             // This is necessary if the wall has different heights at the wall ends.
             double t = vv.minus(upperHandle).dotProduct(descendingDirection);
-            // Attention: Y decreases to the top in JavaFX
-            topPolygonPointsCCW.add(Vector3d.xyz(vv.getX(), vv.getY(), -(baseExtrudeHeight - diffM * t)));
 
-            // Bottom level is simply at Z=0
-            Vector3d bottomPoint = Vector3d.xy(vv.getX(), vv.getY());
-            bottomPolygonPointsCCW.add(bottomPoint);
+            Vector3d topPoint = Vector3d.xyz(vv.getX(), vv.getY(), (baseExtrudeHeight - diffM * t));
+
+            // TODO: Bottom level is currently simply at Z=0, should be at the same level as our floor
+            Vector3d bottomPoint = Vector3d.xyz(vv.getX(), vv.getY(), 0);
+
+            topPolygonPointsCW.add(topPoint);
+            bottomPolygonPointsCW.add(bottomPoint);
         }
 
-        int numPoints = basePointsCCW.size();
-
         // Wall fragment without clipping of the top
-        SurfaceAwareCSG<WallSurface> result = SurfaceAwareCSG.extrudeSurfaces(
+        CSG result = CSGs.extrudeSurfaces(
             new ExtrusionSurfaceDataProvider<WallSurface>() {
                 @Override
-                public List<Vector3d> getConnectedTopPolygonPointsCCW() {
-                    return topPolygonPointsCCW;
+                public List<Vector3d> getTopPolygonPointsCW() {
+                    return topPolygonPointsCW;
                 }
 
                 @Override
-                public List<Vector3d> getBottomPolygonPointsCCW() {
-                    return bottomPolygonPointsCCW;
+                public List<Vector3d> getBottomPolygonPointsCW() {
+                    return bottomPolygonPointsCW;
                 }
 
                 @Override
@@ -245,9 +248,9 @@ public class Wall3DRepresentation extends Abstract3DRepresentation {
                 }
 
                 @Override
-                public WallSurface getSurfaceCCW(int startPointIndex) {
-                    // Attention: Caller wants surface in CCW direction, so we must return the PREVIOUS one
-                    return basePointsCW.get(numPoints - startPointIndex - 1).getPrevious().getSurface();
+                public WallSurface getSurfaceCW(int startPointIndex) {
+                    // Attention: Caller wants surface in CCW direction, outlineCornersCW are in CW direction, so we must return the NEXT one
+                    return outlineCornersCW.get(startPointIndex).getNext().getSurface();
                 }
 
                 @Override
@@ -272,11 +275,11 @@ public class Wall3DRepresentation extends Abstract3DRepresentation {
     protected void updateNode() {
         Wall wall = getWall();
 
-        Vector2D pA = CoordinateUtils.positionToVector2D(wall.getAnchorWallHandleA().requirePosition2D());
-        Vector2D pB = CoordinateUtils.positionToVector2D(wall.getAnchorWallHandleB().requirePosition2D());
+        Vector2D pA = CoordinateUtils.positionToVector2D(wall.getAnchorWallHandleA().requirePosition2D(), false);
+        Vector2D pB = CoordinateUtils.positionToVector2D(wall.getAnchorWallHandleB().requirePosition2D(), false);
 
         Length wallBaseLengthL = wall.calculateBaseLength();
-        double wallBaseLengthC = CoordinateUtils.lengthToCoords(wallBaseLengthL);
+        double wallBaseLengthC = CoordinateUtils.lengthToCoords(wallBaseLengthL, null);
 
         Vector2D longEdgeWall = pB.minus(pA);
         Vector2D shortEdgeWall = longEdgeWall.getNormalCW().scaleToLength(wallBaseLengthC);
@@ -287,18 +290,18 @@ public class Wall3DRepresentation extends Abstract3DRepresentation {
         Optional<WallOutline> oWallOutlineCW = oWap.map(wap -> wap.calculateWallOutlineCW());
         if (oWallOutlineCW.isPresent()) {
             WallOutline wallOutlineCW = oWallOutlineCW.get();
-            SurfaceAwareCSG<WallSurface> csg = createWallCSGNegatedZ(wall, wallOutlineCW.getCornersAsList());
+            CSG csg = createWallCSG(wall, wallOutlineCW.getCornersAsList());
             if (csg == null) {
                 configureForInvalidWall();
                 return;
             }
 
             for (WallHole wallHole : wall.getWallHoles()) {
-                double distanceFromWallEndA = CoordinateUtils.lengthToCoords(wallHole.getDistanceFromWallEndA(wallBaseLengthL));
+                double distanceFromWallEndA = CoordinateUtils.lengthToCoords(wallHole.getDistanceFromWallEndA(wallBaseLengthL), null);
                 Dimensions2D holeDimensions = wallHole.getDimensions();
-                double holeWidthC = CoordinateUtils.lengthToCoords(holeDimensions.getX());
-                double holeHeightC = CoordinateUtils.lengthToCoords(holeDimensions.getY());
-                double holeParapetHeightC = CoordinateUtils.lengthToCoords(wallHole.getParapetHeight());
+                double holeWidthC = CoordinateUtils.lengthToCoords(holeDimensions.getX(), null);
+                double holeHeightC = CoordinateUtils.lengthToCoords(holeDimensions.getY(), null);
+                double holeParapetHeightC = CoordinateUtils.lengthToCoords(wallHole.getParapetHeight(), null);
 
                 Vector2D windowStartMiddle = pA.plus(longEdgeWallU.times(distanceFromWallEndA));
                 Vector2D windowEndMiddle = windowStartMiddle.plus(longEdgeWallU.times(holeWidthC));
@@ -309,26 +312,26 @@ public class Wall3DRepresentation extends Abstract3DRepresentation {
 
                 // Attention: Y decreases to the top in JavaFX
                 List<Vector3d> bottomPoints = Arrays.asList(
-                    Vector3d.xyz(a1p.getX(), a1p.getY(), -holeParapetHeightC),
-                    Vector3d.xyz(a2p.getX(), a2p.getY(), -holeParapetHeightC),
-                    Vector3d.xyz(b2p.getX(), b2p.getY(), -holeParapetHeightC),
-                    Vector3d.xyz(b1p.getX(), b1p.getY(), -holeParapetHeightC)
+                    Vector3d.xyz(b1p.getX(), b1p.getY(), holeParapetHeightC),
+                    Vector3d.xyz(b2p.getX(), b2p.getY(), holeParapetHeightC),
+                    Vector3d.xyz(a2p.getX(), a2p.getY(), holeParapetHeightC),
+                    Vector3d.xyz(a1p.getX(), a1p.getY(), holeParapetHeightC)
                     );
                 List<Vector3d> topPoints = bottomPoints
                                 .stream()
-                                .map(p -> Vector3d.xyz(p.getX(), p.getY(), -(holeParapetHeightC + holeHeightC)))
+                                .map(p -> Vector3d.xyz(p.getX(), p.getY(), (holeParapetHeightC + holeHeightC)))
                                 .collect(Collectors.toList());
 
                 Vector3d textureDirectionX = Vector3d.xy(longEdgeWall.getX(), longEdgeWall.getY());
-                SurfaceAwareCSG<WallSurface> holeCSG = SurfaceAwareCSG.extrudeSurfaces(
+                CSG holeCSG = CSGs.extrudeSurfaces(
                     new ExtrusionSurfaceDataProvider<WallSurface>() {
                         @Override
-                        public List<Vector3d> getConnectedTopPolygonPointsCCW() {
+                        public List<Vector3d> getTopPolygonPointsCW() {
                             return topPoints;
                         }
 
                         @Override
-                        public List<Vector3d> getBottomPolygonPointsCCW() {
+                        public List<Vector3d> getBottomPolygonPointsCW() {
                             return bottomPoints;
                         }
 
@@ -343,7 +346,7 @@ public class Wall3DRepresentation extends Abstract3DRepresentation {
                         }
 
                         @Override
-                        public WallSurface getSurfaceCCW(int startPointIndex) {
+                        public WallSurface getSurfaceCW(int startPointIndex) {
                             return WallSurface.Embrasure;
                         }
 
@@ -360,7 +363,7 @@ public class Wall3DRepresentation extends Abstract3DRepresentation {
                 csg = csg.difference(holeCSG);
             }
 
-            Map<WallSurface, MeshData> meshes = csg.createMeshes(Optional.empty());
+            Map<WallSurface, MeshData> meshes = CSGSurfaceAwareAddon.createMeshes(csg, Optional.empty());
             for (SurfaceData surfaceData : mSurfaces.values()) {
                 // One surface of the wall, e.g. A or One
                 String surfaceTypeId = surfaceData.getSurfaceTypeId();

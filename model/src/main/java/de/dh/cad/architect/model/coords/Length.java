@@ -121,12 +121,12 @@ public class Length implements Comparable<Length> {
         }
     }
 
-    public Length plus(Length x) {
-        return new Length(mLengthMM + x.mLengthMM);
+    public Length plus(Length value) {
+        return new Length(mLengthMM + value.mLengthMM);
     }
 
-    public Length minus(Length x) {
-        return new Length(mLengthMM - x.mLengthMM);
+    public Length minus(Length value) {
+        return new Length(mLengthMM - value.mLengthMM);
     }
 
     public Length times(double value) {
@@ -137,20 +137,24 @@ public class Length implements Comparable<Length> {
         return new Length(Math.abs(mLengthMM));
     }
 
-    public Length difference(Length x) {
-        return x.minus(this).abs();
+    public Length difference(Length value) {
+        return value.minus(this).abs();
     }
 
     public Length negated() {
         return Length.ofMM(-mLengthMM);
     }
 
-    public double divideBy(Length x) {
-        return mLengthMM / x.mLengthMM;
+    public double divideBy(Length value) {
+        return mLengthMM / value.mLengthMM;
     }
 
     public Length divideBy(double value) {
         return new Length(mLengthMM / value);
+    }
+
+    public Length enlarge(Length value) {
+        return lt(value) ? value : this;
     }
 
     public boolean eq(Length other) {
@@ -210,35 +214,6 @@ public class Length implements Comparable<Length> {
         }
     }
 
-    @Override
-    public int compareTo(Length o) {
-        return Double.compare(mLengthMM, o.mLengthMM);
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        long temp;
-        temp = Double.doubleToLongBits(mLengthMM);
-        result = prime * result + (int) (temp ^ (temp >>> 32));
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        Length other = (Length) obj;
-        if (Double.doubleToLongBits(mLengthMM) != Double.doubleToLongBits(other.mLengthMM))
-            return false;
-        return true;
-    }
-
     public String toHumanReadableString(LengthUnit unit, int numDecimalPlaces, boolean showUnit) {
         String valuePart = "{0,number,0";
         if (numDecimalPlaces > 0) {
@@ -270,15 +245,54 @@ public class Length implements Comparable<Length> {
     }
 
     @Override
+    public int compareTo(Length o) {
+        return Double.compare(mLengthMM, o.mLengthMM);
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        long temp;
+        temp = Double.doubleToLongBits(mLengthMM);
+        result = prime * result + (int) (temp ^ (temp >>> 32));
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Length other = (Length) obj;
+        if (Double.doubleToLongBits(mLengthMM) != Double.doubleToLongBits(other.mLengthMM))
+            return false;
+        return true;
+    }
+
+    @Override
     public String toString() {
         return toHumanReadableString(getBestUnitForDisplay(), 2, true);
     }
 
-    public static Length max(Length x1, Length x2) {
-        return x1.lt(x2) ? x2 : x1;
+    public static Length max(Length v1, Length v2) {
+        return v1.lt(v2) ? v2 : v1;
     }
 
-    public static Length min(Length x1, Length x2) {
-        return x1.lt(x2) ? x1 : x2;
+    public static Length max(Length v1, Length v2, Length v3) {
+        Length m12 = max(v1, v2);
+        return m12.lt(v3) ? v3 : m12;
+    }
+
+    public static Length min(Length v1, Length v2) {
+        return v1.lt(v2) ? v1 : v2;
+    }
+
+    public static Length min(Length v1, Length v2, Length v3) {
+        Length m12 = min(v1, v2);
+        return m12.lt(v3) ? m12 : v3;
     }
 }

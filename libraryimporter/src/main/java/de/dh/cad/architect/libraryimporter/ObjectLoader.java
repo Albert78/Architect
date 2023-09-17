@@ -46,7 +46,7 @@ public class ObjectLoader {
         try {
             Group result = new Group();
             ObjData objData = ObjReader.readObj(resource, defaultMaterials);
-            result.getChildren().addAll(FxMeshBuilder.buildMeshViews(objData.getMeshes(), objData.getMeshIdsToMaterials(), true));
+            result.getChildren().addAll(FxMeshBuilder.buildMeshViews(objData.getMeshes(), objData.getMeshNamesToMaterials(), false));
             Transform trans = createTransform(modelRotation);
             if (trans != null) {
                 result.getTransforms().add(trans);

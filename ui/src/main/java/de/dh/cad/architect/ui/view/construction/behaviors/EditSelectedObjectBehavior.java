@@ -100,6 +100,8 @@ public class EditSelectedObjectBehavior extends AbstractConstructionBehavior {
             }
         }
 
+        addGroupingActionsForSelection(selectedObjects, actions);
+
         mActionsList.setAll(actions);
     }
 
@@ -152,7 +154,7 @@ public class EditSelectedObjectBehavior extends AbstractConstructionBehavior {
     }
 
     @Override
-    protected void setDefaultUserHint() {
+    public void setDefaultUserHint() {
         Abstract2DRepresentation repr = (Abstract2DRepresentation) mEditObject;
         if (repr == null) {
             super.setDefaultUserHint();

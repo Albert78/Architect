@@ -148,7 +148,7 @@ public class TakeSnapshotDialog extends Dialog<AssetRefPath> {
     }
 
     public void showFor(Node threeDObject, int defaultPlanViewImageWidth, int defaultPlanViewImageHeight, Window owner) {
-        mTakeSnapshotControl.setObject(threeDObject, 400, defaultPlanViewImageWidth, defaultPlanViewImageHeight);
+        mTakeSnapshotControl.setObject(threeDObject, defaultPlanViewImageWidth, defaultPlanViewImageHeight);
         showAndWait();
     }
 }

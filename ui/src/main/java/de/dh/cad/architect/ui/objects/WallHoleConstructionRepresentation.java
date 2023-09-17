@@ -329,7 +329,7 @@ public class WallHoleConstructionRepresentation extends Abstract2DRepresentation
         Vector2D cornerB1 = CoordinateUtils.positionToVector2D(wall.getAnchorWallCornerLB1().requirePosition3D());
         Vector2D wallDirectionU = cornerB1.minus(cornerA1).toUnitVector();
         double moveWidth = moveDelta.dotProduct(wallDirectionU);
-        Length moveWidthL = CoordinateUtils.coordsToLength(moveWidth);
+        Length moveWidthL = CoordinateUtils.coordsToLength(moveWidth, null);
 
         Length distanceFromWallEnd = wallHole.getDistanceFromWallEnd();
         Length newDistanceFromWallEnd = wallHole.getDockEnd() == WallDockEnd.A
@@ -347,7 +347,7 @@ public class WallHoleConstructionRepresentation extends Abstract2DRepresentation
         Vector2D wallHandleB = CoordinateUtils.positionToVector2D(wall.getAnchorWallHandleB().requirePosition2D());
         Vector2D wallDirectionU = wallHandleB.minus(wallHandleA).toUnitVector();
         double moveWidth = moveDelta.dotProduct(wallDirectionU);
-        Length moveWidthL = CoordinateUtils.coordsToLength(moveWidth);
+        Length moveWidthL = CoordinateUtils.coordsToLength(moveWidth, null);
         WallDockEnd dockEnd = wallHole.getDockEnd();
         Dimensions2D dimensions = wallHole.getDimensions();
 
@@ -420,10 +420,10 @@ public class WallHoleConstructionRepresentation extends Abstract2DRepresentation
 
         Length wallSideLengthL = wall.calculateBaseLength();
 
-        double distanceFromWallEndA = CoordinateUtils.lengthToCoords(wallHole.getDistanceFromWallEndA(wallSideLengthL));
+        double distanceFromWallEndA = CoordinateUtils.lengthToCoords(wallHole.getDistanceFromWallEndA(wallSideLengthL), null);
         Dimensions2D holeDimensions = wallHole.getDimensions();
-        double holeWidthC = CoordinateUtils.lengthToCoords(holeDimensions.getX());
-        double thicknessC = CoordinateUtils.lengthToCoords(wall.getThickness());
+        double holeWidthC = CoordinateUtils.lengthToCoords(holeDimensions.getX(), null);
+        double thicknessC = CoordinateUtils.lengthToCoords(wall.getThickness(), null);
         Vector2D vLongSideU = handleB.minus(handleA).toUnitVector();
         Vector2D vShortSide = vLongSideU.getNormalCCW().scaleToLength(thicknessC);
         Vector2D vShortSide2 = vShortSide.times(0.5);

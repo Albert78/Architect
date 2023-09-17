@@ -17,24 +17,31 @@
  *******************************************************************************/
 package de.dh.cad.architect.fx.nodes.objviewer;
 
-import de.dh.cad.architect.fx.nodes.objviewer.CoordinateAxisNode.Axis;
 import javafx.collections.ObservableList;
 import javafx.scene.Group;
 import javafx.scene.Node;
 
 public class CoordinateSystemNode extends Group {
+    protected CoordinateSystemConfiguration mConfiguration;
+
     protected CoordinateAxisNode mXAxis;
     protected CoordinateAxisNode mYAxis;
     protected CoordinateAxisNode mZAxis;
 
-    public CoordinateSystemNode() {
-        mXAxis = new CoordinateAxisNode(Axis.X);
-        mYAxis = new CoordinateAxisNode(Axis.Y);
-        mZAxis = new CoordinateAxisNode(Axis.Z);
+    public CoordinateSystemNode(CoordinateSystemConfiguration configuration) {
+        mConfiguration = configuration;
+
+        mXAxis = new CoordinateAxisNode(configuration.getXAxisConfig());
+        mYAxis = new CoordinateAxisNode(configuration.getYAxisConfig());
+        mZAxis = new CoordinateAxisNode(configuration.getZAxisConfig());
 
         ObservableList<Node> children = getChildren();
         children.add(mXAxis);
         children.add(mYAxis);
         children.add(mZAxis);
+    }
+
+    public CoordinateSystemConfiguration getConfiguration() {
+        return mConfiguration;
     }
 }

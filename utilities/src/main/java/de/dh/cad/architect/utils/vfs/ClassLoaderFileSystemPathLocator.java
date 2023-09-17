@@ -23,40 +23,36 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 public class ClassLoaderFileSystemPathLocator extends PathBasedFileSystemPathLocator {
-    protected final Module mModule;
+    protected final Class<?> mBase;
 
     /**
      * Creates a new {@link ClassLoaderFileSystemPathLocator} instance.
      * @param path Absolute path of the resource or directory in the module, e.g. <code>/de/foo/bar/Resource.txt</code>
      * or <code>/de/foo/bar/</code>.
-     * @param module Module which contains the resource, e.g. <code>classNearResource.getModule()</code>.
+     * @param base Class whose module contains the resource, e.g. <code>classNearResource.getModule()</code>.
      */
-    public ClassLoaderFileSystemPathLocator(Path path, Module module) {
+    public ClassLoaderFileSystemPathLocator(Path path, Class<?> base) {
         super(path);
-        mModule = module;
+        mBase = base;
     }
 
     @Override
     public IDirectoryLocator resolveDirectory(Path relativePathToDirectory) {
-        return new ClassLoaderFileSystemDirectoryLocator(mPath.resolve(relativePathToDirectory), mModule);
+        return new ClassLoaderFileSystemDirectoryLocator(mPath.resolve(relativePathToDirectory), mBase);
     }
 
     @Override
     public IResourceLocator resolveResource(Path relativePathToResource) {
-        return new ClassLoaderFileSystemResourceLocator(mPath.resolve(relativePathToResource), mModule);
+        return new ClassLoaderFileSystemResourceLocator(mPath.resolve(relativePathToResource), mBase);
     }
 
     protected Optional<InputStream> getResourceFromClassLoader() {
-        try {
-            return Optional.ofNullable(mModule.getResourceAsStream(getPathStr()));
-        } catch (IOException e) {
-            return Optional.empty();
-        }
+        return Optional.ofNullable(mBase.getResourceAsStream(getPathStr()));
     }
 
     @Override
     public IDirectoryLocator getParentDirectory() throws IOException {
-        return new ClassLoaderFileSystemDirectoryLocator(mPath.getParent(), mModule);
+        return new ClassLoaderFileSystemDirectoryLocator(mPath.getParent(), mBase);
     }
 
     /**

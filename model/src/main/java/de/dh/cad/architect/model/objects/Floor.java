@@ -198,7 +198,7 @@ public class Floor extends BaseLimitedPlane {
         return mThickness;
     }
 
-    public void setThickness(Length value) {
+    public void setThickness_JAXB(Length value) {
         mThickness = value;
     }
 }

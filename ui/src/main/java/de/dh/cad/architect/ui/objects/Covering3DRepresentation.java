@@ -18,6 +18,7 @@
 package de.dh.cad.architect.ui.objects;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -34,14 +35,15 @@ import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.threed.Abstract3DView;
 import de.dh.cad.architect.ui.view.threed.ThreeDView;
 import de.dh.utils.Vector3D;
-import de.dh.utils.csg.SurfaceAwareCSG;
-import de.dh.utils.csg.SurfaceAwareCSG.ExtrusionSurfaceDataProvider;
+import de.dh.utils.csg.CSGSurfaceAwareAddon;
+import de.dh.utils.csg.CSGs;
+import de.dh.utils.csg.CSGs.ExtrusionSurfaceDataProvider;
 import de.dh.utils.csg.TextureCoordinateSystem;
 import de.dh.utils.csg.TextureProjection;
-import de.dh.utils.fx.MathUtils;
-import de.dh.utils.fx.MathUtils.RotationData;
 import de.dh.utils.io.MeshData;
 import de.dh.utils.io.fx.FxMeshBuilder;
+import eu.mihosoft.jcsg.CSG;
+import eu.mihosoft.jcsg.ext.org.poly2tri.PolygonUtil;
 import eu.mihosoft.vvecmath.Transform;
 import eu.mihosoft.vvecmath.Vector3d;
 import javafx.geometry.Point3D;
@@ -62,6 +64,7 @@ public class Covering3DRepresentation extends Abstract3DRepresentation {
             mSurfaces.put(surface, sd);
             MeshView meshView = sd.getMeshView();
             meshView.getTransforms().add(mRotation);
+            meshView.getTransforms().add(0, CoordinateUtils.createTransformArchitectToJavaFx());
             add(meshView);
             markSurfaceNode(meshView, new ObjectSurface(this, surfaceTypeId) {
                 @Override
@@ -136,45 +139,59 @@ public class Covering3DRepresentation extends Abstract3DRepresentation {
         Position3D posB = covering.getAnchorB().requirePosition3D();
         Position3D posC = covering.getAnchorC().requirePosition3D();
 
-        Vector3d a = CoordinateUtils.position3DToVecMathVector3d(posA);
-        Vector3d b = CoordinateUtils.position3DToVecMathVector3d(posB);
-        Vector3d c = CoordinateUtils.position3DToVecMathVector3d(posC);
+        Vector3d a = CoordinateUtils.position3DToVecMathVector3d(posA, false);
+        Vector3d b = CoordinateUtils.position3DToVecMathVector3d(posB, false);
+        Vector3d c = CoordinateUtils.position3DToVecMathVector3d(posC, false);
 
         Vector3d ab = b.minus(a);
 
         // Covering normal vector
-        Vector3d n = ab.crossed(c.minus(a)).normalized();
+        Vector3d n1 = ab.crossed(c.minus(a)).normalized();
 
+        // Rotate object coordinates temporarily in X/Y plane to extrude CSG object
+        // Code taken from Transform.rot(Vector3d, Vector3d)
         Vector3d z1 = Vector3d.xyz(0, 0, 1);
+        Vector3d _axis = n1.crossed(z1);
+        double l = _axis.magnitude(); // sine of angle
 
-        RotationData rotationData = MathUtils.calculateRotation(z1, n);
-        Vector3d axis = rotationData.getAxis();
-        double angle = rotationData.getAngle();
-        Transform rotation = Transform.unity().rot(Vector3d.ZERO, axis, angle);
+        Vector3d axis = Vector3d.X_ONE;
+        double angle = 0;
+        Transform rotation = Transform.unity();
+        if (l > 1e-9) {
+            axis = _axis.normalized();
+            angle = n1.angle(z1);
 
-        double THICKNESS = CoordinateUtils.lengthToCoords(Length.ofMM(1));
+            rotation = rotation.rot(Vector3d.ZERO, axis, angle);
+        }
 
-        List<Vector3d> topPoints = new ArrayList<>();
-        List<Vector3d> bottomPoints = new ArrayList<>();
+        double THICKNESS = CoordinateUtils.lengthToCoords(Length.ofMM(1), null);
+
+        List<Vector3d> bottomPointsCW = new ArrayList<>();
         for (Anchor anchor : covering.getAnchors()) {
-            Vector3D pos = CoordinateUtils.position3DToVector3D(anchor.requirePosition3D());
-            Vector3d posNormalZ = Vector3d.xyz(pos.getX(), pos.getY(), -pos.getZ()).transformed(rotation);
+            Vector3D pos = CoordinateUtils.position3DToVector3D(anchor.requirePosition3D(), false);
+            Vector3d posNormalZ = Vector3d.xyz(pos.getX(), pos.getY(), pos.getZ()).transformed(rotation);
 
-            bottomPoints.add(posNormalZ);
-            topPoints.add(Vector3d.xyz(posNormalZ.getX(), posNormalZ.getY(), posNormalZ.getZ() - THICKNESS));
+            bottomPointsCW.add(posNormalZ);
+        }
+        if (PolygonUtil.isCCW(bottomPointsCW)) {
+            Collections.reverse(bottomPointsCW);
+        }
+        List<Vector3d> topPointsCW = new ArrayList<>();
+        for (Vector3d bottomPoint : bottomPointsCW) {
+            topPointsCW.add(Vector3d.xyz(bottomPoint.getX(), bottomPoint.getY(), bottomPoint.getZ() + THICKNESS));
         }
 
         Vector3d textureDirectionX = ab.transformed(rotation);
 
-        SurfaceAwareCSG<Surface> csg = SurfaceAwareCSG.extrudeSurfaces(new ExtrusionSurfaceDataProvider<Surface>() {
+        CSG csg = CSGs.extrudeSurfaces(new ExtrusionSurfaceDataProvider<Surface>() {
             @Override
-            public List<Vector3d> getBottomPolygonPointsCCW() {
-                return bottomPoints;
+            public List<Vector3d> getBottomPolygonPointsCW() {
+                return bottomPointsCW;
             }
 
             @Override
-            public List<Vector3d> getConnectedTopPolygonPointsCCW() {
-                return topPoints;
+            public List<Vector3d> getTopPolygonPointsCW() {
+                return topPointsCW;
             }
 
             @Override
@@ -188,7 +205,7 @@ public class Covering3DRepresentation extends Abstract3DRepresentation {
             }
 
             @Override
-            public Surface getSurfaceCCW(int startPointIndex) {
+            public Surface getSurfaceCW(int startPointIndex) {
                 return Surface.S1;
             }
 
@@ -203,8 +220,8 @@ public class Covering3DRepresentation extends Abstract3DRepresentation {
             }
         }, 0, false);
         TextureCoordinateSystem tcs = TextureCoordinateSystem.create(Vector3d.Z_ONE, textureDirectionX);
-        TextureProjection tp = TextureProjection.fromPointsBorder(tcs, bottomPoints);
-        Map<Surface, MeshData> meshes = csg.createMeshes(Optional.empty());
+        TextureProjection tp = TextureProjection.fromPointsBorder(tcs, bottomPointsCW);
+        Map<Surface, MeshData> meshes = CSGSurfaceAwareAddon.createMeshes(csg, Optional.empty());
         for (Surface surface : Surface.values()) {
             MeshData meshData = meshes.get(surface);
             SurfaceData surfaceData = mSurfaces.get(surface);

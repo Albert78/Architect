@@ -114,7 +114,7 @@ final class Node {
      * Converts solid space to empty space and vice verca.
      */
     public void invert() {
-        
+
         Stream<Polygon> polygonStream;
 
         if (polygons.size() > 200) {
@@ -130,12 +130,7 @@ final class Node {
         if (this.plane == null && !polygons.isEmpty()) {
             this.plane = polygons.get(0)._csg_plane.clone();
         } else if (this.plane == null && polygons.isEmpty()) {
-            
-            System.err.println("Please fix me! I don't know what to do?");
-            
-            // throw new RuntimeException("Please fix me! I don't know what to do?");
-            
-            return;
+            throw new RuntimeException("Please fix me! I don't know what to do?");
         }
 
         this.plane.flip();
@@ -234,13 +229,13 @@ final class Node {
      * @param polygons polygons used to build the BSP
      */
     public final void build(List<Polygon> polygons) {
-        
+
         if (polygons.isEmpty()) return;
 
         if (this.plane == null) {
             this.plane = polygons.get(0)._csg_plane.clone();
         }
-        
+
         polygons = polygons.stream().filter(p->p.isValid()).distinct().collect(Collectors.toList());
 
         List<Polygon> frontP = new ArrayList<>();

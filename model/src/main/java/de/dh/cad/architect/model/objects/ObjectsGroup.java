@@ -32,6 +32,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import org.apache.commons.lang3.StringUtils;
 
 import de.dh.cad.architect.model.changes.IModelChange;
+import de.dh.cad.architect.model.changes.ObjectChange;
 import de.dh.cad.architect.model.changes.ObjectModificationChange;
 import de.dh.cad.architect.utils.jaxb.IDeserializationHandler;
 
@@ -42,9 +43,14 @@ public class ObjectsGroup extends BaseObject implements IDeserializationHandler 
         // For JAXB
     }
 
-    public ObjectsGroup(String id, String name, IObjectsContainer ownerContainer, List<IModelChange> changeTrace) {
+    public ObjectsGroup(String id, String name) {
         super(id, name);
-        ownerContainer.addOwnedChild_Internal(this, changeTrace);
+    }
+
+    public static ObjectsGroup create(String id, String name, IObjectsContainer ownerContainer, List<IModelChange> changeTrace) {
+        ObjectsGroup result = new ObjectsGroup(id, name);
+        ownerContainer.addOwnedChild_Internal(result, changeTrace);
+        return result;
     }
 
     @Override
@@ -84,6 +90,36 @@ public class ObjectsGroup extends BaseObject implements IDeserializationHandler 
                 addObject(bo, undoChangeTrace);
             }
         });
+    }
+
+    public void addAllObjects(Collection<BaseObject> bos, List<IModelChange> changeTrace) {
+        mGroupedObjects.addAll(bos);
+        for (BaseObject bo : bos) {
+            bo.addToGroup_Internal(this);
+        }
+        changeTrace.add(new ObjectChange() {
+            @Override
+            public void undo(List<IModelChange> undoChangeTrace) {
+                removeAllObjects(bos, undoChangeTrace);
+            }
+        }
+        .objectModified(this)
+        .objectsModified(bos));
+    }
+
+    public void removeAllObjects(Collection<BaseObject> bos, List<IModelChange> changeTrace) {
+        mGroupedObjects.removeAll(bos);
+        for (BaseObject bo : bos) {
+            bo.removeFromGroup_Internal(this);
+        }
+        changeTrace.add(new ObjectChange() {
+            @Override
+            public void undo(List<IModelChange> undoChangeTrace) {
+                addAllObjects(bos, undoChangeTrace);
+            }
+        }
+        .objectModified(this)
+        .objectsModified(bos));
     }
 
     public void removeAllGroupedObjects(List<IModelChange> changeTrace) {

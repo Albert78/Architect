@@ -34,6 +34,7 @@ import de.dh.cad.architect.ui.Constants;
 import de.dh.cad.architect.ui.controller.UiController;
 import de.dh.cad.architect.ui.objects.IntermediatePoint.IntermediatePointCallback;
 import de.dh.cad.architect.ui.objects.WallReconciler.DividedWallParts;
+import de.dh.cad.architect.ui.utils.Axis;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
 import de.dh.cad.architect.ui.view.construction.feedback.wall.ChangeWallsVisualFeedbackManager;
@@ -163,16 +164,16 @@ public class WallConstructionRepresentation extends AbstractAnchoredObjectConstr
             mInvalidState = false;
             updateWallLabelsVisibility();
             for (Position2D pos : groundPoints) {
-                coords.add(CoordinateUtils.lengthToCoords(pos.getX()));
-                coords.add(CoordinateUtils.lengthToCoords(pos.getY()));
+                coords.add(CoordinateUtils.lengthToCoords(pos.getX(), Axis.X));
+                coords.add(CoordinateUtils.lengthToCoords(pos.getY(), Axis.Y));
             }
             mBorder.getPoints().setAll(coords);
 
-            double wallThickness2 = CoordinateUtils.lengthToCoords(wall.getThickness()) / 2;
+            double wallThickness2 = CoordinateUtils.lengthToCoords(wall.getThickness(), null) / 2;
             Position2D handlePosA = wall.getAnchorWallHandleA().projectionXY();
-            Vector2D handleA = new Vector2D(CoordinateUtils.lengthToCoords(handlePosA.getX()), CoordinateUtils.lengthToCoords(handlePosA.getY()));
+            Vector2D handleA = new Vector2D(CoordinateUtils.lengthToCoords(handlePosA.getX(), null), CoordinateUtils.lengthToCoords(handlePosA.getY(), null));
             Position2D handlePosB = wall.getAnchorWallHandleB().projectionXY();
-            Vector2D handleB = new Vector2D(CoordinateUtils.lengthToCoords(handlePosB.getX()), CoordinateUtils.lengthToCoords(handlePosB.getY()));
+            Vector2D handleB = new Vector2D(CoordinateUtils.lengthToCoords(handlePosB.getX(), null), CoordinateUtils.lengthToCoords(handlePosB.getY(), null));
             Vector2D middle = Vector2D.center(handleA, handleB);
             Vector2D vectorBA = handleA.minus(handleB);
             Vector2D v12_2 = vectorBA.getNormalCCW();
@@ -189,9 +190,9 @@ public class WallConstructionRepresentation extends AbstractAnchoredObjectConstr
     protected void positionText(Text wallEndLabel, Scale labelScale, double textMiddleX, double textMiddleY, double textWidth) {
         // Scale compensation is not necessary for the text because text is unscaled
         wallEndLabel.setX(textMiddleX - textWidth / 2);
-        wallEndLabel.setY(textMiddleY);
+        wallEndLabel.setY(-textMiddleY);
         labelScale.setPivotX(textMiddleX);
-        labelScale.setPivotY(textMiddleY);
+        labelScale.setPivotY(-textMiddleY);
         wallEndLabel.setTextOrigin(VPos.CENTER);
     }
 

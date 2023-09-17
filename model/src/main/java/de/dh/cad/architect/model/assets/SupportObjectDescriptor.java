@@ -17,13 +17,16 @@
  *******************************************************************************/
 package de.dh.cad.architect.model.assets;
 
+import java.util.Map;
+import java.util.TreeMap;
+
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.jaxb.LengthJavaTypeAdapter;
-import de.dh.cad.architect.model.jaxb.Matrix3x3JavaTypeAdapter;
+import de.dh.cad.architect.model.jaxb.MeshNamesToMeshConfigurationsJavaTypeAdapter;
 
 /**
  * Descriptor for a support object in the asset library.
@@ -36,7 +39,8 @@ public class SupportObjectDescriptor extends AbstractAssetDescriptor {
     protected Length mElevation;
 
     protected String mPlanViewImageResourceName;
-    protected float[][] mModelRotationMatrix;
+
+    protected Map<String, MeshConfiguration> mMeshNamesToMeshConfigurations = new TreeMap<>();
 
     public SupportObjectDescriptor() {
         // For JAXB
@@ -50,7 +54,6 @@ public class SupportObjectDescriptor extends AbstractAssetDescriptor {
         mElevation = Length.ZERO;
 
         mPlanViewImageResourceName = null;
-        mModelRotationMatrix = null;
     }
 
     /**
@@ -118,17 +121,14 @@ public class SupportObjectDescriptor extends AbstractAssetDescriptor {
         mPlanViewImageResourceName = value;
     }
 
-    /**
-     * Returns the rotation matrix which must be applied to the model 3D object or {@code null}.
-     */
-    @XmlElement(name = "ModelRotationMatrix")
-    @XmlJavaTypeAdapter(Matrix3x3JavaTypeAdapter.class)
-    public float[][] getModelRotationMatrix() {
-        return mModelRotationMatrix;
+    @XmlElement(name = "MeshConfigurations")
+    @XmlJavaTypeAdapter(MeshNamesToMeshConfigurationsJavaTypeAdapter.class)
+    public Map<String, MeshConfiguration> getMeshNamesToMeshConfigurations() {
+        return mMeshNamesToMeshConfigurations;
     }
 
-    public void setModelRotationMatrix(float[][] value) {
-        mModelRotationMatrix = value;
+    public void setMeshNamesToMeshConfigurations(Map<String, MeshConfiguration> value) {
+        mMeshNamesToMeshConfigurations = value;
     }
 
     @Override

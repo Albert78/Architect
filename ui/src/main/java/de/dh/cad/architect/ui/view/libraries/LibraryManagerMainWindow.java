@@ -30,13 +30,14 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.dh.cad.architect.model.assets.AbstractAssetDescriptor;
 import de.dh.cad.architect.model.assets.AssetLibrary;
+import de.dh.cad.architect.model.assets.AssetRefPath;
 import de.dh.cad.architect.model.assets.AssetRefPath.IAssetPathAnchor;
+import de.dh.cad.architect.model.assets.AssetRefPath.LibraryAssetPathAnchor;
 import de.dh.cad.architect.model.assets.AssetType;
 import de.dh.cad.architect.model.assets.MaterialSetDescriptor;
 import de.dh.cad.architect.model.assets.SupportObjectDescriptor;
@@ -46,6 +47,9 @@ import de.dh.cad.architect.ui.assets.AssetLoader;
 import de.dh.cad.architect.ui.assets.AssetManager;
 import de.dh.cad.architect.ui.assets.AssetManager.LibraryData;
 import de.dh.cad.architect.ui.assets.AssetManagerConfiguration;
+import de.dh.cad.architect.ui.view.libraries.MaterialSetLocationChooserControl.IMaterialSetLocation;
+import de.dh.cad.architect.ui.view.libraries.MaterialSetLocationChooserControl.LibraryRootMaterialSetLocation;
+import de.dh.cad.architect.ui.view.libraries.MaterialSetLocationChooserControl.SupportObjectMaterialSetLocation;
 import de.dh.cad.architect.utils.Namespace;
 import de.dh.cad.architect.utils.vfs.IDirectoryLocator;
 import de.dh.cad.architect.utils.vfs.PlainFileSystemDirectoryLocator;
@@ -62,6 +66,7 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -71,6 +76,7 @@ import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Control;
 import javafx.scene.control.DialogPane;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.control.SelectionMode;
@@ -267,13 +273,15 @@ public class LibraryManagerMainWindow implements Initializable {
 
     }
 
-    protected CheckableLibraryEntry createLibraryEntry(LibraryData libraryData) {
+    protected CheckableLibraryEntry createLibraryEntry(LibraryData libraryData, boolean checked) {
         return new CheckableLibraryEntry(libraryData.getLibrary(), libraryData.getRootDirectory()) {
             {
+                setSelected(checked);
                 selectedProperty().addListener(new ChangeListener<>() {
                     @Override
                     public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
                         reloadAssets();
+                        saveCheckedLibrariesState();
                     }
                 });
             }
@@ -324,11 +332,20 @@ public class LibraryManagerMainWindow implements Initializable {
     }
 
     public void loadLibraries() {
+        Collection<String> checkedLibraries = mAssetManager.getConfiguration().getCheckedLibraries();
         Collection<CheckableLibraryEntry> libraries = mAssetLoader.getAssetManager().getAssetLibraries().values()
                         .stream()
-                        .map(this::createLibraryEntry)
+                        .map(ld -> createLibraryEntry(ld, checkedLibraries.contains(ld.getLibrary().getId())))
                         .toList();
         mLibraries.setAll(libraries);
+    }
+
+    protected void saveCheckedLibrariesState() {
+        mAssetManager.getConfiguration().setCheckedLibraries(
+            getCheckedLibraries()
+                .stream()
+                .map(library -> library.getId())
+                .toList());
     }
 
     public void reloadAssets() {
@@ -446,11 +463,26 @@ public class LibraryManagerMainWindow implements Initializable {
         });
     }
 
-    protected boolean queryCanDeleteObjects(String dialogTitle, String dialogHeader) {
+    protected boolean queryCanDeleteObjects(String dialogTitle, String textDelete1, String textDeleteN, Collection<String> names) {
         Alert alert = new Alert(AlertType.CONFIRMATION);
         alert.setTitle(dialogTitle);
-        alert.setHeaderText(dialogHeader);
-        alert.setContentText(Strings.LIBRARY_MANAGER_DIALOG_QUERY_DELETE_OBJECTS_COMMON_TEXT);
+        double prefHeight;
+        if (names.size() == 1) {
+            alert.setHeaderText(textDelete1);
+            prefHeight = 50;
+        } else {
+            alert.setHeaderText(textDeleteN);
+            prefHeight = 100;
+        }
+        Label label = new Label(Strings.LIBRARY_MANAGER_DIALOG_QUERY_DELETE_OBJECTS_QUERY);
+        label.setPadding(new Insets(0, 5, 5, 5));
+        ListView<String> namesListView = new ListView<>();
+        namesListView.setItems(FXCollections.observableArrayList(names));
+        namesListView.setPrefSize(150, prefHeight);
+        BorderPane contentPane = new BorderPane();
+        contentPane.setTop(label);
+        contentPane.setCenter(namesListView);
+        alert.getDialogPane().setContent(contentPane);
 
         ButtonType buttonTypeOk = new ButtonType(Strings.OK, ButtonData.OK_DONE);
         ButtonType buttonTypeCancel = new ButtonType(Strings.CANCEL, ButtonData.CANCEL_CLOSE);
@@ -472,13 +504,11 @@ public class LibraryManagerMainWindow implements Initializable {
                         .stream()
                         .map(ld -> ld.getLibrary().getName())
                         .collect(Collectors.toList());
-        String dialogHeader;
-        if (names.size() == 1) {
-            dialogHeader = MessageFormat.format(Strings.LIBRARY_MANAGER_DIALOG_QUERY_DELETE_LIBRARIES_HEADER_1, names.get(0));
-        } else {
-            dialogHeader = MessageFormat.format(Strings.LIBRARY_MANAGER_DIALOG_QUERY_DELETE_LIBRARIES_HEADER_N, StringUtils.join(names, ", "));
-        }
-        return queryCanDeleteObjects(Strings.LIBRARY_MANAGER_DIALOG_QUERY_DELETE_LIBRARIES_TITLE, dialogHeader);
+        return queryCanDeleteObjects(
+            Strings.LIBRARY_MANAGER_DIALOG_QUERY_DELETE_LIBRARIES_TITLE,
+            Strings.LIBRARY_MANAGER_DIALOG_QUERY_DELETE_LIBRARIES_HEADER_1,
+            Strings.LIBRARY_MANAGER_DIALOG_QUERY_DELETE_LIBRARIES_HEADER_N,
+            names);
     }
 
     protected boolean queryCanDeleteMaterials(Collection<MaterialSetDescriptor> materialSets) {
@@ -486,13 +516,11 @@ public class LibraryManagerMainWindow implements Initializable {
                         .stream()
                         .map(msd -> msd.getName())
                         .collect(Collectors.toList());
-        String dialogHeader;
-        if (names.size() == 1) {
-            dialogHeader = MessageFormat.format(Strings.LIBRARY_MANAGER_DIALOG_QUERY_DELETE_MATERIAL_SET_HEADER_1, names.get(0));
-        } else {
-            dialogHeader = MessageFormat.format(Strings.LIBRARY_MANAGER_DIALOG_QUERY_DELETE_MATERIAL_SET_HEADER_N, StringUtils.join(names, ", "));
-        }
-        return queryCanDeleteObjects(Strings.LIBRARY_MANAGER_DIALOG_QUERY_DELETE_MATERIAL_SET_TITLE, dialogHeader);
+        return queryCanDeleteObjects(
+            Strings.LIBRARY_MANAGER_DIALOG_QUERY_DELETE_MATERIAL_SET_TITLE,
+            Strings.LIBRARY_MANAGER_DIALOG_QUERY_DELETE_MATERIAL_SET_HEADER_1,
+            Strings.LIBRARY_MANAGER_DIALOG_QUERY_DELETE_MATERIAL_SET_HEADER_N,
+            names);
     }
 
     protected boolean queryCanDeleteSupportObjects(Collection<SupportObjectDescriptor> supportObjects) {
@@ -500,13 +528,11 @@ public class LibraryManagerMainWindow implements Initializable {
                         .stream()
                         .map(sod -> sod.getName())
                         .collect(Collectors.toList());
-        String dialogHeader;
-        if (names.size() == 1) {
-            dialogHeader = MessageFormat.format(Strings.LIBRARY_MANAGER_DIALOG_QUERY_DELETE_SUPPORT_OBJECTS_HEADER_1, names.get(0));
-        } else {
-            dialogHeader = MessageFormat.format(Strings.LIBRARY_MANAGER_DIALOG_QUERY_DELETE_SUPPORT_OBJECTS_HEADER_N, StringUtils.join(names, ", "));
-        }
-        return queryCanDeleteObjects(Strings.LIBRARY_MANAGER_DIALOG_QUERY_DELETE_SUPPORT_OBJECTS_TITLE, dialogHeader);
+        return queryCanDeleteObjects(
+            Strings.LIBRARY_MANAGER_DIALOG_QUERY_DELETE_SUPPORT_OBJECTS_TITLE,
+            Strings.LIBRARY_MANAGER_DIALOG_QUERY_DELETE_SUPPORT_OBJECTS_HEADER_1,
+            Strings.LIBRARY_MANAGER_DIALOG_QUERY_DELETE_SUPPORT_OBJECTS_HEADER_N,
+            names);
     }
 
     protected void queryDeleteLibraries(Collection<CheckableLibraryEntry> libraries) {
@@ -537,7 +563,7 @@ public class LibraryManagerMainWindow implements Initializable {
                     log.error("Error deleting material '" + descriptor.getName() + "', id: " + descriptor.getId(), e);
                 }
             }
-            reloadAssets();
+            reloadMaterialSets();
         }
     }
 
@@ -546,11 +572,11 @@ public class LibraryManagerMainWindow implements Initializable {
         editDialog.setTitle(Strings.LIBRARY_MANAGER_CREATE_MATERIAL_SET_DIALOG_TITLE);
         editDialog.setHeaderText(Strings.LIBRARY_MANAGER_CREATE_MATERIAL_SET_HEADER_DIALOG_HEADER);
 
-        MaterialSetAnchorChooserControl materialSetAnchorChooserControl = new MaterialSetAnchorChooserControl(mAssetManager);
-        BooleanExpression invalidProperty = Bindings.isNull(materialSetAnchorChooserControl.materialSetAnchorProperty());
+        MaterialSetLocationChooserControl materialSetLocationChooserControl = new MaterialSetLocationChooserControl(mAssetManager);
+        BooleanExpression invalidProperty = Bindings.isNull(materialSetLocationChooserControl.materialSetRootLocationProperty());
 
         DialogPane dialogPane = editDialog.getDialogPane();
-        dialogPane.setContent(materialSetAnchorChooserControl);
+        dialogPane.setContent(materialSetLocationChooserControl);
         Scene scene = dialogPane.getScene();
 
         scene.getStylesheets().add(Constants.APPLICATION_CSS.toExternalForm());
@@ -559,25 +585,54 @@ public class LibraryManagerMainWindow implements Initializable {
         stage.setHeight(200);
         stage.setWidth(400);
 
-        dialogPane.getButtonTypes().add(ButtonType.OK);
+        dialogPane.getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
         Node okButton = dialogPane.lookupButton(ButtonType.OK);
         okButton.disableProperty().bind(invalidProperty);
-        materialSetAnchorChooserControl.requestFocus();
+        materialSetLocationChooserControl.requestFocus();
 
         editDialog.showAndWait().ifPresent(res -> {
+            if (res != ButtonType.OK) {
+                return;
+            }
             try {
-                MaterialSetDescriptor descriptor = mAssetManager.createMaterialSet(materialSetAnchorChooserControl.getMaterialSetAnchor());
+                IMaterialSetLocation materialSetLocation = materialSetLocationChooserControl.getMaterialSetLocation();
+                MaterialSetDescriptor newMaterialSetDescriptor;
+                if (materialSetLocation instanceof LibraryRootMaterialSetLocation rmsl) {
+                    String libraryId = rmsl.LibraryId();
+                    newMaterialSetDescriptor = mAssetManager.createRootMaterialSet(libraryId);
 
-                String newName = Namespace.generateName(Strings.NEW_MATERIAL_SET_NAME_PATTERN,
-                    mAssetManager.loadAllLibraryRootMaterialSetDescriptors().stream().map(msd -> msd.getName()).collect(Collectors.toList()), 1);
-                descriptor.setName(newName);
-                mAssetManager.saveMaterialSetDescriptor(descriptor);
-                editMaterialSet(descriptor);
+                    Collection<MaterialSetDescriptor> msDescriptorsInLibrary =
+                                    mAssetManager
+                                        .loadMaterialSetDescriptors(new LibraryAssetPathAnchor(libraryId), false);
+
+                    String newName = Namespace.generateName(Strings.NEW_MATERIAL_SET_NAME_PATTERN,
+                        msDescriptorsInLibrary.stream().map(msd -> msd.getName()).collect(Collectors.toList()), 1);
+                    newMaterialSetDescriptor.setName(newName);
+                } else if (materialSetLocation instanceof SupportObjectMaterialSetLocation somsl) {
+                    AssetRefPath supportObjectDescriptorRef = somsl.supportObjectRefPath();
+                    newMaterialSetDescriptor = mAssetManager.createSupportObjectMaterialSet(supportObjectDescriptorRef);
+
+                    Collection<MaterialSetDescriptor> supportObjectMaterialSetDescriptors =
+                                    mAssetManager.resolveAssetLocation(supportObjectDescriptorRef)
+                                        .resolveLocalMaterialSetsDirectory()
+                                        .loadMaterialSetDescriptors();
+
+                    SupportObjectDescriptor soDescriptor = mAssetManager.loadSupportObjectDescriptor(supportObjectDescriptorRef);
+                    String newName = Namespace.generateName(Strings.NEW_MATERIAL_SET_NAME_PATTERN,
+                        supportObjectMaterialSetDescriptors.stream().map(msd -> msd.getName()).collect(Collectors.toList()), 1);
+                    newName = MessageFormat.format(Strings.NEW_MATERIAL_SET_IN_SO_NAME_PATTERN, newName, soDescriptor.getName());
+                    newMaterialSetDescriptor.setName(newName);
+                } else {
+                    return;
+                }
+
+                mAssetManager.saveMaterialSetDescriptor(newMaterialSetDescriptor);
+                editMaterialSet(newMaterialSetDescriptor);
+                // editMaterialSet triggers reloading of assets
             } catch (IOException e) {
                 log.error("Error while creating new material set", e);
             }
-            reloadAssets();
         });
     }
 
@@ -655,8 +710,8 @@ public class LibraryManagerMainWindow implements Initializable {
         Alert editDialog = new Alert(AlertType.NONE);
         editDialog.setTitle(Strings.LIBRARY_MANAGER_EDIT_MATERIAL_SET_DIALOG_TITLE);
         editDialog.setHeaderText(Strings.LIBRARY_MANAGER_EDIT_MATERIAL_SET_DIALOG_HEADER);
-        editDialog.setWidth(600);
         editDialog.setWidth(800);
+        editDialog.setHeight(1000);
         editDialog.setResizable(true);
         DialogPane dialogPane = editDialog.getDialogPane();
         dialogPane.getStylesheets().add(Constants.APPLICATION_CSS.toExternalForm());
@@ -678,8 +733,8 @@ public class LibraryManagerMainWindow implements Initializable {
         Alert editDialog = new Alert(AlertType.NONE);
         editDialog.setTitle(Strings.LIBRARY_MANAGER_EDIT_SUPPORT_OBJECT_DIALOG_TITLE);
         editDialog.setHeaderText(Strings.LIBRARY_MANAGER_EDIT_SUPPORT_OBJECT_DIALOG_HEADER);
-        editDialog.setWidth(600);
         editDialog.setWidth(800);
+        editDialog.setWidth(1000);
         editDialog.setResizable(true);
         DialogPane dialogPane = editDialog.getDialogPane();
         dialogPane.getStylesheets().add(Constants.APPLICATION_CSS.toExternalForm());
@@ -740,7 +795,7 @@ public class LibraryManagerMainWindow implements Initializable {
         LibraryData libraryData = mAssetManager.createNewAssetLibrary(new PlainFileSystemDirectoryLocator(libraryPath), Strings.LIBRARY_MANAGER_NEW_ASSET_LIBRARY_NAME);
         AssetManagerConfiguration configuration = mAssetManager.getConfiguration();
         configuration.setLastAssetLibraryPath(libraryPath);
-        CheckableLibraryEntry libraryEntry = createLibraryEntry(libraryData);
+        CheckableLibraryEntry libraryEntry = createLibraryEntry(libraryData, true);
         mLibraries.add(libraryEntry);
         editAssetLibrary(libraryEntry);
         selectLibrary(libraryEntry);
@@ -763,7 +818,7 @@ public class LibraryManagerMainWindow implements Initializable {
             List<CheckableLibraryEntry> newLibraries = new ArrayList<>();
             for (IDirectoryLocator libraryDirectory : directories) {
                 LibraryData libraryData = mAssetManager.openAssetLibrary(libraryDirectory);
-                CheckableLibraryEntry libraryEntry = createLibraryEntry(libraryData);
+                CheckableLibraryEntry libraryEntry = createLibraryEntry(libraryData, true);
                 if (!mLibraries.contains(libraryEntry)) {
                     newLibraries.add(libraryEntry);
                 }

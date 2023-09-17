@@ -132,8 +132,6 @@ public class WallReconciler extends DefaultObjectReconciler {
 
         List<IModelChange> innerChangeTrace = new ArrayList<>(); // Changes where only modifications are relevant
 
-        resultWallDockEndView.setWallHeight(removeWallOppositeEnd.getWallHeight(), innerChangeTrace);
-
         // Move windows from removeWall to resultWall
         WallDockEnd removeWallDockEnd = removeWallDockEndView.getWallEnd();
         for (WallHole wallHole : new ArrayList<>(removeWall.getWallHoles())) {
@@ -148,12 +146,14 @@ public class WallReconciler extends DefaultObjectReconciler {
             result.addWallHole_Internal(wallHole, innerChangeTrace);
         }
 
+        Collection<BaseAnchoredObject> reconcileObjects = new ArrayList<>();
+
         // Remove middle anchors from their dock if they are docked, they won't be present any more later
         Collection<Anchor> middleAnchors = new ArrayList<>();
         middleAnchors.addAll(resultWallDockEndView.getAllAnchors());
         middleAnchors.addAll(removeWallDockEndView.getAllAnchors());
         for (Anchor middleAnchor : middleAnchors) {
-            uiController.doRemoveAnchorFromDock(middleAnchor, innerChangeTrace);
+            reconcileObjects.addAll(uiController.doRemoveAnchorFromDock_Internal(middleAnchor, innerChangeTrace));
         }
 
         // Anchors to be transferred to result wall
@@ -199,7 +199,8 @@ public class WallReconciler extends DefaultObjectReconciler {
         uiController.doRemoveObject(removeWall, innerChangeTrace);
 
         // Reconcile wall and all other docked objects
-        ObjectReconcileOperation oro = new ObjectReconcileOperation("Merge walls", Arrays.asList(result));
+        reconcileObjects.add(result);
+        ObjectReconcileOperation oro = new ObjectReconcileOperation("Merge walls", reconcileObjects);
         uiController.doReconcileObjects(oro, innerChangeTrace);
 
         changeTrace.add(MacroChange.create(innerChangeTrace, false));
@@ -237,8 +238,9 @@ public class WallReconciler extends DefaultObjectReconciler {
 
         // We do a trick to avoid undocking the B end anchors: We create the new wall with zero size
         // at the bend position and then swap its B end anchors with the B end anchors of the wall to be divided
-        Wall wallPartEndB = Wall.createFromHandlePositions(null, thickness, wall.getHeightA(), heightEndB,
+        Wall wallPartEndB = Wall.createFromHandlePositions(wall.getName() + " (2)", thickness, wall.getHeightA(), heightEndB,
                 bendPosition, bendPosition, wall.getOwnerContainer(), innerChangeTrace);
+        wall.setName(wall.getName() + " (1)", innerChangeTrace);
 
         // Collect B side anchors from wallPartEndB (anchors are located at the middle of the whole wall -> aMidXXX)
         Anchor aMidB = wallPartEndB.getAnchorWallHandleB();
