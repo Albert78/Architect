@@ -24,7 +24,9 @@ import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.ui.utils.Axis;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
-import de.dh.cad.architect.ui.view.DragControl;
+import de.dh.cad.architect.ui.view.construction.Abstract2DView;
+import de.dh.cad.architect.ui.view.construction.DragControl2D;
+import de.dh.cad.architect.ui.view.construction.UiPlanPosition;
 import de.dh.utils.Vector2D;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.BooleanProperty;
@@ -86,20 +88,21 @@ public class DimensioningVisual {
     }
 
     public void enableDrag() {
-        var dragControl = new DragControl() {
+        var dragControl = new DragControl2D() {
             double initialLabelDistance;
             Vector2D vDistance;
         };
 
-        Pane transformedRoot = mParent.getParentView().getTransformedRoot();
+        Abstract2DView parentView = mParent.getParentView();
+        Pane transformedRoot = parentView.getTransformedRoot();
 
         mText.setOnMousePressed(mouseEvent -> {
             if (!mouseEvent.isPrimaryButtonDown()) {
                 return;
             }
-            Point2D localPoint = transformedRoot.sceneToLocal(mouseEvent.getSceneX(), mouseEvent.getSceneY());
+            UiPlanPosition pos = parentView.getPlanPositionFromScene(mouseEvent.getSceneX(), mouseEvent.getSceneY());
             // record a delta distance for the drag and drop operation.
-            dragControl.setPoint(localPoint);
+            dragControl.setPosition(pos);
             dragControl.vDistance = mP2.minus(mP1).toUnitVector().getNormalCW();
             dragControl.initialLabelDistance = getLabelDistance();
 
@@ -115,8 +118,9 @@ public class DimensioningVisual {
             if (!mouseEvent.isPrimaryButtonDown()) {
                 return;
             }
-            Point2D localPoint = transformedRoot.sceneToLocal(mouseEvent.getSceneX(), mouseEvent.getSceneY());
-            Point2D delta = localPoint.subtract(dragControl.getPoint());
+            UiPlanPosition pos = parentView.getPlanPositionFromScene(mouseEvent.getSceneX(), mouseEvent.getSceneY());
+            Point2D localPoint = pos.getPointOnPlan();
+            Point2D delta = localPoint.subtract(dragControl.getPosition().getPointOnPlan());
 
             double dist = -dragControl.vDistance.dotProduct(new Vector2D(delta.getX(), delta.getY()));
             setLabelDistance(dragControl.initialLabelDistance + dist);

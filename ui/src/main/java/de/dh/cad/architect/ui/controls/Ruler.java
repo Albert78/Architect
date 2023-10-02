@@ -31,7 +31,6 @@ import de.dh.cad.architect.ui.Constants;
 import de.dh.cad.architect.ui.controller.UiController;
 import de.dh.cad.architect.ui.objects.Abstract2DRepresentation;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
-import de.dh.cad.architect.ui.view.DragControl;
 import de.dh.utils.fx.FxUtils;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -73,18 +72,6 @@ public class Ruler extends Pane {
         }
         public double getTextPosition() {
             return mTextPosition;
-        }
-    }
-
-    protected class RulerDragControl extends DragControl {
-        protected boolean mHidden = false;
-
-        public boolean isHidden() {
-            return mHidden;
-        }
-
-        public void setHidden(boolean value) {
-            mHidden = value;
         }
     }
 
@@ -213,7 +200,9 @@ public class Ruler extends Pane {
     }
 
     protected void configureGuideArrow(GuideArrow guideArrow) {
-        RulerDragControl dragControl = new RulerDragControl();
+        var dragControl = new Object() {
+            boolean Hidden;
+        };
         guideArrow.setViewOrder(Constants.VIEW_ORDER_RULER_GUIDE_ARROW);
         GuideLine guideLine = guideArrow.getGuideLine();
 
@@ -221,15 +210,13 @@ public class Ruler extends Pane {
             if (mouseEvent.getButton() != MouseButton.PRIMARY) {
                 return;
             }
-            Point2D localPoint = sceneToLocal(mouseEvent.getSceneX(), mouseEvent.getSceneY());
-            dragControl.setPoint(localPoint);
             getScene().setCursor(Cursor.MOVE);
         });
         guideArrow.setOnMouseReleased(mouseEvent -> {
             if (mouseEvent.getButton() != MouseButton.PRIMARY) {
                 return;
             }
-            if (dragControl.isHidden()) {
+            if (dragControl.Hidden) {
                 deleteGuideLine(guideLine);
             }
             getScene().setCursor(Cursor.DEFAULT);
@@ -241,13 +228,13 @@ public class Ruler extends Pane {
             Point2D localPoint = sceneToLocal(mouseEvent.getSceneX(), mouseEvent.getSceneY());
             if (Math.abs(localPoint.getY()) > GUIDE_ARROW_DRAG_SNAP_TO_ORIGINAL_POS_THRESHOLD) {
                 guideArrow.setVisible(false);
-                dragControl.setHidden(true);
+                dragControl.Hidden = true;
             } else {
                 setGuideLinePosition(guideLine, localPoint.getX());
-                if (dragControl.isHidden()) {
+                if (dragControl.Hidden) {
                     guideArrow.setVisible(true);
                 }
-                dragControl.setHidden(false);
+                dragControl.Hidden = false;
             }
         });
         guideArrow.setOnMouseEntered(mouseEvent -> {

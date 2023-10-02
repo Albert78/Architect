@@ -20,31 +20,33 @@ package de.dh.cad.architect.ui.objects;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.function.Consumer;
 
 import de.dh.cad.architect.ui.controller.UiController;
-import de.dh.cad.architect.ui.view.DragControl;
 import de.dh.cad.architect.ui.view.construction.Abstract2DView;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
+import de.dh.cad.architect.ui.view.construction.DragControl2D;
+import de.dh.cad.architect.ui.view.construction.UiPlanPosition;
 import de.dh.utils.fx.MouseHandlerContext;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.event.EventHandler;
-import javafx.geometry.Point2D;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Pane;
 import javafx.scene.transform.Scale;
 
 /**
  * UI representation of any UI object like model objects and ancillary objects.
  */
 public abstract class Abstract2DUiObject extends Group {
+    public interface IInitDragHandler {
+        void onStartDragEvent(UiPlanPosition startDragPoint);
+    }
+
     public interface IDragHandler {
-        void onDragEvent(Point2D origPoint, Point2D dragPoint, Point2D pointInScene);
+        void onDragEvent(UiPlanPosition startPoint, UiPlanPosition currentDragPoint);
     }
 
     protected class UnscaledNode {
@@ -189,9 +191,8 @@ public abstract class Abstract2DUiObject extends Group {
     /**
      * Utility method to configure the dragging feature of a modification control.
      */
-    protected MouseHandlerContext createDragHandler(Consumer<Point2D> onStartDragHandler, IDragHandler onDragHandler, IDragHandler onEndDragHandler, Cursor mouseOverCursor, Cursor dragCursor) {
-        DragControl dragControl = new DragControl();
-        Pane transformedRoot = mParentView.getTransformedRoot();
+    protected MouseHandlerContext createDragHandler(IInitDragHandler onStartDragHandler, IDragHandler onDragHandler, IDragHandler onEndDragHandler, Cursor mouseOverCursor, Cursor dragCursor) {
+        DragControl2D dragControl = new DragControl2D();
 
         return new MouseHandlerContext(
             // Mouse pressed
@@ -199,11 +200,11 @@ public abstract class Abstract2DUiObject extends Group {
                 if (!mouseEvent.isPrimaryButtonDown()) {
                     return;
                 }
-                Point2D localPoint = transformedRoot.sceneToLocal(mouseEvent.getSceneX(), mouseEvent.getSceneY());
+                UiPlanPosition uiPosition = mParentView.getPlanPositionFromScene(mouseEvent.getSceneX(), mouseEvent.getSceneY());
                 if (onStartDragHandler != null) {
-                    onStartDragHandler.accept(localPoint);
+                    onStartDragHandler.onStartDragEvent(uiPosition);
                 }
-                dragControl.setPoint(localPoint);
+                dragControl.setPosition(uiPosition);
                 getScene().setCursor(dragCursor);
                 if (mouseEvent.getButton() == MouseButton.PRIMARY) {
                     // Only consume event for our button - others might be needed in other handlers
@@ -217,11 +218,11 @@ public abstract class Abstract2DUiObject extends Group {
                 }
                 getScene().setCursor(Cursor.DEFAULT);
                 if (onEndDragHandler != null) {
-                    Point2D origPoint = dragControl.getPoint();
-                    Point2D localPoint = transformedRoot.sceneToLocal(mouseEvent.getSceneX(), mouseEvent.getSceneY());
-                    onEndDragHandler.onDragEvent(origPoint, localPoint, new Point2D(mouseEvent.getSceneX(), mouseEvent.getSceneY()));
+                    UiPlanPosition currentPosition = mParentView.getPlanPositionFromScene(mouseEvent.getSceneX(), mouseEvent.getSceneY());
+                    UiPlanPosition startPosition = dragControl.getPosition();
+                    onEndDragHandler.onDragEvent(startPosition, currentPosition);
+                    mouseEvent.consume();
                 }
-                mouseEvent.consume();
             },
             // Mouse moved
             null,
@@ -231,28 +232,25 @@ public abstract class Abstract2DUiObject extends Group {
                     return;
                 }
                 if (onDragHandler != null) {
-                    Point2D origPoint = dragControl.getPoint();
-                    // Using mouseEvent.getX()/getY() or obj.sceneToLocal() produces unsteady, jumping values.
-                    // Is it because of the Group objects around? I don't know.
-                    // ---> So we use root.sceneToLocal(), which gives us always the correct values
-                    Point2D localPoint = transformedRoot.sceneToLocal(mouseEvent.getSceneX(), mouseEvent.getSceneY());
-                    onDragHandler.onDragEvent(origPoint, localPoint, new Point2D(mouseEvent.getSceneX(), mouseEvent.getSceneY()));
+                    UiPlanPosition startPosition = dragControl.getPosition();
+                    UiPlanPosition currentPosition = mParentView.getPlanPositionFromScene(mouseEvent.getSceneX(), mouseEvent.getSceneY());
+                    onDragHandler.onDragEvent(startPosition, currentPosition);
+                    mouseEvent.consume();
                 }
-                // Don't consume event, could needed by another handler
             },
             // Mouse entered
             mouseEvent -> {
                 if (!mouseEvent.isPrimaryButtonDown()) {
                     getScene().setCursor(mouseOverCursor);
                 }
-                mouseEvent.consume();
+                // Don't consume event, could be needed by another handler
             },
             // Mouse exited
             mouseEvent -> {
                 if (!mouseEvent.isPrimaryButtonDown()) {
                     getScene().setCursor(Cursor.DEFAULT);
                 }
-                // Don't consume event, could needed by another handler
+                // Don't consume event, could be needed by another handler
             });
     }
 }

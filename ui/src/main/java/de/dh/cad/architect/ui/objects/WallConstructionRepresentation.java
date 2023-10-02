@@ -42,7 +42,6 @@ import de.dh.utils.Vector2D;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Bounds;
-import javafx.geometry.Point2D;
 import javafx.geometry.VPos;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
@@ -312,19 +311,8 @@ public class WallConstructionRepresentation extends AbstractAnchoredObjectConstr
     }
 
     @Override
-    public void dragAnchor(Anchor anchor, Point2D startDragPoint, Point2D currentDragPoint, Position2D targetPosition, boolean firstMoveEvent,
-    boolean shiftDown, boolean altDown, boolean controlDown) {
-        super.dragAnchor(anchor, startDragPoint, currentDragPoint, targetPosition, firstMoveEvent, shiftDown, altDown, controlDown);
-        if (mFeedbackManager == null) {
-            return;
-        }
-        mFeedbackManager.updateVisualObjects();
-    }
-
-    @Override
-    public void startAnchorDrag(Anchor anchor,
-        Point2D startDragPoint, Position2D startDragPosition) {
-        super.startAnchorDrag(anchor, startDragPoint, startDragPosition);
+    public void startAnchorDrag(Anchor anchor, Position2D startDragPos) {
+        super.startAnchorDrag(anchor, startDragPos);
         if (mFeedbackManager != null) {
             mFeedbackManager.uninstall();
         }
@@ -341,6 +329,16 @@ public class WallConstructionRepresentation extends AbstractAnchoredObjectConstr
         }
         mFeedbackManager.uninstall();
         mFeedbackManager = null;
+    }
+
+    @Override
+    public void dragAnchor(Anchor anchor, Position2D startDragPos, Position2D currentDragPos, boolean firstMoveEvent, boolean shiftDown,
+        boolean altDown, boolean controlDown) {
+        super.dragAnchor(anchor, startDragPos, currentDragPos, firstMoveEvent, shiftDown, altDown, controlDown);
+        if (mFeedbackManager == null) {
+            return;
+        }
+        mFeedbackManager.updateVisualObjects();
     }
 
     @Override

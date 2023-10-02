@@ -17,8 +17,6 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.objects;
 
-import java.util.function.Consumer;
-
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.ui.utils.Axis;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
@@ -41,7 +39,7 @@ public class BaseImageAncillary extends Abstract2DAncillaryObject {
         mOverlayImage.setPickOnBounds(true);
     }
 
-    public MouseHandlerContext installDragHandler(Consumer<Point2D> onStartDragHandler, IDragHandler onDragHandler, IDragHandler onEndDragHandler,
+    public MouseHandlerContext installDragHandler(IInitDragHandler onStartDragHandler, IDragHandler onDragHandler, IDragHandler onEndDragHandler,
         Cursor mouseOverCursor, Cursor dragCursor) {
         MouseHandlerContext dragHandler = createDragHandler(onStartDragHandler, onDragHandler, onEndDragHandler, mouseOverCursor, dragCursor);
         dragHandler.install(this);

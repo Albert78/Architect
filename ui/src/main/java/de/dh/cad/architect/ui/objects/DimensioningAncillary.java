@@ -52,10 +52,26 @@ public class DimensioningAncillary extends Abstract2DAncillaryObject {
             mVisual.setProperties(Color.RED, false, false);
         }
 
-        mVisual.setLabelDistance(mLabelDistanceScaled + mLabelDistanceUnscaled * scaleCompensation);
+        mVisual.setLabelDistance(getCalculatedLabelDistance());
         mVisual.updateShape(mPosition1, mPosition2, Optional.empty(), scaleCompensation);
     }
 
+    public double getCalculatedLabelDistance() {
+        return mLabelDistanceScaled + mLabelDistanceUnscaled * getScaleCompensation();
+    }
+
+    /**
+     * Sets the properties for the dimensioning visual. We support setting the label's distance to the base positions' line for two use-cases:
+     * <ul>
+     * <li>The label's distance will scale together with the plan's view as if the dimensioning would be drawn on the plan's paper.</li>
+     * <li>The label's distance will be a constant size which will not change if the plan view scales. This is used for temporary support dimensionings during visual feedbacks.</li>
+     * </ul>
+     * The final label's distance is calculated as the sum of the two values, so just leave one or the other <code>0</code> or use both of them simultaneously.
+     * @param pos1 Position of the first anchor point.
+     * @param pos2 Position of the second anchor point.
+     * @param labelDistanceScaled Scaled distance of the label which will grow and shrink as the plan view is scaled.
+     * @param labelDistanceUnscaled Unscaled distance of the label which will always ve shown as the given, constant number of view pixels.
+     */
     public void setProperties(Position2D pos1, Position2D pos2, double labelDistanceScaled, double labelDistanceUnscaled, boolean valid) {
         mValid = valid;
         mPosition1 = pos1;

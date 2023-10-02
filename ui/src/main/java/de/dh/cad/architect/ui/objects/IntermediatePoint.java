@@ -22,9 +22,10 @@ import de.dh.cad.architect.model.objects.Anchor;
 import de.dh.cad.architect.ui.Constants;
 import de.dh.cad.architect.ui.utils.Axis;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
-import de.dh.cad.architect.ui.view.DragControl;
 import de.dh.cad.architect.ui.view.construction.Abstract2DView;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
+import de.dh.cad.architect.ui.view.construction.DragControl2D;
+import de.dh.cad.architect.ui.view.construction.UiPlanPosition;
 import javafx.geometry.Point2D;
 import javafx.scene.Cursor;
 import javafx.scene.input.MouseButton;
@@ -52,7 +53,7 @@ import javafx.scene.transform.Scale;
  * this instance and thus makes this intermediate point ready for garbage collection.
  */
 public class IntermediatePoint extends Abstract2DAncillaryObject {
-    static class IntermediatePointDragOperation extends DragControl {
+    static class IntermediatePointDragOperation extends DragControl2D {
         private Anchor mCreatedAnchor = null;
         private Point2D mDragPointCenterOffset = null;
 
@@ -127,19 +128,19 @@ public class IntermediatePoint extends Abstract2DAncillaryObject {
                 return;
             }
             dragOperation.reset();
-            Point2D localPoint = root.sceneToLocal(mouseEvent.getSceneX(), mouseEvent.getSceneY());
+            UiPlanPosition pos = mParentView.getPlanPositionFromScene(mouseEvent.getSceneX(), mouseEvent.getSceneY());
             // Start point of cursor
-            dragOperation.setPoint(localPoint);
+            dragOperation.setPosition(pos);
             dragOperation.FirstMoveEvent = true;
             // Delta distance start cursor point -> shape center
-            dragOperation.setDragPointCenterOffset(new Point2D(mShape.getCenterX(), mShape.getCenterY()).subtract(localPoint));
+            dragOperation.setDragPointCenterOffset(new Point2D(mShape.getCenterX(), mShape.getCenterY()).subtract(pos.getPointOnPlan()));
             mShape.getScene().setCursor(Cursor.MOVE);
         });
         mShape.setOnMouseReleased(mouseEvent -> {
             if (mouseEvent.getButton() != MouseButton.PRIMARY) {
                 return;
             }
-            // This even is also fired if the mouse is not at the shape's position. This is necessary because we use this
+            // This event is also fired if the mouse is not at the shape's position. This is necessary because we use this
             // even as finishing event for the drag operation.
             Anchor createdAnchor = dragOperation.getCreatedAnchor();
             if (createdAnchor == null) {
@@ -159,7 +160,9 @@ public class IntermediatePoint extends Abstract2DAncillaryObject {
                 return;
             }
 
-            Point2D localPoint = root.sceneToLocal(mouseEvent.getSceneX(), mouseEvent.getSceneY());
+            UiPlanPosition pos = mParentView.getPlanPositionFromScene(mouseEvent.getSceneX(), mouseEvent.getSceneY());
+
+            Point2D localPoint = pos.getPointOnPlan();
             Point2D localPointWithOffset = localPoint.add(dragOperation.getDragPointCenterOffset());
             Position2D position = CoordinateUtils.point2DToPosition2D(localPointWithOffset);
 
@@ -174,9 +177,9 @@ public class IntermediatePoint extends Abstract2DAncillaryObject {
                 // Hopefully, the system created a UI representation for the new anchor...
                 dragOperation.setCreatedAnchor(createdAnchor);
                 mShape.setVisible(false);
-                dragStart(createdAnchor, localPointWithOffset);
+                dragStart(createdAnchor, position);
             } else {
-                drag(createdAnchor, dragOperation.getPoint().add(dragOperation.getDragPointCenterOffset()), localPointWithOffset, position,
+                drag(createdAnchor, dragOperation.getPosition().getModelPosition(), position,
                     dragOperation.FirstMoveEvent, mouseEvent.isShiftDown(), mouseEvent.isAltDown(), mouseEvent.isControlDown());
                 dragOperation.FirstMoveEvent = false;
             }
@@ -187,10 +190,10 @@ public class IntermediatePoint extends Abstract2DAncillaryObject {
         return mParentView.getRepresentationByModelId(anchor.getAnchorOwner().getId());
     }
 
-    protected void dragStart(Anchor anchor, Point2D startPoint) {
+    protected void dragStart(Anchor anchor, Position2D startPosition) {
         Abstract2DRepresentation repr = getAnchorOwnerRepresentation(anchor);
         if (repr != null) {
-            repr.startAnchorDrag(anchor, startPoint, CoordinateUtils.point2DToPosition2D(startPoint));
+            repr.startAnchorDrag(anchor, startPosition);
         }
     }
 
@@ -201,10 +204,10 @@ public class IntermediatePoint extends Abstract2DAncillaryObject {
         }
     }
 
-    protected void drag(Anchor anchor, Point2D dragStartPos, Point2D currentPos, Position2D currentPosition, boolean firstMoveEvent, boolean shiftDown, boolean altDown, boolean controlDown) {
+    protected void drag(Anchor anchor, Position2D dragStartPos, Position2D currentPos, boolean firstMoveEvent, boolean shiftDown, boolean altDown, boolean controlDown) {
         Abstract2DRepresentation repr = getAnchorOwnerRepresentation(anchor);
         if (repr != null) {
-            repr.dragAnchor(anchor, dragStartPos, currentPos, currentPosition, firstMoveEvent, shiftDown, altDown, controlDown);
+            repr.dragAnchor(anchor, dragStartPos, currentPos, firstMoveEvent, shiftDown, altDown, controlDown);
         }
     }
 

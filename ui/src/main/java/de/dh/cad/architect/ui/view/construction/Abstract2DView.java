@@ -20,16 +20,19 @@ package de.dh.cad.architect.ui.view.construction;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.model.objects.BaseObject;
 import de.dh.cad.architect.ui.controller.UiController;
 import de.dh.cad.architect.ui.objects.Abstract2DAncillaryObject;
 import de.dh.cad.architect.ui.objects.Abstract2DRepresentation;
 import de.dh.cad.architect.ui.objects.AbstractObjectUIRepresentation;
 import de.dh.cad.architect.ui.objects.ObjectTypesRegistry;
+import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.AbstractPlanView;
 import de.dh.cad.architect.ui.view.construction.behaviors.ConstructionNullBehavior;
 import de.dh.utils.fx.ClippingStackPane;
 import javafx.collections.ObservableList;
+import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
@@ -88,6 +91,25 @@ public abstract class Abstract2DView extends AbstractPlanView<Abstract2DRepresen
         mTransformedRoot = null;
         mTopLayer = null;
         mCenterPane.getChildren().clear();
+    }
+
+    public Point2D getPointOnPlanFromScene(double sceneX, double sceneY) {
+        return mTransformedRoot.sceneToLocal(sceneX, sceneY);
+    }
+
+    public UiPlanPosition getPlanPositionFromScene(double sceneX, double sceneY) {
+        Point2D ptInScene = new Point2D(sceneX, sceneY);
+        return new UiPlanPosition(ptInScene) {
+            @Override
+            public Position2D getModelPosition() {
+                return CoordinateUtils.point2DToPosition2D(getPointOnPlan());
+            }
+
+            @Override
+            public Point2D getPointOnPlan() {
+                return getPointOnPlanFromScene(ptInScene.getX(), ptInScene.getY());
+            }
+        };
     }
 
     // To be overridden

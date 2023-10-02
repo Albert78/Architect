@@ -44,8 +44,8 @@ public class Dimensioning extends BaseAnchoredObject {
         mLabelDistancePt = viewDistance;
     }
 
-    public static Dimensioning create(String name, Position2D pos1, Position2D pos2, double viewDistance, IObjectsContainer ownerContainer, List<IModelChange> changeTrace) {
-        Dimensioning result = new Dimensioning(IdGenerator.generateUniqueId(Dimensioning.class), name, viewDistance);
+    public static Dimensioning create(String name, Position2D pos1, Position2D pos2, double labelDistancePt, IObjectsContainer ownerContainer, List<IModelChange> changeTrace) {
+        Dimensioning result = new Dimensioning(IdGenerator.generateUniqueId(Dimensioning.class), name, labelDistancePt);
         ownerContainer.addOwnedChild_Internal(result, changeTrace);
         result.createAnchor(AP_POSITION_1, pos1, changeTrace);
         result.createAnchor(AP_POSITION_2, pos2, changeTrace);

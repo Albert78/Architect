@@ -195,6 +195,8 @@ public class WallReconciler extends DefaultObjectReconciler {
         removeWall.addAnchor_Internal(aMidU_CCW, innerChangeTrace);
         removeWall.addAnchor_Internal(aMidU_CW, innerChangeTrace);
 
+        reconcileObjects.removeAll(Arrays.asList(removeWall, aMidB, aMidL_CCW, aMidL_CW, aMidU_CCW, aMidU_CW));
+
         // Remove obsolete wall
         uiController.doRemoveObject(removeWall, innerChangeTrace);
 

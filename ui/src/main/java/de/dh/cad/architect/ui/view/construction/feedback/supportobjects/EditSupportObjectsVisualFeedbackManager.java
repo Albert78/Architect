@@ -268,12 +268,12 @@ public class EditSupportObjectsVisualFeedbackManager {
         mRotateFeature.installDragHandler(
             op -> {
                 dragRotateContext.origObjectsCenter = mObjectsCenter;
-                dragRotateContext.vOp = CoordinateUtils.coordsToVector2D(op.getX(), op.getY(), true).minus(mObjectsCenter);
+                dragRotateContext.vOp = op.getModelPosition().toVector2D().minus(mObjectsCenter);
 
                 dragRotateContext.origObjectsData = new ArrayList<>(mSupportObjects);
             },
-            (op, dp, sp) -> {
-                Vector2D vDp = CoordinateUtils.coordsToVector2D(dp.getX(), dp.getY(), true).minus(dragRotateContext.origObjectsCenter);
+            (op, dp) -> {
+                Vector2D vDp = dp.getModelPosition().toVector2D().minus(dragRotateContext.origObjectsCenter);
                 float angle = (float) Vector2D.angleBetween(dragRotateContext.vOp, vDp);
                 rotateSupportObjects(dragRotateContext.origObjectsData, angle, dragRotateContext.origObjectsCenter.toPosition2D());
             }, null, Cursors.createCursorRotate(), Cursors.createCursorRotate());
@@ -302,15 +302,15 @@ public class EditSupportObjectsVisualFeedbackManager {
             op -> {
                 dragSizeContext.coordinateSystemRotationDeg = getBoundingBoxRotationDeg();
                 dragSizeContext.pivotPosition = mBoundingBoxResizeOpposite; // Opposite edge of resize image
-                Vector2D origV = CoordinateUtils.point2DToVector2D(op, true)
+                Vector2D origV = op.getModelPosition().toVector2D()
                         .minus(dragSizeContext.pivotPosition);
                 dragSizeContext.origV = origV;
                 dragSizeContext.origObjectsData = new ArrayList<>(mSupportObjects);
             },
-            (op, dp, sp) -> {
+            (op, dp) -> {
                 Vector2D origV = dragSizeContext.origV;
                 Vector2D pivotPosition = dragSizeContext.pivotPosition;
-                Vector2D newV = CoordinateUtils.point2DToVector2D(dp, true)
+                Vector2D newV = dp.getModelPosition().toVector2D()
                         .minus(pivotPosition);
 
                 List<SupportObjectLocationData> objectsData = dragSizeContext.origObjectsData;
@@ -373,15 +373,16 @@ public class EditSupportObjectsVisualFeedbackManager {
             op -> {
                 changeHeightContext.origObjectsData = new ArrayList<>(mSupportObjects);
             },
-            (op, dp, sp) -> {
-                Length delta = CoordinateUtils.coordsToLength(dp.subtract(op).getY(), Axis.Y);
+            (op, dp) -> {
+                Point2D opScene = op.getPointInScene();
+                Length delta = CoordinateUtils.coordsToLength(dp.getPointInScene().getY() - opScene.getY(), Axis.Y);
 
                 tooltip.setText(MessageFormat.format(Strings.DRAG_HEIGHT, deltaString(delta)));
-                tooltip.show(mBoundingBoxShape, window.getX() + sp.getX(), window.getY() + sp.getY());
+                tooltip.show(mBoundingBoxShape, window.getX() + opScene.getX(), window.getY() + opScene.getY());
 
                 changeSupportObjectsHeight(changeHeightContext.origObjectsData, delta);
             },
-            (op, dp, sp) -> {
+            (op, dp) -> {
                 tooltip.hide();
             }, Cursor.V_RESIZE, Cursor.V_RESIZE);
         mChangeHeightFeature.mouseOverProperty().addListener((observable, oldValue, newValue) -> {
@@ -404,15 +405,16 @@ public class EditSupportObjectsVisualFeedbackManager {
             op -> {
                 changeElevationContext.origObjectsData = new ArrayList<>(mSupportObjects);
             },
-            (op, dp, sp) -> {
-                Length delta = CoordinateUtils.coordsToLength(dp.subtract(op).getY(), Axis.Y);
+            (op, dp) -> {
+                Point2D opScene = op.getPointInScene();
+                Length delta = CoordinateUtils.coordsToLength(dp.getPointInScene().getY() - opScene.getY(), Axis.Y);
 
                 tooltip.setText(MessageFormat.format(Strings.DRAG_ELEVATION, deltaString(delta)));
-                tooltip.show(mBoundingBoxShape, window.getX() + sp.getX(), window.getY() + sp.getY());
+                tooltip.show(mBoundingBoxShape, window.getX() + opScene.getX(), window.getY() + opScene.getY());
 
                 changeSupportObjectsElevation(changeElevationContext.origObjectsData, delta);
             },
-            (op, dp, sp) -> {
+            (op, dp) -> {
                 tooltip.hide();
             }, Cursor.V_RESIZE, Cursor.V_RESIZE);
         mChangeElevationFeature.mouseOverProperty().addListener((observable, oldValue, newValue) -> {

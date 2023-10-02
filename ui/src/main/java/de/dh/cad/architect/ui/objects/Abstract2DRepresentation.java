@@ -30,7 +30,6 @@ import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.geometry.Point2D;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Shape;
 
@@ -169,10 +168,9 @@ public abstract class Abstract2DRepresentation extends Abstract2DUiObject implem
     /**
      * Called if a drag operation starts on one of our anchors.
      * @param anchor Anchor to be dragged.
-     * @param startDragPoint Visual coordinate of the mouse cursor at drag start, in root coordinates.
-     * @param startDragPosition Model position of the current drag point.
+     * @param startDragPoint Position where the drag operation started.
      */
-    public void startAnchorDrag(Anchor anchor, Point2D startDragPoint, Position2D startDragPosition) {
+    public void startAnchorDrag(Anchor anchor, Position2D startDragPos) {
         // To be overridden, if D&D is supported for anchors
     }
 
@@ -186,18 +184,17 @@ public abstract class Abstract2DRepresentation extends Abstract2DUiObject implem
     /**
      * Called if one of our anchors is dragged.
      * @param anchor Anchor being dragged.
-     * @param startDragPoint Visual coordinate of the mouse cursor at drag start, in root coordinates.
-     * @param currentDragPoint Current visual coordinate of the mouse, in root coordinates.
-     * @param targetPosition Model position of the current drag point.
+     * @param startDragPos Position where the drag operation started.
+     * @param currentDragPos Current position of the drag.
      * @param shiftDown True if the shift key is pressed.
      * @param altDown True if the alt key is pressed.
      * @param controlDown True if the control key is pressed.
      */
     public void dragAnchor(Anchor anchor,
-        Point2D startDragPoint, Point2D currentDragPoint, Position2D targetPosition, boolean firstMoveEvent,
+        Position2D startDragPos, Position2D currentDragPos, boolean firstMoveEvent,
         boolean shiftDown, boolean altDown, boolean controlDown) {
         // Override if drag behavior should be different
-        dragAnchorDock(anchor, targetPosition, firstMoveEvent, shiftDown, altDown, controlDown);
+        dragAnchorDock(anchor, currentDragPos, firstMoveEvent, shiftDown, altDown, controlDown);
     }
 
     public void dragAnchorDock(Anchor anchor, Position2D targetPosition, boolean firstMoveEvent,

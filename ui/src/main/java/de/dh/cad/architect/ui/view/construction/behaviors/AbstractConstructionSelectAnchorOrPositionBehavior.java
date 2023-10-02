@@ -27,6 +27,7 @@ import de.dh.cad.architect.ui.utils.Cursors;
 import de.dh.cad.architect.ui.view.AbstractPlanView;
 import de.dh.cad.architect.ui.view.AbstractUiMode;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
+import de.dh.cad.architect.ui.view.construction.UiPlanPosition;
 import javafx.event.EventHandler;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -45,8 +46,8 @@ public abstract class AbstractConstructionSelectAnchorOrPositionBehavior extends
                 return;
             }
             event.consume();
-            Position2D pos = getView().getPlanPositionFromScene(event.getSceneX(), event.getSceneY());
-            pos = tryCorrectPosition(pos, event.isShiftDown(), event.isAltDown(), event.isControlDown());
+            UiPlanPosition uiPos = getView().getPlanPositionFromScene(event.getSceneX(), event.getSceneY());
+            Position2D pos = tryCorrectPosition(uiPos.getModelPosition(), event.isShiftDown(), event.isAltDown(), event.isControlDown());
             triggerPoint(pos);
         } else if (MouseButton.SECONDARY.equals(button)) {
             event.consume();
@@ -57,8 +58,8 @@ public abstract class AbstractConstructionSelectAnchorOrPositionBehavior extends
         }
     };
     protected final EventHandler<? super MouseEvent> ROOT_MOUSE_MOVE_HANDLER = event -> {
-        Position2D pos = getView().getPlanPositionFromScene(event.getSceneX(), event.getSceneY());
-        pos = tryCorrectPosition(pos, event.isShiftDown(), event.isAltDown(), event.isControlDown());
+        UiPlanPosition uiPos = getView().getPlanPositionFromScene(event.getSceneX(), event.getSceneY());
+        Position2D pos = tryCorrectPosition(uiPos.getModelPosition(), event.isShiftDown(), event.isAltDown(), event.isControlDown());
         showPositionFeedback(pos);
     };
     protected final EventHandler<? super MouseEvent> ROOT_MOUSE_EXITED_HANDLER = event -> {

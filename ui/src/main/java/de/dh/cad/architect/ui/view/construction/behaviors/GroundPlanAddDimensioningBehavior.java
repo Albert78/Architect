@@ -121,7 +121,7 @@ public class GroundPlanAddDimensioningBehavior extends AbstractConstructionSelec
         Position2D endPosition = oEndDockAnchor.map(a -> a.getPosition().projectionXY()).or(() -> oEndPosition).get();
         Dimensioning dimensioning = Dimensioning.create(
             BaseObjectUIRepresentation.generateSimpleName(getPlan().getDimensionings().values(), Dimensioning.class),
-            startPosition, endPosition, DIMENSIONING_LABEL_DISTANCE, getPlan(), changeTrace);
+            startPosition, endPosition, mFeedback.getCalculatedLabelDistance(), getPlan(), changeTrace);
         UiController uiController = getUiController();
         mOStartDockAnchor.ifPresent(startDockAnchor -> {
             uiController.doDock(dimensioning.getAnchor1(), startDockAnchor, DockConflictStrategy.SkipDock, changeTrace);

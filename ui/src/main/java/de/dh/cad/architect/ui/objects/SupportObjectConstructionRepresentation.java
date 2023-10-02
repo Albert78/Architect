@@ -24,9 +24,10 @@ import de.dh.cad.architect.model.objects.SupportObject;
 import de.dh.cad.architect.ui.Constants;
 import de.dh.cad.architect.ui.assets.AssetLoader;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
-import de.dh.cad.architect.ui.view.DragControl;
 import de.dh.cad.architect.ui.view.construction.Abstract2DView;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
+import de.dh.cad.architect.ui.view.construction.DragControl2D;
+import de.dh.cad.architect.ui.view.construction.UiPlanPosition;
 import de.dh.utils.Vector2D;
 import de.dh.utils.fx.MouseHandlerContext;
 import javafx.beans.value.ChangeListener;
@@ -144,24 +145,24 @@ public class SupportObjectConstructionRepresentation extends AbstractAnchoredObj
 
     public void enableCollectiveMove(IMoveHandler moveHandler) {
         disableCollectiveMove();
-        final var dragControl = new DragControl() {
+        final var dragControl = new DragControl2D() {
             boolean FirstMoveEvent = true;
         };
 
         // Drag handler is installed when modification features are turned on
         mCollectiveMoveHandler = createDragHandler(
             op -> { // Start drag
-                dragControl.setPoint(op);
+                dragControl.setPosition(op);
                 dragControl.FirstMoveEvent = true;
             },
-            (op, dp, sp) -> { // Drag
-                Point2D last = dragControl.getPoint();
-                de.dh.cad.architect.model.coords.Vector2D delta = CoordinateUtils.point2DToVector2D(dp.subtract(last));
+            (op, dp) -> { // Drag
+                UiPlanPosition last = dragControl.getPosition();
+                de.dh.cad.architect.model.coords.Vector2D delta = dp.getModelPosition().toVector2D().minus(last.getModelPosition().toVector2D());
                 moveHandler.move(delta, dragControl.FirstMoveEvent);
-                dragControl.setPoint(dp);
+                dragControl.setPosition(dp);
                 dragControl.FirstMoveEvent = false;
             },
-            (op, dp, sp) -> { // End drag
+            (op, dp) -> { // End drag
                 // Nothing to do
             }, Cursor.MOVE, Cursor.CLOSED_HAND).install(this);
     }

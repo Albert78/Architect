@@ -34,11 +34,12 @@ import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.construction.Abstract2DView;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
+import de.dh.cad.architect.ui.view.construction.DragControl2D;
+import de.dh.cad.architect.ui.view.construction.UiPlanPosition;
 import de.dh.utils.Vector2D;
 import de.dh.utils.fx.MouseHandlerContext;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.geometry.Point2D;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.Node;
@@ -81,7 +82,7 @@ public class WallHoleConstructionRepresentation extends Abstract2DRepresentation
     protected class MoveBarDragHandlers {
         protected final MoveBarNodes mMoveBarNodes;
         protected final WallDockEnd mWallHoleEnd;
-        protected Point2D mLastPoint;
+        protected UiPlanPosition mLastPosition = null;
         protected boolean mDragging = false;
         protected boolean mMouseOver = false;
 
@@ -90,18 +91,18 @@ public class WallHoleConstructionRepresentation extends Abstract2DRepresentation
             mWallHoleEnd = wallHoleEnd;
         }
 
-        public void onStartDrag(Point2D originalPoint) {
-            mLastPoint= originalPoint;
+        public void onStartDrag(UiPlanPosition origPos) {
+            mLastPosition = origPos;
             setDragging(true);
         }
 
-        public void onDragging(Point2D origPoint, Point2D dragPoint, Point2D pointInScene) {
-            Vector2D moveDelta = CoordinateUtils.point2DToUiVector2D(dragPoint.subtract(mLastPoint));
+        public void onDragging(UiPlanPosition origPos, UiPlanPosition dragPos) {
+            Vector2D moveDelta = CoordinateUtils.point2DToUiVector2D(dragPos.getPointOnPlan().subtract(mLastPosition.getPointOnPlan()));
             dragWallHoleEnd(moveDelta, mWallHoleEnd);
-            mLastPoint = dragPoint;
+            mLastPosition = dragPos;
         }
 
-        public void onDragEnd(Point2D origPoint, Point2D dragPoint, Point2D pointInScene) {
+        public void onDragEnd(UiPlanPosition origPos, UiPlanPosition dragPos) {
             setDragging(false);
         }
 
@@ -115,14 +116,6 @@ public class WallHoleConstructionRepresentation extends Abstract2DRepresentation
 
         public MoveBarNodes getMoveBarNodes() {
             return mMoveBarNodes;
-        }
-
-        public Point2D getLastPoint() {
-            return mLastPoint;
-        }
-
-        public void setLastPoint(Point2D value) {
-            mLastPoint = value;
         }
 
         public boolean isDragging() {
@@ -174,18 +167,16 @@ public class WallHoleConstructionRepresentation extends Abstract2DRepresentation
         addScaled(mBorder);
         setViewOrder(Constants.VIEW_ORDER_WALL_HOLE);
 
-        var dragContext = new Object() {
-            Point2D lastPoint;
-        };
+        var dragContext = new DragControl2D();
         // Drag handler for wall hole
         mModificationMouseContext = createDragHandler(
             op -> {
-                dragContext.lastPoint = op;
+                dragContext.setPosition(op);
             },
-            (op, dp, sp) -> {
-                Vector2D moveDelta = CoordinateUtils.point2DToUiVector2D(dp.subtract(dragContext.lastPoint));
+            (op, dp) -> {
+                Vector2D moveDelta = CoordinateUtils.point2DToUiVector2D(dp.getPointOnPlan().subtract(dragContext.getPosition().getPointOnPlan()));
                 dragWallHole(moveDelta);
-                dragContext.lastPoint = dp;
+                dragContext.setPosition(dp);
             },
             null, Cursor.MOVE, Cursor.MOVE); // Don't install it here
 

@@ -512,23 +512,14 @@ mCenterPane.setStyle("-fx-background-color: cornsilk;");
         updateAllGuideLines();
     }
 
-    public Point2D getPointInPlanFromScene(double sceneX, double sceneY) {
-        return mTransformedRoot.sceneToLocal(sceneX, sceneY);
-    }
-
-    public Position2D getPlanPositionFromScene(double sceneX, double sceneY) {
-        Point2D pt = getPointInPlanFromScene(sceneX, sceneY);
-        return CoordinateUtils.coordsToPosition2D(pt.getX(), pt.getY());
-    }
-
     public void enableRulerCursorMarker() {
         if (mCursorMarkerMoveEventHandler == null) {
             mCursorMarkerMoveEventHandler = new EventHandler<>() {
                 @Override
                 public void handle(MouseEvent event) {
-                    Position2D pos = getPlanPositionFromScene(event.getSceneX(), event.getSceneY());
-                    mHorizontalRuler.setCursorMarker(pos);
-                    mVerticalRuler.setCursorMarker(pos);
+                    UiPlanPosition pos = getPlanPositionFromScene(event.getSceneX(), event.getSceneY());
+                    mHorizontalRuler.setCursorMarker(pos.getModelPosition());
+                    mVerticalRuler.setCursorMarker(pos.getModelPosition());
                 }
             };
             addEventHandler(MouseEvent.MOUSE_MOVED, mCursorMarkerMoveEventHandler);
