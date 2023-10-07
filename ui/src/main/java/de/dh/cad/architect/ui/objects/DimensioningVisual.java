@@ -37,7 +37,6 @@ import javafx.geometry.Point2D;
 import javafx.geometry.VPos;
 import javafx.scene.Cursor;
 import javafx.scene.input.MouseButton;
-import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.scene.text.Font;
@@ -92,10 +91,7 @@ public class DimensioningVisual {
             double initialLabelDistance;
             Vector2D vDistance;
         };
-
         Abstract2DView parentView = mParent.getParentView();
-        Pane transformedRoot = parentView.getTransformedRoot();
-
         mText.setOnMousePressed(mouseEvent -> {
             if (!mouseEvent.isPrimaryButtonDown()) {
                 return;

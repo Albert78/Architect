@@ -98,7 +98,7 @@ public class WallConstructionRepresentation extends AbstractAnchoredObjectConstr
 
     @Override
     public void dispose() {
-        removeIntermediatePoints();
+        removeIntermediatePoint();
         removeVisualFeedback();
     }
 
@@ -230,7 +230,7 @@ public class WallConstructionRepresentation extends AbstractAnchoredObjectConstr
             @Override
             protected void detachIntermediatePoint(IntermediatePoint source) {
                 mIntermediatePoint = null;
-                addIntermediatePoints();
+                addIntermediatePoint();
             }
 
             @Override
@@ -263,14 +263,14 @@ public class WallConstructionRepresentation extends AbstractAnchoredObjectConstr
         return result;
     }
 
-    protected void addIntermediatePoints() {
+    protected void addIntermediatePoint() {
         if (mIntermediatePoint == null) {
             mIntermediatePoint = createIntermediatePoint();
         }
-        updateIntermediatePoints();
+        updateIntermediatePoint();
     }
 
-    protected void updateIntermediatePoints() {
+    protected void updateIntermediatePoint() {
         Wall wall = getWall();
         boolean visible = !wall.isHidden();
         if (mIntermediatePoint != null) {
@@ -279,7 +279,7 @@ public class WallConstructionRepresentation extends AbstractAnchoredObjectConstr
         }
     }
 
-    protected void removeIntermediatePoints() {
+    protected void removeIntermediatePoint() {
         if (mIntermediatePoint != null) {
             mIntermediatePoint.dispose();
             mIntermediatePoint = null;
@@ -289,13 +289,13 @@ public class WallConstructionRepresentation extends AbstractAnchoredObjectConstr
     @Override
     public void enableModificationFeatures() {
         mModificationFeaturesEnabled = true;
-        addIntermediatePoints();
+        addIntermediatePoint();
     }
 
     @Override
     public void disableModificationFeatures() {
         mModificationFeaturesEnabled = false;
-        removeIntermediatePoints();
+        removeIntermediatePoint();
     }
 
     @Override
@@ -316,6 +316,7 @@ public class WallConstructionRepresentation extends AbstractAnchoredObjectConstr
         if (mFeedbackManager != null) {
             mFeedbackManager.uninstall();
         }
+        removeIntermediatePoint();
         mFeedbackManager = new ChangeWallsVisualFeedbackManager(getParentView());
         mFeedbackManager.initializeForDragWallHandle(anchor);
         mFeedbackManager.updateVisualObjects();
@@ -329,6 +330,7 @@ public class WallConstructionRepresentation extends AbstractAnchoredObjectConstr
         }
         mFeedbackManager.uninstall();
         mFeedbackManager = null;
+        addIntermediatePoint();
     }
 
     @Override
@@ -375,7 +377,7 @@ public class WallConstructionRepresentation extends AbstractAnchoredObjectConstr
     public void updateToModel() {
         super.updateToModel();
         updateShape();
-        updateIntermediatePoints();
+        updateIntermediatePoint();
         updateProperties();
     }
 }

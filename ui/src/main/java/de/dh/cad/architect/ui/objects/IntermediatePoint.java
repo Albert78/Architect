@@ -29,7 +29,6 @@ import de.dh.cad.architect.ui.view.construction.UiPlanPosition;
 import javafx.geometry.Point2D;
 import javafx.scene.Cursor;
 import javafx.scene.input.MouseButton;
-import javafx.scene.layout.Pane;
 import javafx.scene.shape.Circle;
 import javafx.scene.transform.Scale;
 
@@ -109,8 +108,6 @@ public class IntermediatePoint extends Abstract2DAncillaryObject {
         mScaleCompensation = addUnscaled(mShape);
         mParentView.addAncillaryObject(this);
         setViewOrder(Constants.VIEW_ORDER_INTERACTION);
-
-        Pane root = mParentView.getTransformedRoot();
 
         mShape.setOnMouseEntered(mouseEvent -> {
             if (dragOperation.getCreatedAnchor() == null) {

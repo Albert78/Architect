@@ -356,12 +356,12 @@ public class Strings {
     public static final String ACTION_GROUND_PLAN_ADD_DIMENSIONING_TITLE = "Bemaßung hinzufügen";
     public static final String ACTION_GROUND_PLAN_CANCEL_CREATE_DIMENSIONING_TITLE = "Abbrechen: Bemaßung einfügen";
     public static final String GROUND_PLAN_START_DIMENSIONING_BEHAVIOR_TITLE = "Bemaßung hinzufügen";
-    public static final String GROUND_PLAN_START_DIMENSIONING_BEHAVIOR_DEFAULT_USER_HINT = "Wähle den Start-Anker der Bemaßung";
+    public static final String GROUND_PLAN_START_DIMENSIONING_BEHAVIOR_DEFAULT_USER_HINT = "Wähle den Startpunkt oder -Anker der Bemaßung";
     public static final String GROUND_PLAN_START_DIMENSIONING_BEHAVIOR_ANCHOR_AIMED = "Bemaßung starten bei {0}";
 
     public static final String ACTION_GROUND_PLAN_CANCEL_ADD_DIMENSIONING_TITLE = "Abbrechen: Bemaßung einfügen";
     public static final String GROUND_PLAN_ADD_DIMENSIONING_BEHAVIOR_TITLE = "Bemaßung hinzufügen";
-    public static final String GROUND_PLAN_ADD_DIMENSIONING_BEHAVIOR_DEFAULT_USER_HINT = "Wähle den End-Anker der Bemaßung";
+    public static final String GROUND_PLAN_ADD_DIMENSIONING_BEHAVIOR_DEFAULT_USER_HINT = "Wähle den Endpunkt oder -Anker der Bemaßung";
     public static final String GROUND_PLAN_ADD_DIMENSIONING_BEHAVIOR_ANCHOR_AIMED = "Bemaßung enden bei {0}";
 
     public static final String ACTION_GROUND_PLAN_REMOVE_OBJECTS_TITLE = "{0} Objekt(e) entfernen";

@@ -21,6 +21,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 import de.dh.cad.architect.model.coords.Bounds2D;
@@ -40,9 +41,9 @@ import de.dh.cad.architect.ui.utils.Cursors;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
 import de.dh.cad.architect.ui.view.construction.behaviors.AbstractConstructionBehavior;
 import de.dh.utils.fx.ImageUtils;
+import de.dh.utils.fx.SimpleToolTip;
 import javafx.geometry.Point2D;
 import javafx.scene.Cursor;
-import javafx.scene.control.Tooltip;
 import javafx.scene.shape.StrokeType;
 import javafx.stage.Window;
 
@@ -141,6 +142,7 @@ public class EditSupportObjectsVisualFeedbackManager {
     protected BasePolylineShapeAncillary mBoundingBoxShape = null;
     protected Vector2D mBoundingBoxResizeOpposite = null; // Top-left point in unrotated state
     protected Vector2D mObjectsCenter = null; // Center position of the bounding box / of all selected objects
+    protected double mBoundingBoxRotationDeg = 0; // Rotation of the bounding box in model coordinate system
 
     // Order matters: We derive the rotation of the visual bounding box from the rotation of the first object
     protected List<SupportObjectLocationData> mSupportObjects = new ArrayList<>();
@@ -149,10 +151,6 @@ public class EditSupportObjectsVisualFeedbackManager {
         mBehavior = behavior;
         mView = view;
         mObjectsUpdateHandler = objectsUpdateHandler;
-    }
-
-    protected double getBoundingBoxRotationDeg() {
-        return mSupportObjects.isEmpty() ? 0 : mSupportObjects.get(0).getRotationDeg();
     }
 
     protected void rotateSupportObjects(List<SupportObjectLocationData> origObjectsData, float angleDeg, Position2D pivotPosition) {
@@ -250,9 +248,7 @@ public class EditSupportObjectsVisualFeedbackManager {
      */
     protected void installModificationFeatures() {
         Window window = mView.getScene().getWindow();
-        Tooltip tooltip = new Tooltip();
-        tooltip.setHideOnEscape(true);
-        tooltip.setAutoHide(true);
+        SimpleToolTip toolTip = new SimpleToolTip();
 
         mRotateFeature = new BaseImageAncillary(
             ImageUtils.loadSquareIcon(EditSupportObjectsVisualFeedbackManager.class, ROTATE_IMAGE_RESOURCE, MODIFICATION_SYMBOLS_SIZE),
@@ -291,27 +287,26 @@ public class EditSupportObjectsVisualFeedbackManager {
         mResizeFeature.setViewOrder(Constants.VIEW_ORDER_INTERACTION);
         mView.addAncillaryObject(mResizeFeature);
         var dragSizeContext = new Object() {
-            // Start positions of the bounding rect; the rect moves during the operation so we correlate the drag positions to the starting rect
-            Vector2D pivotPosition;
-            Vector2D origV;
-            double coordinateSystemRotationDeg;
+            Vector2D boundingBoxResizeOpposite; // Snapshot of mBoundingBoxResizeOpposite at operation start, prevents  moving/jumping of that point
+            double coordinateSystemRotationDeg; // Snapshot of the bounding box' rotation at operation start
+            Vector2D origV; // Vector from boundingBoxResizeOpposite to the mouse position at operation start
 
             List<SupportObjectLocationData> origObjectsData;
         };
         mResizeFeature.installDragHandler(
             op -> {
-                dragSizeContext.coordinateSystemRotationDeg = getBoundingBoxRotationDeg();
-                dragSizeContext.pivotPosition = mBoundingBoxResizeOpposite; // Opposite edge of resize image
+                dragSizeContext.coordinateSystemRotationDeg = mBoundingBoxRotationDeg;
+                dragSizeContext.boundingBoxResizeOpposite = mBoundingBoxResizeOpposite; // Opposite edge of resize image
                 Vector2D origV = op.getModelPosition().toVector2D()
-                        .minus(dragSizeContext.pivotPosition);
+                        .minus(dragSizeContext.boundingBoxResizeOpposite);
                 dragSizeContext.origV = origV;
                 dragSizeContext.origObjectsData = new ArrayList<>(mSupportObjects);
             },
             (op, dp) -> {
                 Vector2D origV = dragSizeContext.origV;
-                Vector2D pivotPosition = dragSizeContext.pivotPosition;
+                Vector2D boundingBoxResizeOpposite = dragSizeContext.boundingBoxResizeOpposite;
                 Vector2D newV = dp.getModelPosition().toVector2D()
-                        .minus(pivotPosition);
+                        .minus(boundingBoxResizeOpposite);
 
                 List<SupportObjectLocationData> objectsData = dragSizeContext.origObjectsData;
                 if (objectsData.size() == 1) {
@@ -326,11 +321,11 @@ public class EditSupportObjectsVisualFeedbackManager {
                     double scaleY = newSize.getY().divideBy(origSize.getY());
                     Position2D origCenterPoint = sold.getCenterPoint();
                     Position2D newCenterPoint = origCenterPoint
-                                    .minus(pivotPosition)
+                                    .minus(boundingBoxResizeOpposite)
                                     .rotate(-rotationDeg)
                                     .scale(scaleX, scaleY)
                                     .rotate(rotationDeg)
-                                    .plus(pivotPosition);
+                                    .plus(boundingBoxResizeOpposite);
                     SupportObjectLocationData soldNew = sold
                                     .withSize(Dimensions2D.ofAbs(newSize))
                                     .withCenterPoint(newCenterPoint);
@@ -347,7 +342,7 @@ public class EditSupportObjectsVisualFeedbackManager {
                     double scale = newLength_origDirection.divideBy(origLength);
 
                     scaleSupportObjects(objectsData,
-                        pivotPosition.toPosition2D(),
+                        boundingBoxResizeOpposite.toPosition2D(),
                         dragSizeContext.coordinateSystemRotationDeg,
                         scale);
                 }
@@ -377,13 +372,13 @@ public class EditSupportObjectsVisualFeedbackManager {
                 Point2D opScene = op.getPointInScene();
                 Length delta = CoordinateUtils.coordsToLength(dp.getPointInScene().getY() - opScene.getY(), Axis.Y);
 
-                tooltip.setText(MessageFormat.format(Strings.DRAG_HEIGHT, deltaString(delta)));
-                tooltip.show(mBoundingBoxShape, window.getX() + opScene.getX(), window.getY() + opScene.getY());
+                toolTip.setToolTipText(MessageFormat.format(Strings.DRAG_HEIGHT, deltaString(delta)));
+                toolTip.showToolTip(mBoundingBoxShape, window.getX() + opScene.getX(), window.getY() + opScene.getY());
 
                 changeSupportObjectsHeight(changeHeightContext.origObjectsData, delta);
             },
             (op, dp) -> {
-                tooltip.hide();
+                toolTip.hideToolTip();
             }, Cursor.V_RESIZE, Cursor.V_RESIZE);
         mChangeHeightFeature.mouseOverProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue) {
@@ -409,13 +404,13 @@ public class EditSupportObjectsVisualFeedbackManager {
                 Point2D opScene = op.getPointInScene();
                 Length delta = CoordinateUtils.coordsToLength(dp.getPointInScene().getY() - opScene.getY(), Axis.Y);
 
-                tooltip.setText(MessageFormat.format(Strings.DRAG_ELEVATION, deltaString(delta)));
-                tooltip.show(mBoundingBoxShape, window.getX() + opScene.getX(), window.getY() + opScene.getY());
+                toolTip.setToolTipText(MessageFormat.format(Strings.DRAG_ELEVATION, deltaString(delta)));
+                toolTip.showToolTip(mBoundingBoxShape, window.getX() + opScene.getX(), window.getY() + opScene.getY());
 
                 changeSupportObjectsElevation(changeElevationContext.origObjectsData, delta);
             },
             (op, dp) -> {
-                tooltip.hide();
+                toolTip.hideToolTip();
             }, Cursor.V_RESIZE, Cursor.V_RESIZE);
         mChangeElevationFeature.mouseOverProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue) {
@@ -445,6 +440,13 @@ public class EditSupportObjectsVisualFeedbackManager {
 
     public void updateVisualObjects(List<SupportObjectLocationData> locationData) {
         mSupportObjects = locationData;
+        Iterator<SupportObjectLocationData> iLocationData = locationData.iterator();
+        if (!iLocationData.hasNext()) {
+            mBoundingBoxShape.removeFromView();
+            mBoundingBoxShape = null;
+            return;
+        }
+        // else: iLocationData has a next entry
 
         // We think the bounding box in its own coordinate system, rotated by boxRotation around the center point of the first object.
         // This is necessary to be able to include all contained object corners with the box's X- and Y-coordinates.
@@ -457,35 +459,26 @@ public class EditSupportObjectsVisualFeedbackManager {
         // (4) At the end, we transform the final bounding box's coordinates back to global coordinates to show the box in the UI,
         // this is done by rotating the (rotated) bounding box's coordinates by the bounding box's rotation around it's rotation center.
 
-        // Data of the bounding box which contains all objects.
-        // This box is rotated like the first selected object.
-        float boxRotation = 0;
-        Bounds2D boundingBoxRotated = null;
-        Position2D boundingBoxRotationCenter = null;
+        // Initialization of bounding box.
+        // The bounding box is rotated like the first selected object.
+        SupportObjectLocationData referenceSOLD = iLocationData.next();
+        float boxRotation = referenceSOLD.getRotationDeg();
+        Position2D boundingBoxRotationCenter = referenceSOLD.getCenterPoint();
+        Dimensions2D soSizeOfRef = referenceSOLD.getSize();
+        Bounds2D boundingBoxRotated = Bounds2D.of(boundingBoxRotationCenter.minus(soSizeOfRef.toVector().times(0.5)), soSizeOfRef);
 
-        for (SupportObjectLocationData sold : locationData) {
+        // Grow the bounding box' rectangle to include the other objects
+        while (iLocationData.hasNext()) {
+            SupportObjectLocationData sold = iLocationData.next();
             // Data of the current object
             Position2D soCenterPoint = sold.getCenterPoint();
             Dimensions2D soSize = sold.getSize();
             Bounds2D soBox = Bounds2D.of(soCenterPoint.minus(soSize.toVector().times(0.5)), soSize);
             float soRotation = sold.getRotationDeg();
 
-            if (boundingBoxRotated == null) {
-                // First object, take rotation from that object.
-                // The box is initialized with the bounds of the object and will grow with each object we loop through.
-                boxRotation = soRotation;
-                boundingBoxRotated = soBox;
-                boundingBoxRotationCenter = soCenterPoint;
-            } else {
-                Box2D soBoxFinal = soBox.rotateAround(soRotation, soCenterPoint); // Step (1)
-                Box2D soBoxFinalInBBCoordinates = soBoxFinal.rotateAround(-boxRotation, boundingBoxRotationCenter); // Step (2)
-                boundingBoxRotated = boundingBoxRotated.union(soBoxFinalInBBCoordinates); // Step (3)
-            }
-        }
-        if (boundingBoxRotated == null) {
-            mBoundingBoxShape.removeFromView();
-            mBoundingBoxShape = null;
-            return;
+            Box2D soBoxFinal = soBox.rotateAround(soRotation, soCenterPoint); // Step (1)
+            Box2D soBoxFinalInBBCoordinates = soBoxFinal.rotateAround(-boxRotation, boundingBoxRotationCenter); // Step (2)
+            boundingBoxRotated = boundingBoxRotated.union(soBoxFinalInBBCoordinates); // Step (3)
         }
 
         Box2D finalBoundingBox = boundingBoxRotated.rotateAround(boxRotation, boundingBoxRotationCenter);
@@ -508,6 +501,7 @@ public class EditSupportObjectsVisualFeedbackManager {
             fx_x1y2.getX(), fx_x1y2.getY());
         mBoundingBoxShape.updateCoords(coords, StrokeType.OUTSIDE);
         mObjectsCenter = new Vector2D(x1y1.getX().plus(x2y2.getX()).divideBy(2), x1y1.getY().plus(x2y2.getY()).divideBy(2));
+        mBoundingBoxRotationDeg = boxRotation;
         mBoundingBoxResizeOpposite = x1y2.toVector2D();
 
         mChangeHeightFeature.setPosition(x1y2);

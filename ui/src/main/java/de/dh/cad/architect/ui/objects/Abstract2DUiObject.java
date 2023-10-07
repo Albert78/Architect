@@ -88,7 +88,7 @@ public abstract class Abstract2DUiObject extends Group {
     }
 
     /**
-     * Called after this view was removed from the plan.
+     * Called after this view object was removed from the plan.
      * Can remove event handlers etc.
      */
     public void dispose() {
