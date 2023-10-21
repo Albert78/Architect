@@ -20,6 +20,7 @@ module de.dh.cad.architect.fxutils {
     exports de.dh.cad.architect.fx.nodes.objviewer;
     exports de.dh.utils;
     exports de.dh.utils.fx;
+    exports de.dh.utils.fx.shapes;
     exports de.dh.utils.io;
     exports de.dh.utils.io.obj;
     exports de.dh.utils.io.fx;

@@ -20,6 +20,7 @@ package de.dh.utils.fx.viewsfx;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import de.dh.utils.fx.sash.SashEx;
 import de.dh.utils.fx.viewsfx.DockViewLocationDescriptor.DockZoneSplitting;
@@ -48,7 +49,7 @@ public class DockAreaControl extends BorderPane implements IDockZoneParent {
     public static DockAreaControl create(String dockAreaId) {
         DockAreaControl result = new DockAreaControl(dockAreaId);
 
-        TabDockHost tdh = TabDockHost.create(result);
+        TabDockHost tdh = DockSystem.getDockHostCreator().createTabDockHost(result, UUID.randomUUID().toString(), UUID.randomUUID().toString());
         result.initialize(tdh);
         DockSystem.getDockAreaControlsRegistry().put(dockAreaId, result);
         return result;
@@ -67,11 +68,10 @@ public class DockAreaControl extends BorderPane implements IDockZoneParent {
         mRootDockHost.clearViews();
     }
 
-    public void restoreLayout(AbstractDockZoneState rootDockZoneState) {
+    public void restoreLayout(AbstractDockZoneState rootDockZoneState, IViewsManager viewsManager, IDockHostCreator dockHostCreator) {
         clearViews();
-        ViewsRegistry viewsRegistry = DockSystem.getViewsRegistry();
         if (rootDockZoneState != null) {
-            initialize(IDockZone.restoreLayout(this, rootDockZoneState, viewsRegistry));
+            initialize(IDockZone.restoreLayout(this, rootDockZoneState, viewsManager, dockHostCreator));
         }
     }
 
@@ -92,7 +92,7 @@ public class DockAreaControl extends BorderPane implements IDockZoneParent {
         return mRootDockHost.findTabDockHostById(tabDockHostId);
     }
 
-    public Optional<TabDockHost> getOrTryCreateDockHost(DockViewLocationDescriptor location) {
+    public Optional<TabDockHost> getOrTryCreateDockHost(DockViewLocationDescriptor location, IDockHostCreator dockHostCreator) {
         String tabDockHostId = location.getTabDockHostId();
         Optional<TabDockHost> result = findTabDockHostById(tabDockHostId);
         if (result.isPresent()) {
@@ -106,7 +106,7 @@ public class DockAreaControl extends BorderPane implements IDockZoneParent {
             Optional<IDockZone> oZone = findDockZoneById(dockZoneId);
             if (oZone.isPresent()) {
                 IDockZone zone = oZone.get();
-                return Optional.of(zone.split(dzs.getSideOfNewDockZone(), tabDockHostId, location.getNewDockZoneId(), dzs.getDividerPosition()));
+                return Optional.of(zone.split(dzs.getSideOfNewDockZone(), tabDockHostId, location.getNewDockZoneId(), dzs.getDividerPosition(), dockHostCreator));
             }
         }
         return Optional.empty();
@@ -134,11 +134,11 @@ public class DockAreaControl extends BorderPane implements IDockZoneParent {
     }
 
     @Override
-    public SashDockHost replaceWithSash(IDockZone replaceChild, String newChildDockZoneId, DockSide emptySide) {
+    public SashDockHost replaceWithSash(IDockZone replaceChild, String newChildDockZoneId, DockSide emptySide, IDockHostCreator dockHostCreator) {
         if (replaceChild != mRootDockHost) {
             throw new IllegalStateException("Inner node is not our root dock host");
         }
-        SashDockHost result = SashDockHost.create(replaceChild.getDockZoneId(), this);
+        SashDockHost result = dockHostCreator.createSashDockHost(replaceChild.getDockZoneId(), this);
         SashEx sash = result.getSash();
         SashUtils.setSashItem(sash, emptySide.opposite(), (Node) replaceChild);
         replaceChild.occupyDockZone(newChildDockZoneId, result);

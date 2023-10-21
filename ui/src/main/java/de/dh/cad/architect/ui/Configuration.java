@@ -21,7 +21,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -38,7 +37,6 @@ public class Configuration implements IConfig {
 
     protected static final String KEY_PLAN_FILE_HISTORY_PREFIX = "PlanFileHistory_";
     protected static final String KEY_LAST_WINDOW_STATE = "LastWindowState";
-    protected static final String KEY_LAST_MAIN_WINDOW_LEFT_AREA_WIDTH = "LastMainWindowLeftAreaWidth";
 
     protected final Preferences mPrefs;
 
@@ -133,18 +131,6 @@ public class Configuration implements IConfig {
 
     public void setLastWindowState(String value) {
         mPrefs.put(KEY_LAST_WINDOW_STATE, value);
-    }
-
-    public Optional<Integer> getLastMainWindowLeftAreaWidth() {
-        String str = mPrefs.get(KEY_LAST_MAIN_WINDOW_LEFT_AREA_WIDTH, null);
-        if (StringUtils.isEmpty(str)) {
-            return Optional.empty();
-        }
-        return Optional.of(Integer.parseInt(str));
-    }
-
-    public void setLastMainWindowLeftAreaWidth(int value) {
-        mPrefs.put(KEY_LAST_MAIN_WINDOW_LEFT_AREA_WIDTH, String.valueOf(value));
     }
 
     ////////////////////////////////////////////////////////////////// Generic getters/setters ///////////////////////////////////////////////////////

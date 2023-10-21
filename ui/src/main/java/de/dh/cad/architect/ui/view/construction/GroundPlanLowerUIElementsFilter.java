@@ -21,10 +21,9 @@ import de.dh.cad.architect.ui.objects.Abstract2DRepresentation;
 import de.dh.cad.architect.ui.objects.CeilingConstructionRepresentation;
 import de.dh.cad.architect.ui.objects.CoveringConstructionRepresentation;
 
-public class GroundPlanLowerUIElementFilter extends GroundPlanUIElementFilter {
+public class GroundPlanLowerUIElementsFilter extends GroundPlanUIElementFilter {
     @Override
     public boolean isUIElementMouseTransparent(Abstract2DRepresentation repr) {
-        return repr instanceof CeilingConstructionRepresentation || repr instanceof CoveringConstructionRepresentation
-                ;
+        return repr instanceof CeilingConstructionRepresentation || repr instanceof CoveringConstructionRepresentation;
     }
 }

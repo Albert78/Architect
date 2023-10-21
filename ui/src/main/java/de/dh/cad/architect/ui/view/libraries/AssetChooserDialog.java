@@ -18,6 +18,7 @@
 package de.dh.cad.architect.ui.view.libraries;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import de.dh.cad.architect.model.assets.AbstractAssetDescriptor;
 import de.dh.cad.architect.model.assets.AssetType;
@@ -35,6 +36,9 @@ import javafx.scene.control.SelectionMode;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 
+/**
+ * Dialog for choosing an asset in form of an asset descriptor from the asset library.
+ */
 public class AssetChooserDialog<T extends AbstractAssetDescriptor> extends Dialog<T> {
     protected static final int DIALOG_MIN_WIDTH = 1200;
     protected static final int DIALOG_MIN_HEIGHT = 400;
@@ -88,13 +92,21 @@ public class AssetChooserDialog<T extends AbstractAssetDescriptor> extends Dialo
     }
 
     public static <T extends AbstractAssetDescriptor> AssetChooserDialog<T> createWithProgressIndicator(AssetLoader assetLoader, String dialogTitle, AssetType assetType) {
+        return createWithProgressIndicator(assetLoader, dialogTitle, assetType, Optional.empty());
+    }
+
+    public static <T extends AbstractAssetDescriptor> AssetChooserDialog<T> createWithProgressIndicator(AssetLoader assetLoader, String dialogTitle, AssetType assetType, Consumer<AssetChooserDialog<T>> onFinishedLoading) {
+        return createWithProgressIndicator(assetLoader, dialogTitle, assetType, Optional.of(onFinishedLoading));
+    }
+
+    public static <T extends AbstractAssetDescriptor> AssetChooserDialog<T> createWithProgressIndicator(AssetLoader assetLoader, String dialogTitle, AssetType assetType, Optional<Consumer<AssetChooserDialog<T>>> oOnFinishedLoading) {
         AssetChooserDialog<T> result = new AssetChooserDialog<>(assetLoader, dialogTitle, assetType);
-        result.loadLibraries();
+        result.loadLibraries(oOnFinishedLoading);
         return result;
     }
 
-    protected void loadLibraries() {
-        mAssetChooserControl.loadLibraries();
+    protected void loadLibraries(Optional<Consumer<AssetChooserDialog<T>>> oOnFinishedLoading) {
+        mAssetChooserControl.loadLibraries(oOnFinishedLoading.map(onFinishedLoading -> acc -> onFinishedLoading.accept(AssetChooserDialog.this)));
     }
 
     protected void validate() {

@@ -18,6 +18,8 @@
 // Copyright (c) 2017-2018 Flexpoint Tech Ltd. All rights reserved.
 package de.dh.utils.fx;
 
+import java.util.Optional;
+
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,6 +106,44 @@ public class StageState {
         return "X=" + mX + ";Y=" + mY + ";Width="+ mWidth + ";Height=" + mHeight + ";Maximized=" + mMaximized + ";Hidden=" + mHidden;
     }
 
+    /**
+     * Reads the current state of the given stage and returns it.
+     * Use this method to restore the correct size of the stage if it is in maximized state. See the comment in
+     * {@link #fromStage(Stage)}.
+     * @param oFormerStageState State of the stage from a former serialization. Only needed if the stage is currently in
+     * maximized state to preserve the original width and height.
+     */
+    public static StageState fromStage(Stage stage, Optional<StageState> oFormerStageState) {
+        return oFormerStageState
+                        .map(formerStageState -> fromStage(stage,
+                            formerStageState.getX(), formerStageState.getY(),
+                            formerStageState.getWidth(), formerStageState.getHeight()))
+                        .orElse(fromStage(stage));
+    }
+
+    /**
+     * Reads the current state of the given stage and returns it.
+     * Use this method to restore the correct size of the stage if it is in maximized state. See the comment in
+     * {@link #fromStage(Stage)}.
+     * The params denote the original values of the stage in normal (i.e. not maximized) state. Only needed if the stage is maximized.
+     */
+    public static StageState fromStage(Stage stage, double normalX, double normalY, double normalWidth, double normalHeight) {
+        StageState state = fromStage(stage);
+        if (state.isMaximized()) {
+            return state.withNormalValues(normalX, normalY, normalWidth, normalHeight);
+        }
+        return state;
+    }
+
+    /**
+     * Reads the current state of the given stage and returns it. Note that this method
+     * is not able to read the "unmaximized" width and height of the stage if the stage is currently
+     * maximized. That will result in a wrong X, Y, width and height in that case, i.e. if the stage is
+     * reset to the returned stage state in that case, switching from maximized to normal stage
+     * will change the state but will leave the stage size in the maximized size instead of returning
+     * to the size the stage had before maximizing. To solve that problem, the caller should maintain
+     * the unmaximized size of the stage, if possible, and call {@link #fromStage(Stage, double, double, double, double)}.
+     */
     public static StageState fromStage(Stage stage) {
         return new StageState(
             stage.getX(),
@@ -114,12 +154,23 @@ public class StageState {
             !stage.isShowing());
     }
 
-    public void writeToStage(Stage stage) {
+    /**
+     * Convenience method to build an optional stage state from a nullable config string.
+     */
+    public static Optional<StageState> buildStageState(String savedState) {
+        return Optional.ofNullable(savedState).map(stateStr -> StageState.fromSerializedState(stateStr));
+    }
+
+    public void applyToStage(Stage stage) {
         // First, restore the size and position of the stage.
         resizeAndPosition(stage);
         Platform.runLater(() -> {
             checkStageVisible(stage);
         });
+    }
+
+    public StageState withNormalValues(double x, double y, double width, double height) {
+        return new StageState(x, y, width, height, mMaximized, mHidden);
     }
 
     public boolean isMaximized() {
@@ -147,9 +198,9 @@ public class StageState {
     }
 
     protected void resizeAndPosition(Stage stage) {
-        if (isHidden()) {
-            stage.hide();
-        }
+        // This sequence works under Windows 11 with JavaFX 20
+        // Without calling stage.hide(), stage.setMaximized() does not maximize the stage.
+        stage.hide();
         stage.setX(getX());
         stage.setY(getY());
         stage.setWidth(getWidth());

@@ -62,7 +62,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.SortedList;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -89,7 +88,6 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import javafx.stage.Window;
-import javafx.stage.WindowEvent;
 
 public class LibraryManagerMainWindow implements Initializable {
     public static final int WINDOW_SIZE_X = 1500;
@@ -323,12 +321,14 @@ public class LibraryManagerMainWindow implements Initializable {
 
     public void reloadMaterialSets() {
         Collection<AssetLibrary> checkedLibraries = getCheckedLibraries();
-        mMaterialSetChooserControl.loadLibraries(checkedLibraries);
+        Optional<MaterialSetDescriptor> oSelectedAsset = mMaterialSetChooserControl.getSelectedAsset();
+        mMaterialSetChooserControl.loadLibraries(checkedLibraries, Optional.of(acc -> oSelectedAsset.ifPresent(ass -> acc.selectObject(ass.getId()))));
     }
 
     protected void reloadSupportObjects() {
         Collection<AssetLibrary> checkedLibraries = getCheckedLibraries();
-        mSupportObjectsChooserControl.loadLibraries(checkedLibraries);
+        Optional<SupportObjectDescriptor> oSelectedAsset = mSupportObjectsChooserControl.getSelectedAsset();
+        mSupportObjectsChooserControl.loadLibraries(checkedLibraries, Optional.of(acc -> oSelectedAsset.ifPresent(ass -> acc.selectObject(ass.getId()))));
     }
 
     public void loadLibraries() {
@@ -454,12 +454,8 @@ public class LibraryManagerMainWindow implements Initializable {
         primaryStage.setTitle(Strings.LIBRARY_MANAGER_WINDOW_TITLE);
         primaryStage.show();
 
-        mPrimaryStage.onCloseRequestProperty().addListener(new ChangeListener<>() {
-            @Override
-            public void changed(ObservableValue<? extends EventHandler<WindowEvent>> observable, EventHandler<WindowEvent> oldValue,
-                EventHandler<WindowEvent> newValue) {
-                // TODO: Save content?
-            }
+        mPrimaryStage.setOnCloseRequest(event -> {
+            // TODO: Save content?
         });
     }
 

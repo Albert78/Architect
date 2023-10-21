@@ -15,13 +15,14 @@
  *     You should have received a copy of the GNU General Public License
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>
  *******************************************************************************/
-module de.dh.cad.architect.main {
-    exports de.dh.cad.architect;
+package de.dh.cad.architect.ui.view.construction;
 
-    requires de.dh.cad.architect.ui;
-    requires de.dh.cad.architect.model;
-    requires de.dh.cad.architect.libraryeditor;
+import de.dh.cad.architect.ui.objects.Abstract2DRepresentation;
+import de.dh.cad.architect.ui.objects.AnchorConstructionRepresentation;
 
-    requires transitive javafx.graphics;
-    requires org.slf4j;
+public class AllUIElementsVisibleFilter extends ConstructionUIElementFilter {
+    @Override
+    public boolean isUIElementVisible(Abstract2DRepresentation repr) {
+        return !(repr instanceof AnchorConstructionRepresentation);
+    }
 }

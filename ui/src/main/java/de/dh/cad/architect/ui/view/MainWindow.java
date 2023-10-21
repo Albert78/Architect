@@ -59,8 +59,8 @@ import de.dh.utils.fx.viewsfx.DockAreaControl;
 import de.dh.utils.fx.viewsfx.DockSystem;
 import de.dh.utils.fx.viewsfx.Dockable;
 import de.dh.utils.fx.viewsfx.DockableFloatingStage;
+import de.dh.utils.fx.viewsfx.ViewLifecycleManager;
 import de.dh.utils.fx.viewsfx.ViewsRegistry;
-import de.dh.utils.fx.viewsfx.ViewsRegistry.ViewLifecycleManager;
 import de.dh.utils.fx.viewsfx.io.ViewsLayoutStateIO;
 import de.dh.utils.fx.viewsfx.layout.AbstractDockLayoutDescriptor;
 import de.dh.utils.fx.viewsfx.layout.PerspectiveDescriptor;
@@ -303,12 +303,13 @@ public class MainWindow implements Initializable {
             }
         });
 
-        // Create the view lifecycle managers.
-        ViewsRegistry viewsRegistry = DockSystem.getViewsRegistry();
+        // Step 1: Create view registry and view lifecycle managers.
+        ViewsRegistry viewsRegistry = new ViewsRegistry();
+        DockSystem.setViewsManager(viewsRegistry);
         viewsRegistry.addView(mConstructionViewManager = new ViewLifecycleManager<>(VIEW_ID_CONSTRUCTION_AREA, true) {
             @Override
-            protected Dockable<ConstructionView> createDockable() {
-                return createDockableForView(mConstructionView, VIEW_ID_CONSTRUCTION_AREA, mConstructionView.getTitle());
+            protected Dockable<ConstructionView> createDockable(String viewId) {
+                return createDockableForView(mConstructionView, viewId, mConstructionView.getTitle());
             }
 
             @Override
@@ -318,8 +319,8 @@ public class MainWindow implements Initializable {
         });
         viewsRegistry.addView(mThreeDViewManager = new ViewLifecycleManager<>(VIEW_ID_3D_PRESENTATION, true) {
             @Override
-            protected Dockable<ThreeDView> createDockable() {
-                return createDockableForView(mThreeDView, VIEW_ID_3D_PRESENTATION, mThreeDView.getTitle());
+            protected Dockable<ThreeDView> createDockable(String viewId) {
+                return createDockableForView(mThreeDView, viewId, mThreeDView.getTitle());
             }
 
             @Override
@@ -329,8 +330,8 @@ public class MainWindow implements Initializable {
         });
         viewsRegistry.addView(mPropertiesViewManager = new ViewLifecycleManager<>(VIEW_ID_PROPERTIES, true) {
             @Override
-            protected Dockable<PropertiesControl> createDockable() {
-                Dockable<PropertiesControl> result = Dockable.of(mPropertiesControl, VIEW_ID_PROPERTIES, Strings.PROPERTIES_VIEW_TITLE, false);
+            protected Dockable<PropertiesControl> createDockable(String viewId) {
+                Dockable<PropertiesControl> result = Dockable.of(mPropertiesControl, viewId, Strings.PROPERTIES_VIEW_TITLE, false);
                 return result;
             }
 
@@ -341,8 +342,8 @@ public class MainWindow implements Initializable {
         });
         viewsRegistry.addView(mInteractionsPaneViewManager = new ViewLifecycleManager<>(VIEW_ID_INTERACTIONS_PANE, true) {
             @Override
-            protected Dockable<Parent> createDockable() {
-                Dockable<Parent> result = Dockable.of(mInteractionsPaneParent, VIEW_ID_INTERACTIONS_PANE, "-", false);
+            protected Dockable<Parent> createDockable(String viewId) {
+                Dockable<Parent> result = Dockable.of(mInteractionsPaneParent, viewId, "-", false);
                 return result;
             }
 
@@ -361,8 +362,8 @@ public class MainWindow implements Initializable {
         });
         viewsRegistry.addView(mObjectTreeViewManager = new ViewLifecycleManager<>(VIEW_ID_OBJECT_TREE, true) {
             @Override
-            protected Dockable<ObjectTreeControl> createDockable() {
-                Dockable<ObjectTreeControl> result = Dockable.of(mObjectTreeControl, VIEW_ID_OBJECT_TREE, Strings.OBJECT_TREE_VIEW_TITLE, false);
+            protected Dockable<ObjectTreeControl> createDockable(String viewId) {
+                Dockable<ObjectTreeControl> result = Dockable.of(mObjectTreeControl, viewId, Strings.OBJECT_TREE_VIEW_TITLE, false);
                 return result;
             }
 
@@ -373,8 +374,8 @@ public class MainWindow implements Initializable {
         });
         viewsRegistry.addView(mScriptConsoleViewManager = new ViewLifecycleManager<>(VIEW_ID_SCRIPT_CONSOLE, true) {
             @Override
-            protected Dockable<ScriptConsoleControl> createDockable() {
-                Dockable<ScriptConsoleControl> result = Dockable.of(mScriptConsoleControl, VIEW_ID_SCRIPT_CONSOLE, Strings.SCRIPT_CONSOLE_VIEW_TITLE, true);
+            protected Dockable<ScriptConsoleControl> createDockable(String viewId) {
+                Dockable<ScriptConsoleControl> result = Dockable.of(mScriptConsoleControl, viewId, Strings.SCRIPT_CONSOLE_VIEW_TITLE, true);
                 return result;
             }
 
@@ -385,8 +386,8 @@ public class MainWindow implements Initializable {
         });
         viewsRegistry.addView(mLogOutputViewManager = new ViewLifecycleManager<>(VIEW_ID_LOG_OUTPUT, true) {
             @Override
-            protected Dockable<LogOutputControl> createDockable() {
-                Dockable<LogOutputControl> result = Dockable.of(mLogOutputControl, VIEW_ID_LOG_OUTPUT, Strings.LOG_OUTPUT_VIEW_TITLE, true);
+            protected Dockable<LogOutputControl> createDockable(String viewId) {
+                Dockable<LogOutputControl> result = Dockable.of(mLogOutputControl, viewId, Strings.LOG_OUTPUT_VIEW_TITLE, true);
                 return result;
             }
 
@@ -506,27 +507,27 @@ public class MainWindow implements Initializable {
     protected List<MenuItem> createWindowMenuItems() {
         MenuItem constructionViewItem = new MenuItem(Strings.WINDOW_MENU_ITEM_CONSTRUCTION_VIEW);
         constructionViewItem.setOnAction(event -> {
-            mConstructionViewManager.ensureVisible(getStage(), true);
+            mConstructionViewManager.ensureVisible(getStage(), true, true);
         });
         MenuItem threeDViewItem = new MenuItem(Strings.WINDOW_MENU_ITEM_3D_VIEW);
         threeDViewItem.setOnAction(event -> {
-            mThreeDViewManager.ensureVisible(getStage(), true);
+            mThreeDViewManager.ensureVisible(getStage(), true, true);
         });
         MenuItem propertiesViewItem = new MenuItem(Strings.WINDOW_MENU_ITEM_PROPERTIES_VIEW);
         propertiesViewItem.setOnAction(event -> {
-            mPropertiesViewManager.ensureVisible(getStage(), true);
+            mPropertiesViewManager.ensureVisible(getStage(), true, true);
         });
         MenuItem objectsViewItem = new MenuItem(Strings.WINDOW_MENU_ITEM_OBJECTS_VIEW);
         objectsViewItem.setOnAction(event -> {
-            mObjectTreeViewManager.ensureVisible(getStage(), true);
+            mObjectTreeViewManager.ensureVisible(getStage(), true, true);
         });
         MenuItem scriptConsoleViewItem = new MenuItem(Strings.WINDOW_MENU_ITEM_SCRIPT_CONSOLE_VIEW);
         scriptConsoleViewItem.setOnAction(event -> {
-            mScriptConsoleViewManager.ensureVisible(getStage(), true);
+            mScriptConsoleViewManager.ensureVisible(getStage(), true, true);
         });
         MenuItem logOutputViewItem = new MenuItem(Strings.WINDOW_MENU_ITEM_LOG_OUTPUT_VIEW);
         logOutputViewItem.setOnAction(event -> {
-            mLogOutputViewManager.ensureVisible(getStage(), true);
+            mLogOutputViewManager.ensureVisible(getStage(), true, true);
         });
         return Arrays.asList(
             constructionViewItem,
@@ -551,7 +552,7 @@ public class MainWindow implements Initializable {
         Platform.runLater(() -> {
             Optional<ViewsLayoutState> oViewsLayoutState = Optional.empty();
             try {
-                Path settingsPath = Paths.get(ViewsLayoutStateIO.DEFAULT_FILE_NAME);
+                Path settingsPath = Paths.get(Constants.ARCHITECT_VIEWS_LAYOUT_FILE_NAME);
                 if (Files.exists(settingsPath)) {
                     try (BufferedReader br = Files.newBufferedReader(settingsPath)) {
                         oViewsLayoutState = Optional.of(ViewsLayoutStateIO.deserialize(br));
@@ -568,7 +569,7 @@ public class MainWindow implements Initializable {
         try {
             ViewsLayoutState viewsLayoutState = DockSystem.saveLayoutState();
 
-            try (BufferedWriter bw = Files.newBufferedWriter(Paths.get(ViewsLayoutStateIO.DEFAULT_FILE_NAME))) {
+            try (BufferedWriter bw = Files.newBufferedWriter(Paths.get(Constants.ARCHITECT_VIEWS_LAYOUT_FILE_NAME))) {
                 ViewsLayoutStateIO.serialize(viewsLayoutState, bw);
             }
         } catch (Exception e) {
@@ -640,12 +641,9 @@ public class MainWindow implements Initializable {
         }
         removeInteractionsControl();
         children.add(control);
-        mInteractionsPaneViewManager.ensureVisible(getStage(), false);
+        mInteractionsPaneViewManager.ensureVisible(getStage(), bringToFront, false);
         mInteractionsPaneViewManager.getDockable().ifPresent(d -> {
             d.setDockableTitle(title);
-            if (bringToFront) {
-                // TODO
-            }
         });
     }
 

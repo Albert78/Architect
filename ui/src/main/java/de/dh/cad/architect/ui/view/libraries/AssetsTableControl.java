@@ -22,7 +22,9 @@ import java.net.URL;
 import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -379,24 +381,24 @@ public class AssetsTableControl<T extends AbstractAssetDescriptor> extends Borde
     }
 
     public void reloadLibraries_progress_async() {
-        loadLibraries_progress_async(mLibraries);
+        loadLibraries_progress_async(mLibraries, Optional.empty());
     }
 
-    public void loadLibraries_progress_async(Collection<AssetLibrary> libraries) {
+    public void loadLibraries_progress_async(Collection<AssetLibrary> libraries, Optional<Consumer<AssetsTableControl<T>>> oOnFinishedLoading) {
         Scene scene = getScene();
         if (scene == null) {
             // Scene not initialized yet, postpone loading of libraries
             Platform.runLater(() -> {
                 Window window = getScene().getWindow();
-                loadLibraries(libraries, window);
+                loadLibraries(libraries, window, oOnFinishedLoading);
             });
             return;
         }
         Window window = scene.getWindow();
-        loadLibraries(libraries, window);
+        loadLibraries(libraries, window, oOnFinishedLoading);
     }
 
-    protected void loadLibraries(Collection<AssetLibrary> libraries, Window window) {
+    protected void loadLibraries(Collection<AssetLibrary> libraries, Window window, Optional<Consumer<AssetsTableControl<T>>> oOnFinishedLoading) {
         mLibraries = libraries;
         mConcurrentUpdater.startUpdate(new Task<>() {
             protected volatile boolean mCancelled = false;
@@ -450,6 +452,9 @@ public class AssetsTableControl<T extends AbstractAssetDescriptor> extends Borde
                     }
                     libraryCounterBase0++;
                 }
+                Platform.runLater(() -> {
+                    oOnFinishedLoading.ifPresent(onFinishedLoading -> onFinishedLoading.accept(AssetsTableControl.this));
+                });
                 return null;
             }
         }, getProgressDialogTitle(mAssetType), window);

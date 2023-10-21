@@ -44,21 +44,26 @@ import javafx.stage.Window;
 
 /**
  * Controller class which wraps each dockable control/node of the application.
+ * This class is not intended to be subclassed.
  *
- * This dockable controller holds a reference to the dockable UI control as well as additional properties describing
- * the dockable's capabilities, e.g. whether it's closeable or if it supports to be a floatable window.
+ * This dockable controller holds a reference to the dockable UI control ("the view") as well as additional properties describing
+ * the dockable's capabilities, e.g. whether it's closeable or if it supports to become a floatable window.
  * Furthermore, this controller holds several constraints for the dockable UI control.
  *
  * The lifetime of this controller is the same as the dockable control it wraps. It is created by the application typically at
- * the creation time of the UI control and should be discarded when the underlaying UI control's lifetime ends. If the UI control
- * supports to be reused after closing it, it can be revived by just calling any of the {@code dockXX} or {@code toFloatingState} methods.
+ * the creation time of the UI control and should be discarded when the underlaying UI control's lifetime ends.
+ * If the docking system is instructed to close the dockable (e.g. if the user presses the dockable's close button), the
+ * {@link #addOnBeforeClosingHandler(Consumer) before-closing-handlers} and the  {@link #addOnClosedHandler(Consumer) closed-handlers}
+ * will fire, even if the view can be reused.
+ * If the UI control supports to be reused after closing it, it can be revived by just calling any of the
+ * {@code dockXX} or {@code toFloatingState} methods again.
  *
  * This dockable can be docked, floating or none of the two (see {@link #dockedProperty()}, {@link #floatingProperty()}).
  * At the time it is docked or floating, this object is referenced by the dock hosts ({@link TabDockHost}, {@link DockableFloatingStage}).
- * When it's neither docked nor floating, this object together with its contained {@link #getView() view} is not referenced by any of the
- * docking system's objects. If it's referenced from the application, it can be revived by just docking to any dock host or by making
- * it floating. If it's not referenced by the application, its lifetime (and the lifetime of the enclosed view) ends at the time when
- * it is closed by the user.
+ * Additionally, dockables are referenced by their {@link ViewLifecycleManager}, which will manage if the dockable supports being
+ * {@link ViewLifecycleManager#isReusableView() reused}. A reusable dockable will "survive" close operations and will just be reused.
+ * If a dockable is not reusable, the view will just forget the dockable's instance on close.
+ * Please read the {@link ViewLifecycleManager}'s documentation about application references to a dockable or it's view.
  *
  * Application components may communicate with the underlaying UI control without the knowledge about the dock system and the dock situation, if
  * they neither interfere with the UI control's location in the node hierarchy nor with it's visibility state.
@@ -73,7 +78,6 @@ public class Dockable<T extends Node> {
         }
     };
 
-    // TODO: Make configurable
     protected double mDefaultWidth = 800;
     protected double mDefaultHeight = 600;
 
@@ -115,11 +119,6 @@ public class Dockable<T extends Node> {
         return new Dockable<>(view, viewId, title, showCloseButton);
     }
 
-    public static <T extends Node> Dockable<T> of(T view, String title, boolean showCloseButton) {
-        String viewId = UUID.randomUUID().toString();
-        return new Dockable<>(view, viewId, title, showCloseButton);
-    }
-
     public T getView() {
         return mView;
     }
@@ -157,6 +156,22 @@ public class Dockable<T extends Node> {
 
     public void setData(Object value) {
         mDataProperty.set(value);
+    }
+
+    public double getDefaultWidth() {
+        return mDefaultWidth;
+    }
+
+    public void setDefaultWidth(double value) {
+        mDefaultWidth = value;
+    }
+
+    public double getDefaultHeight() {
+        return mDefaultHeight;
+    }
+
+    public void setDefaultHeight(double value) {
+        mDefaultHeight = value;
     }
 
     public ObjectProperty<Node> focusControlProperty() {
@@ -301,6 +316,15 @@ public class Dockable<T extends Node> {
         mVisibleProperty.set(false);
     }
 
+    protected boolean requestFocus() {
+        Node focusControl = getFocusControl();
+        if (focusControl == null) {
+            return false;
+        }
+        focusControl.requestFocus();
+        return true;
+    }
+
     /**
      * Removes the underlaying dockable UI control from its current docking host, leaving it outside
      * any node hierarchy.
@@ -405,7 +429,7 @@ public class Dockable<T extends Node> {
             targetDockZone = sdh.getReplacementOrSelf();
         }
 
-        TabDockHost newSibling = targetDockZone.split(side, newDockZoneId, newParentDockZoneId);
+        TabDockHost newSibling = targetDockZone.split(side, newDockZoneId, newParentDockZoneId, DockSystem.getDockHostCreator());
 
         DockableTabControl result = newSibling.addDockable(this, 0);
         mDockableUIRepresentationProperty.set(result);

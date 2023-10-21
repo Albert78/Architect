@@ -64,8 +64,8 @@ public class ChoosePainterMaterialControl extends BorderPane {
         mCurrentMaterialLabel = new Label("-");
         Button chooseMaterialButton = new Button("...");
         chooseMaterialButton.setOnAction(event -> {
-            MaterialChooserDialog dialog = MaterialChooserDialog.createWithProgressIndicator(mAssetLoader, Strings.THREE_D_PAINTER_BEHAVIOR_CHOOSE_MATERIAL_DIALOG_TITLE);
-            dialog.selectMaterial(mSelectedMaterial);
+            MaterialChooserDialog dialog = MaterialChooserDialog.createWithProgressIndicator(mAssetLoader, Strings.THREE_D_PAINTER_BEHAVIOR_CHOOSE_MATERIAL_DIALOG_TITLE,
+                mcd -> mcd.selectMaterial(mSelectedMaterial));
             Optional<AssetRefPath> oRes = dialog.showAndWait();
             oRes.ifPresent(mrp -> {
                 setMaterial(mrp);

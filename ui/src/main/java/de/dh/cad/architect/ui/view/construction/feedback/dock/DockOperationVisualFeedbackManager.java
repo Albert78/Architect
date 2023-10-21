@@ -17,14 +17,17 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.view.construction.feedback.dock;
 
-import de.dh.cad.architect.ui.objects.PositionMarkerAncillary;
+import de.dh.cad.architect.ui.objects.ConnectionArrowAncillary;
+import de.dh.cad.architect.ui.objects.PositionCircleMarkerAncillary;
+import de.dh.cad.architect.ui.objects.PositionCrossMarkerAncillary;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
 import de.dh.cad.architect.ui.view.construction.feedback.AncillaryPosition;
 
 public class DockOperationVisualFeedbackManager {
     protected final ConstructionView mView;
-    protected PositionMarkerAncillary mSourceAnchorMarker = null;
-    protected PositionMarkerAncillary mTargetAnchorMarker = null;
+    protected PositionCircleMarkerAncillary mSourceAnchorMarker = null;
+    protected PositionCrossMarkerAncillary mTargetAnchorMarker = null;
+    protected ConnectionArrowAncillary mArcArrow = null;
 
     public DockOperationVisualFeedbackManager(ConstructionView view) {
         mView = view;
@@ -38,22 +41,34 @@ public class DockOperationVisualFeedbackManager {
             }
         } else {
             if (mSourceAnchorMarker == null) {
-                mSourceAnchorMarker = new PositionMarkerAncillary(mView);
+                mSourceAnchorMarker = new PositionCircleMarkerAncillary(mView);
                 mView.addAncillaryObject(mSourceAnchorMarker);
             }
             mSourceAnchorMarker.update(sourcePosition);
         }
-        if (sourcePosition == null) {
+        if (targetPosition == null) {
             if (mTargetAnchorMarker != null) {
                 mView.removeAncillaryObject(mTargetAnchorMarker.getAncillaryObjectId());
                 mTargetAnchorMarker = null;
             }
         } else {
             if (mTargetAnchorMarker == null) {
-                mTargetAnchorMarker = new PositionMarkerAncillary(mView);
+                mTargetAnchorMarker = new PositionCrossMarkerAncillary(mView);
                 mView.addAncillaryObject(mTargetAnchorMarker);
             }
             mTargetAnchorMarker.update(targetPosition);
+        }
+        if (sourcePosition != null && targetPosition != null) {
+            if (mArcArrow == null) {
+                mArcArrow = new ConnectionArrowAncillary(mView);
+                mView.addAncillaryObject(mArcArrow);
+            }
+            mArcArrow.update(sourcePosition, targetPosition);
+        } else {
+            if (mArcArrow != null) {
+                mView.removeAncillaryObject(mArcArrow.getAncillaryObjectId());
+                mArcArrow = null;
+            }
         }
     }
 

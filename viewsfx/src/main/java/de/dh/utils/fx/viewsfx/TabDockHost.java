@@ -20,7 +20,6 @@ package de.dh.utils.fx.viewsfx;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import de.dh.utils.fx.viewsfx.DockDragOperation.DockDefinition;
 import javafx.beans.value.ChangeListener;
@@ -41,7 +40,7 @@ import javafx.scene.layout.StackPane;
  * There will always be at least one tab dock host per {@link DockAreaControl}. If no dockables are
  * currently docked, that tab dock host is the only child of the dock host control and it is empty.
  */
-public final class TabDockHost extends StackPane implements IDockZone {
+public non-sealed class TabDockHost extends StackPane implements IDockZone {
     protected enum TabHostDockPosition {
         North, South, East, West, Center
     }
@@ -101,17 +100,17 @@ public final class TabDockHost extends StackPane implements IDockZone {
     }
 
     public static class DockableTabControl extends Tab implements IDockableUIRepresentation {
-        protected final ChangeListener<? super String> mTitleListener = (observable, oldValue, newValue) -> {
-            setText(newValue);
-        };
-
         protected final Dockable<?> mDockable;
         protected final TabDockHost mTabDockHost;
-        protected final Label mTitleLabel;
+        protected final Label mTitleLabel = new Label();
+
+        protected final ChangeListener<? super String> mTitleListener = (observable, oldValue, newValue) -> {
+            mTitleLabel.setText(newValue);
+        };
 
         public DockableTabControl(Dockable<?> dockable, TabDockHost tabDockHost) {
             mDockable = dockable;
-            mTitleLabel = new Label(dockable.getDockableTitle());
+            mTitleLabel.setText(dockable.getDockableTitle());
             setGraphic(mTitleLabel); // We use our own Label to enable adding our drag & drop event handlers
             mDockable.titleProperty().addListener(mTitleListener);
             // TODO: Graphic, ToolTip
@@ -181,17 +180,13 @@ public final class TabDockHost extends StackPane implements IDockZone {
         occupyDockZone(dockZoneId, dockZoneParent);
     }
 
-    public static TabDockHost create(IDockZoneParent parentDockHost) {
-        return create(parentDockHost, UUID.randomUUID().toString(), UUID.randomUUID().toString());
-    }
-
     public static TabDockHost create(IDockZoneParent dockZoneParent, String dockZoneId, String tabDockHostId) {
         TabDockHost result = new TabDockHost(tabDockHostId, dockZoneId, dockZoneParent);
         result.initialize();
         return result;
     }
 
-    protected void initialize() {
+    public void initialize() {
         DockSystem.installDragTargetEventHandlers(mTabPane, new IDockDragTargetHandlers() {
             @Override
             public boolean handleDragEntered(DockDragOperation operation, double dragPositionX, double dragPositionY) {
@@ -294,6 +289,11 @@ public final class TabDockHost extends StackPane implements IDockZone {
     public void occupyDockZone(String dockZoneId, IDockZoneParent dockZoneParent) {
         mDockZoneId = dockZoneId;
         mDockZoneParent = dockZoneParent;
+    }
+
+    // To be overridden
+    public boolean isClosable() {
+        return true;
     }
 
     public boolean isSingleChild(IDockableUIRepresentation representation) {
@@ -495,7 +495,7 @@ public final class TabDockHost extends StackPane implements IDockZone {
         // Not necessary to remove the event handlers but we installed it so we will also clean up...
         DockSystem.removeDragSourceEventHandlers(dockableTab.getTitleLabel());
 
-        if (tabs.isEmpty()) {
+        if (tabs.isEmpty() && isClosable()) {
             getDockZoneParent().invalidateLeaf(this);
         }
     }

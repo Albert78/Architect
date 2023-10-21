@@ -35,6 +35,10 @@
         </dependency>
         <dependency>
             <groupId>de.dh.cad.architect</groupId>
+            <artifactId>libraryeditor</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>de.dh.cad.architect</groupId>
             <artifactId>utilities</artifactId>
         </dependency>
 

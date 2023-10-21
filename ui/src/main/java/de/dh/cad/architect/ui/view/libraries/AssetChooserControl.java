@@ -23,6 +23,7 @@ import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.function.Consumer;
 
 import de.dh.cad.architect.model.assets.AbstractAssetDescriptor;
 import de.dh.cad.architect.model.assets.AssetLibrary;
@@ -131,16 +132,17 @@ public class AssetChooserControl<T extends AbstractAssetDescriptor> extends Bord
         return mAssetsTableControl;
     }
 
-    public void loadLibraries() {
+    public void loadLibraries(Optional<Consumer<AssetChooserControl<T>>> oOnFinishedLoading) {
         Collection<AssetLibrary> libraries = mAssetLoader.getAssetManager().getAssetLibraries().values()
                         .stream()
                         .map(LibraryData::getLibrary)
                         .toList();
-        loadLibraries(libraries);
+        loadLibraries(libraries, oOnFinishedLoading);
     }
 
-    public void loadLibraries(Collection<AssetLibrary> libraries) {
-        mAssetsTableControl.loadLibraries_progress_async(libraries);
+    public void loadLibraries(Collection<AssetLibrary> libraries, Optional<Consumer<AssetChooserControl<T>>> oOnFinishedLoading) {
+        mAssetsTableControl.loadLibraries_progress_async(libraries, oOnFinishedLoading
+            .map(onFinishedLoading -> atc -> onFinishedLoading.accept(AssetChooserControl.this)));
     }
 
     protected void setContentControl(Node control) {

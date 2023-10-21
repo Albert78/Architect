@@ -25,7 +25,7 @@ public interface IDockZoneParent {
 
     /**
      * Tells this parent that the given child is invalid, i.e. doesn't have any more valid content to
-     * show. This parent will decide if the child should be removed or retained.
+     * show. The receiving parent will decide if the child should be removed or retained.
      */
     void invalidateLeaf(TabDockHost child);
 
@@ -42,6 +42,7 @@ public interface IDockZoneParent {
      * @param replaceChild Child dock zone of this dock zone parent which should be replaced by a sash.
      * @param newChildDockZoneId New dock zone ID which is assigned to the child when it is moved down the hierarchy.
      * @param emptySide Side where the new sash should be empty; the {@code replaceChild} will be set at the opposite side.
+     * @param dockHostCreator Creator for dock hosts.
      */
-    SashDockHost replaceWithSash(IDockZone replaceChild, String newChildDockZoneId, DockSide emptySide);
+    SashDockHost replaceWithSash(IDockZone replaceChild, String newChildDockZoneId, DockSide emptySide, IDockHostCreator dockHostCreator);
 }

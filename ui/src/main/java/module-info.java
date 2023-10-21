@@ -21,6 +21,7 @@ module de.dh.cad.architect.ui {
     exports de.dh.cad.architect.ui.utils;
     exports de.dh.cad.architect.ui.assets;
     exports de.dh.cad.architect.ui.persistence;
+    exports de.dh.cad.architect.ui.logoutput;
     exports de.dh.cad.architect.ui.view.libraries;
     opens de.dh.cad.architect.ui.view;
     opens de.dh.cad.architect.ui.controls;

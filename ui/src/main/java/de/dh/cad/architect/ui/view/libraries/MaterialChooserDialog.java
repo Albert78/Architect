@@ -18,6 +18,7 @@
 package de.dh.cad.architect.ui.view.libraries;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import de.dh.cad.architect.model.assets.AssetRefPath;
 import de.dh.cad.architect.ui.Constants;
@@ -33,6 +34,9 @@ import javafx.scene.control.DialogPane;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 
+/**
+ * Dialog for choosing a material from the asset library.
+ */
 public class MaterialChooserDialog extends Dialog<AssetRefPath> {
     protected static final int DIALOG_MIN_WIDTH = 1200;
     protected static final int DIALOG_MIN_HEIGHT = 400;
@@ -79,13 +83,22 @@ public class MaterialChooserDialog extends Dialog<AssetRefPath> {
     }
 
     public static MaterialChooserDialog createWithProgressIndicator(AssetLoader assetLoader, String dialogTitle) {
+        return createWithProgressIndicator(assetLoader, dialogTitle, Optional.empty());
+    }
+
+    public static MaterialChooserDialog createWithProgressIndicator(AssetLoader assetLoader, String dialogTitle, Consumer<MaterialChooserDialog> onFinishedLoading) {
+        return createWithProgressIndicator(assetLoader, dialogTitle, Optional.of(onFinishedLoading));
+    }
+
+    public static MaterialChooserDialog createWithProgressIndicator(AssetLoader assetLoader, String dialogTitle, Optional<Consumer<MaterialChooserDialog>> oOnFinishedLoading) {
         MaterialChooserDialog result = new MaterialChooserDialog(assetLoader, dialogTitle);
-        result.loadLibraries();
+        result.loadLibraries(oOnFinishedLoading);
         return result;
     }
 
-    protected void loadLibraries() {
-        mMaterialChooserControl.loadLibraries();
+    protected void loadLibraries(Optional<Consumer<MaterialChooserDialog>> oOnFinishedLoading) {
+        mMaterialChooserControl.loadLibraries(oOnFinishedLoading
+            .map(onFinishedLoading -> mcc -> onFinishedLoading.accept(MaterialChooserDialog.this)));
     }
 
     protected void validate() {

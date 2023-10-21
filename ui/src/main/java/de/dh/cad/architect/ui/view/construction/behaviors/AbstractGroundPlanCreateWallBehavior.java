@@ -34,7 +34,7 @@ import de.dh.cad.architect.ui.objects.BaseObjectUIRepresentation;
 import de.dh.cad.architect.ui.objects.FloorConstructionRepresentation;
 import de.dh.cad.architect.ui.objects.WallConstructionRepresentation;
 import de.dh.cad.architect.ui.view.AbstractUiMode;
-import de.dh.cad.architect.ui.view.construction.GroundPlanLowerUIElementFilter;
+import de.dh.cad.architect.ui.view.construction.GroundPlanLowerUIElementsFilter;
 import de.dh.cad.architect.ui.view.construction.feedback.wall.endings.AbstractWallEnding;
 import de.dh.cad.architect.ui.view.construction.feedback.wall.endings.AbstractWallEnding.AbstractWallEndConfiguration;
 import de.dh.cad.architect.ui.view.construction.feedback.wall.endings.DockedWallEnding;
@@ -61,7 +61,7 @@ public abstract class AbstractGroundPlanCreateWallBehavior extends AbstractConst
 
     @Override
     protected void initializeUiElementFilter() {
-        setUIElementFilter(new GroundPlanLowerUIElementFilter());
+        setUIElementFilter(new GroundPlanLowerUIElementsFilter());
     }
 
     protected UnconnectedWallEnding createUnconnectedWallEnd(Position2D position, boolean isStart) {

@@ -123,7 +123,6 @@ public abstract class BaseObject implements Comparable<BaseObject> {
         });
     }
 
-
     /**
      * Internal method to be used in model module.
      * Clients should call {@link ObjectsGroup#addObject(BaseObject, ChangeSet)}.

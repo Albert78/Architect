@@ -27,8 +27,10 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.dh.utils.fx.viewsfx.DockViewLocationDescriptor.DockZoneSplitting;
-import de.dh.utils.fx.viewsfx.ViewsRegistry.ViewLifecycleManager;
 import de.dh.utils.fx.viewsfx.layout.AbstractDockLayoutDescriptor;
 import de.dh.utils.fx.viewsfx.layout.FloatingViewLayoutDescriptor;
 import de.dh.utils.fx.viewsfx.layout.PerspectiveDescriptor;
@@ -44,6 +46,7 @@ import de.dh.utils.fx.viewsfx.state.ViewDockState;
 import de.dh.utils.fx.viewsfx.state.ViewsLayoutState;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DataFormat;
@@ -51,21 +54,29 @@ import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.robot.Robot;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 
 /**
- * Static context for transferring dragged content.
+ * Central dock system management.
+ * This class acts as central context for all necessary objects like the {@link IViewsManager views manager}, the {@link DockAreaControl dock area controls},
+ * the {@link PerspectiveDescriptor current perspective}, the {@link IDockHostCreator dock host creator} and all internal state like
+ * the main window, the current floating windows and the current drag operation, if present.
  */
 public class DockSystem {
+    private static final Logger log = LoggerFactory.getLogger(DockSystem.class);
+
     protected static final DataFormat DND_DATAFORMAT = new DataFormat("DockSystem");
     protected static final String DND_PLACEHOLDER = "DockSystem DND Operation";
 
     protected static Optional<DockDragOperation> mCurrentDragOperation = Optional.empty();
     protected static Stage mMainWindow = null;
-    protected static ViewsRegistry mViewsRegistry = new ViewsRegistry();
+    protected static IViewsManager mViewsManager = new ViewsRegistry();
     protected static Map<String, DockAreaControl> mDockAreaControls = new HashMap<>();
     protected static PerspectiveDescriptor mPerspectiveLayout = new PerspectiveDescriptor(Collections.emptyMap(), Collections.emptyList(), Collections.emptyList());
 
     protected static ObservableList<DockableFloatingStage> mFloatingStages = FXCollections.observableArrayList();
+
+    protected static IDockHostCreator mDockHostCreator = new DefaultDockHostCreator();
 
     static void notifyNewStage(DockableFloatingStage stage) {
         mFloatingStages.add(stage);
@@ -130,16 +141,17 @@ public class DockSystem {
                 // place in screen.
                 // In this case, we will create a floating stage as drop target.
 
-                // JavaFX 17:
+                // JavaFX 20:
                 // - Bug: We are also routed to this position if the user had pressed the escape key. In that situation,
                 //   the drop operation actually should be cancelled. But unfortunately, we cannot distinguish between
-                //   "normal" mouse release and a press of the escape key here, can we?
+                //   "normal" mouse release and a press of the escape key here. Even the key event filter in
+                //   DockDragOperation isn't fired during the drag&drop operation. Is there a way to solve this?
                 // - The given DragEvent doesn't contain sensible mouse coordinates, that's why we use Robot.
                 //   Is there a better solution?
                 Robot r = new Robot();
                 DockableFloatingStage dfs = dockable.toFloatingState(mMainWindow, r.getMouseX(), r.getMouseY());
                 dfs.requestFocus();
-                DockSystem.finishDragOperation();
+                finishDragOperation();
             });
         });
     }
@@ -199,8 +211,17 @@ public class DockSystem {
         dragTarget.setOnDragDropped(null);
     }
 
-    public static ViewsRegistry getViewsRegistry() {
-        return mViewsRegistry;
+    /**
+     * Gets the views manager for this system. The default views manager implementation, {@link ViewsRegistry}, maintains
+     * a static set of view lifecycle managers which are known beforehand.
+     * The application is free to set a different views manager.
+     */
+    public static IViewsManager getViewsManager() {
+        return mViewsManager;
+    }
+
+    public static void setViewsManager(IViewsManager value) {
+        mViewsManager = value;
     }
 
     public static Map<String, DockAreaControl> getDockAreaControlsRegistry() {
@@ -213,7 +234,7 @@ public class DockSystem {
 
     public static Optional<TabDockHost> tryGetOrCreateTabDockHost(DockViewLocationDescriptor location) {
         for (DockAreaControl dockAreaControl : mDockAreaControls.values()) {
-            Optional<TabDockHost> res = dockAreaControl.getOrTryCreateDockHost(location);
+            Optional<TabDockHost> res = dockAreaControl.getOrTryCreateDockHost(location, mDockHostCreator);
             if (res.isPresent()) {
                 return res;
             }
@@ -246,6 +267,9 @@ public class DockSystem {
         return Optional.empty();
     }
 
+    /**
+     * Gets the view location for the given {@code tabDockHostId} in the current perspective.
+     */
     public static Optional<DockViewLocationDescriptor> getViewLocationDescriptorForTabDockHost(String tabDockHostId) {
         for (Entry<String, AbstractDockLayoutDescriptor> entry : mPerspectiveLayout.getDockAreaLayouts().entrySet()) {
             String dockAreaId = entry.getKey();
@@ -262,8 +286,24 @@ public class DockSystem {
         return mMainWindow;
     }
 
+    /**
+     * Sets the primary stage of the application. This must be done by the application before the {@link DockSystem} can
+     * manage any views layouting (e.g. restoring the layout, resetting the perspective etc.).
+     */
     public static void setMainWindow(Stage primaryStage) {
         mMainWindow = primaryStage;
+    }
+
+    /**
+     * Sets a custom dock host creator to be able to create own dock hosts.
+     * This can make sense for example to create a special editor tab dock host for the editor dock zone.
+     */
+    public static void setDockHostCreator(IDockHostCreator value) {
+        mDockHostCreator = value;
+    }
+
+    public static IDockHostCreator getDockHostCreator() {
+        return mDockHostCreator;
     }
 
     /**
@@ -283,32 +323,6 @@ public class DockSystem {
      */
     public static void setPerspectiveLayout(PerspectiveDescriptor value) {
         mPerspectiveLayout = value;
-    }
-
-    /**
-     * Resets all dock areas and floating views to the default state declared in the current perspective.
-     */
-    public static void resetPerspective() {
-        ViewsLayoutState layoutState = calculateTargetStateForPerspective(mPerspectiveLayout);
-        restoreLayoutState(layoutState);
-    }
-
-    /**
-     * Gets the current views layout state which can be stored to a persistent place and restored by calling
-     * {@link #restoreLayoutState(ViewsLayoutState)}.
-     */
-    public static ViewsLayoutState saveLayoutState() {
-        ViewsLayoutState result = new ViewsLayoutState();
-
-        for (Entry<String, DockAreaControl> entry : mDockAreaControls.entrySet()) {
-            String dockAreaId = entry.getKey();
-            DockAreaControl dockAreaControl = entry.getValue();
-            result.getDockLayouts().put(dockAreaId, dockAreaControl.saveLayout());
-        }
-
-        List<FloatingViewState> floatingViewStates = DockSystem.getViewsRegistry().storeFloatingViewStates();
-        result.getFloatingWindowStates().addAll(floatingViewStates);
-        return result;
     }
 
     /**
@@ -389,8 +403,9 @@ public class DockSystem {
     /**
      * Materializes the views layout state according to the default views declared in the perspective and their
      * default layout.
+     * The returned {@link ViewsLayoutState} can be restored in the UI by calling {@link #restoreLayoutState(ViewsLayoutState)}.
      */
-    public static ViewsLayoutState calculateTargetStateForPerspective(PerspectiveDescriptor perspective) {
+    public static ViewsLayoutState buildTargetStateForPerspective(PerspectiveDescriptor perspective) {
         Map<String, AbstractDockZoneState> dockLayouts = new HashMap<>();
         Collection<FloatingViewState> floatingViewStates = new ArrayList<>();
 
@@ -398,7 +413,7 @@ public class DockSystem {
         Map<String, Collection<String>> tabDockHostsToViewIds = new HashMap<>();
         Collection<String> defaultViewIds = perspective.getDefaultViewIds();
         for (String viewId : defaultViewIds) {
-            ViewLifecycleManager<?> viewLifecycleManager = mViewsRegistry.getViewLifecycleManager(viewId);
+            ViewLifecycleManager<?> viewLifecycleManager = mViewsManager.getViewLifecycleManager(viewId);
             if (viewLifecycleManager != null) {
                 viewLifecycleManager.getPreferredViewLocation().ifPresent(vld -> {
                     if (vld instanceof DockViewLocationDescriptor dvld) {
@@ -420,7 +435,7 @@ public class DockSystem {
             dockLayouts.put(dockAreaId, rootDockZoneState);
         }
 
-        // Translates all
+        // Build all floating view states
         for (FloatingViewLayoutDescriptor layoutDescriptor : perspective.getFloatingViewLayouts()) {
             FloatingViewState state = new FloatingViewState(
                 layoutDescriptor.getViewId(),
@@ -432,6 +447,56 @@ public class DockSystem {
         }
 
         return new ViewsLayoutState(dockLayouts, floatingViewStates);
+    }
+
+    protected static void restoreFloatingViews(Collection<FloatingViewState> floatingViewStates, Window floatingWindowsOwner) {
+        for (FloatingViewState vs : floatingViewStates) {
+            String viewId = vs.getViewId();
+
+            ViewLifecycleManager<?> viewLifecycleManager = mViewsManager.getViewLifecycleManagers().get(viewId);
+            if (viewLifecycleManager == null) {
+                log.warn("Unable to restore view settings for view '" + viewId + "', view is not present in registry");
+                continue;
+            }
+            Dockable<?> dockable = viewLifecycleManager.getOrCreateDockable();
+            dockable.toFloatingState(floatingWindowsOwner, vs.getFloatingPositionX(), vs.getFloatingPositionY(), vs.getFloatingWidth(), vs.getFloatingHeight());
+        }
+    }
+
+    protected static List<FloatingViewState> storeFloatingViewStates() {
+        List<FloatingViewState> result = new ArrayList<>();
+        for (ViewLifecycleManager<?> viewLifecycleManager : mViewsManager.getViewLifecycleManagers().values()) {
+            String viewId = viewLifecycleManager.getViewId();
+            viewLifecycleManager.getDockable().ifPresent(dockable -> {
+                dockable.getViewLocation().ifPresent(dvl -> {
+                    if (dvl instanceof FloatingViewLocation fvl)   {
+                       Bounds floatingArea = fvl.getFloatingArea();
+                       result.add(new FloatingViewState(viewId,
+                           (int) floatingArea.getMinX(), (int) floatingArea.getMinY(),
+                           (int) floatingArea.getWidth(), (int) floatingArea.getHeight()));
+                   }
+                });
+            });
+        }
+        return result;
+    }
+
+    /**
+     * Gets the current views layout state which can be stored to a persistent place and restored later by calling
+     * {@link #restoreLayoutState(ViewsLayoutState)}.
+     */
+    public static ViewsLayoutState saveLayoutState() {
+        ViewsLayoutState result = new ViewsLayoutState();
+
+        for (Entry<String, DockAreaControl> entry : mDockAreaControls.entrySet()) {
+            String dockAreaId = entry.getKey();
+            DockAreaControl dockAreaControl = entry.getValue();
+            result.getDockLayouts().put(dockAreaId, dockAreaControl.saveLayout());
+        }
+
+        List<FloatingViewState> floatingViewStates = storeFloatingViewStates();
+        result.getFloatingWindowStates().addAll(floatingViewStates);
+        return result;
     }
 
     /**
@@ -446,10 +511,18 @@ public class DockSystem {
             AbstractDockZoneState dockZoneState = dockZoneStates.get(dockAreaId);
             if (dockZoneState != null) {
                 DockAreaControl dockAreaControl = entry.getValue();
-                dockAreaControl.restoreLayout(dockZoneState);
+                dockAreaControl.restoreLayout(dockZoneState, mViewsManager, mDockHostCreator);
             }
         }
 
-        mViewsRegistry.restoreFloatingViews(layoutState.getFloatingWindowStates(), mMainWindow);
+        restoreFloatingViews(layoutState.getFloatingWindowStates(), mMainWindow);
+    }
+
+    /**
+     * Resets all dock areas and floating views to the default state declared in the current perspective.
+     */
+    public static void resetPerspective() {
+        ViewsLayoutState layoutState = buildTargetStateForPerspective(mPerspectiveLayout);
+        restoreLayoutState(layoutState);
     }
 }

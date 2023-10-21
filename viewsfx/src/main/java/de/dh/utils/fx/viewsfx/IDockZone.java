@@ -27,7 +27,6 @@ import de.dh.utils.fx.sash.Sash;
 import de.dh.utils.fx.sash.SashEx.PaneSide;
 import de.dh.utils.fx.sash.SashEx.StateOverride;
 import de.dh.utils.fx.viewsfx.TabDockHost.DockableTabControl;
-import de.dh.utils.fx.viewsfx.ViewsRegistry.ViewLifecycleManager;
 import de.dh.utils.fx.viewsfx.state.AbstractDockZoneState;
 import de.dh.utils.fx.viewsfx.state.SashDockZoneState;
 import de.dh.utils.fx.viewsfx.state.SashDockZoneState.MaximizedZone;
@@ -125,20 +124,21 @@ public sealed interface IDockZone permits TabDockHost, SashDockHost {
             }
             return result;
         } else {
-            throw new RuntimeException("Sealed class, this case is not permitted");
+            throw new RuntimeException("Sealed interface " + IDockZone.class.getSimpleName() + " doesn't permit sub class " + getClass().getSimpleName());
         }
     }
 
-    static IDockZone restoreLayout(IDockZoneParent parentDockHost, AbstractDockZoneState dockZoneSettings, ViewsRegistry viewsRegistry) {
+    static IDockZone restoreLayout(IDockZoneParent parentDockHost, AbstractDockZoneState dockZoneSettings,
+        IViewsManager viewsManager, IDockHostCreator dockHostCreator) {
         Logger log = LoggerFactory.getLogger(ViewsRegistry.class);
         if (dockZoneSettings instanceof TabHostDockZoneState tdhdzs) {
             String dockZoneId = tdhdzs.getDockZoneId();
             String tabDockHostId = tdhdzs.getTabDockHostId();
-            TabDockHost result = TabDockHost.create(parentDockHost, dockZoneId, tabDockHostId);
+            TabDockHost result = dockHostCreator.createTabDockHost(parentDockHost, dockZoneId, tabDockHostId);
             DockableTabControl selectedTab = null;
             for (ViewDockState vds : tdhdzs.getViewDockStates()) {
                 String viewId = vds.getViewId();
-                ViewLifecycleManager<?> viewLifecycleManager = viewsRegistry.getViewLifecycleManager(viewId);
+                ViewLifecycleManager<?> viewLifecycleManager = viewsManager.getViewLifecycleManager(viewId);
                 if (viewLifecycleManager == null) {
                     log.warn("Unable to find declaration for view '" + viewId + "', view is not present in registry");
                     continue;
@@ -162,11 +162,11 @@ public sealed interface IDockZone permits TabDockHost, SashDockHost {
             return result;
         } else if (dockZoneSettings instanceof SashDockZoneState sdzs) {
             String dockZoneId = sdzs.getDockZoneId();
-            SashDockHost result = SashDockHost.create(dockZoneId, parentDockHost);
+            SashDockHost result = dockHostCreator.createSashDockHost(dockZoneId, parentDockHost);
             result.setOrientation(toFxOrientation(sdzs.getOrientation()));
             result.setZones(
-                restoreLayout(result, sdzs.getZoneStateA(), viewsRegistry),
-                restoreLayout(result, sdzs.getZoneStateB(), viewsRegistry),
+                restoreLayout(result, sdzs.getZoneStateA(), viewsManager, dockHostCreator),
+                restoreLayout(result, sdzs.getZoneStateB(), viewsManager, dockHostCreator),
                 sdzs.getDividerPosition());
             // Maximize pane after setting the divider's position because the position will be
             // used for the overridden state in our sash
@@ -186,15 +186,15 @@ public sealed interface IDockZone permits TabDockHost, SashDockHost {
         }
     }
 
-    default TabDockHost split(DockSide side, String newDockHostId, String newDockZoneId) {
-        return split(side, newDockHostId, newDockZoneId, 0.5);
+    default TabDockHost split(DockSide side, String newDockHostId, String newDockZoneId, IDockHostCreator dockHostCreator) {
+        return split(side, newDockHostId, newDockZoneId, 0.5, dockHostCreator);
     }
 
-    default TabDockHost split(DockSide side, String newDockHostId, String newDockZoneId, double dividerPosition) {
+    default TabDockHost split(DockSide side, String newDockHostId, String newDockZoneId, double dividerPosition, IDockHostCreator dockHostCreator) {
         IDockZoneParent dockZoneParent = getDockZoneParent();
 
-        SashDockHost sdh = dockZoneParent.replaceWithSash(this, newDockZoneId, side);
-        TabDockHost result = TabDockHost.create(sdh, newDockZoneId, newDockHostId);
+        SashDockHost sdh = dockZoneParent.replaceWithSash(this, newDockZoneId, side, dockHostCreator);
+        TabDockHost result = dockHostCreator.createTabDockHost(sdh, newDockZoneId, newDockHostId);
         Sash sash = sdh.getSash();
 
         switch (side) {

@@ -247,11 +247,11 @@ public final class SashDockHost extends StackPane implements IDockZoneParent, ID
     }
 
     @Override
-    public SashDockHost replaceWithSash(IDockZone replaceChild, String newChildDockZoneId, DockSide emptySide) {
+    public SashDockHost replaceWithSash(IDockZone replaceChild, String newChildDockZoneId, DockSide emptySide, IDockHostCreator dockHostCreator) {
         Node innerNode = (Node) replaceChild;
         DockSide dockedSide = SashUtils.getDockSideOfItem(mSash, (Node) replaceChild)
                 .orElseThrow(() -> new IllegalStateException("Zone to be replaced is no child of this dock host"));
-        SashDockHost result = SashDockHost.create(replaceChild.getDockZoneId(), this);
+        SashDockHost result = dockHostCreator.createSashDockHost(replaceChild.getDockZoneId(), this);
         SashUtils.setSashItem(result.getSash(), emptySide.opposite(), innerNode);
         replaceChild.occupyDockZone(newChildDockZoneId, result);
         SashUtils.setSashItem(mSash, dockedSide, result);

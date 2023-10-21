@@ -22,6 +22,7 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.function.Consumer;
 
 import de.dh.cad.architect.model.assets.AssetLibrary;
 import de.dh.cad.architect.model.assets.AssetRefPath;
@@ -107,16 +108,18 @@ public class MaterialChooserControl extends BorderPane implements Initializable 
         }
     }
 
-    public void loadLibraries() {
+    public void loadLibraries(Optional<Consumer<MaterialChooserControl>> oOnFinishedLoading) {
         Collection<AssetLibrary> libraries = mAssetLoader.getAssetManager().getAssetLibraries().values()
                         .stream()
                         .map(LibraryData::getLibrary)
                         .toList();
-        loadLibraries(libraries);
+        loadLibraries(libraries, oOnFinishedLoading);
     }
 
-    public void loadLibraries(Collection<AssetLibrary> libraries) {
-        mAssetsTableControl.loadLibraries_progress_async(libraries);
+    public void loadLibraries(Collection<AssetLibrary> libraries, Optional<Consumer<MaterialChooserControl>> oOnFinishedLoading) {
+        mAssetsTableControl.loadLibraries_progress_async(libraries,
+            oOnFinishedLoading
+                .map(onFinishedLoading -> (atc) -> onFinishedLoading.accept(MaterialChooserControl.this)));
     }
 
     ChangeListener<MaterialDescriptor> SELECTED_MATERIAL_CHANGE_LISTENER = new ChangeListener<>() {

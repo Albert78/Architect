@@ -29,10 +29,12 @@ import de.dh.cad.architect.ui.objects.Abstract2DRepresentation;
 import de.dh.cad.architect.ui.objects.AnchorConstructionRepresentation;
 import de.dh.cad.architect.ui.objects.BaseObjectUIRepresentation;
 import de.dh.cad.architect.ui.view.AbstractUiMode;
+import de.dh.cad.architect.ui.view.construction.AllUIElementsVisibleFilter;
 
 public class PermanentDockBehavior extends AbstractDockBehavior {
     public PermanentDockBehavior(AnchorConstructionRepresentation handleAnchorRepresentation, AbstractUiMode<Abstract2DRepresentation, Abstract2DAncillaryObject> parentMode) {
         super(handleAnchorRepresentation, parentMode);
+        setUIElementFilter(new AllUIElementsVisibleFilter());
     }
 
     @Override

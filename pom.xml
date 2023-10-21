@@ -85,6 +85,11 @@
             </dependency>
             <dependency>
                 <groupId>de.dh.cad.architect</groupId>
+                <artifactId>libraryeditor</artifactId>
+                <version>${architect-modules-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>de.dh.cad.architect</groupId>
                 <artifactId>utilities</artifactId>
                 <version>${architect-modules-version}</version>
             </dependency>
@@ -183,6 +188,7 @@
         <module>fxutils</module>
         <module>ui</module>
         <module>main</module>
+        <module>libraryeditor</module>
         <module>libraryimporter</module>
         <module>codeeditors</module>
     </modules>

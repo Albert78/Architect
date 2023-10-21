@@ -27,6 +27,7 @@ import de.dh.cad.architect.model.assets.SupportObjectDescriptor;
 import de.dh.cad.architect.model.objects.Anchor;
 import de.dh.cad.architect.model.objects.BaseObject;
 import de.dh.cad.architect.model.objects.ObjectsGroup;
+import de.dh.cad.architect.ui.IConfig;
 import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.objects.Abstract2DAncillaryObject;
 import de.dh.cad.architect.ui.objects.Abstract2DRepresentation;
@@ -37,6 +38,8 @@ import de.dh.cad.architect.ui.view.construction.SupportObjectsUIElementFilter;
 import de.dh.cad.architect.ui.view.libraries.AssetChooserDialog;
 
 public class SupportObjectsDefaultBehavior extends AbstractConstructionBehavior {
+    protected static final String KEY_LAST_SELECTED_SUPPORT_OBJECT_DESCRIPTOR = "LastSelectedSupportObjectDescriptorId";
+
     public SupportObjectsDefaultBehavior(AbstractUiMode<Abstract2DRepresentation, Abstract2DAncillaryObject> parentMode) {
         super(parentMode);
         setUIElementFilter(new SupportObjectsUIElementFilter());
@@ -108,6 +111,7 @@ public class SupportObjectsDefaultBehavior extends AbstractConstructionBehavior 
     }
 
     protected IContextAction createAddSupportObjectAction() {
+        IConfig config = getUiController().getConfiguration();
         return new IContextAction() {
             @Override
             public String getTitle() {
@@ -116,13 +120,16 @@ public class SupportObjectsDefaultBehavior extends AbstractConstructionBehavior 
 
             @Override
             public void execute() {
+                Optional<String> oLastSODId = Optional.ofNullable(config.getString(KEY_LAST_SELECTED_SUPPORT_OBJECT_DESCRIPTOR, null));
                 AssetChooserDialog<SupportObjectDescriptor> dialog = AssetChooserDialog.createWithProgressIndicator(
-                    getUiController().getAssetManager().buildAssetLoader(), Strings.SUPPORT_OBJECTS_DEFAULT_BEHAVIOR_CHOOSE_SUPPORT_OBJECT_TO_ADD, AssetType.SupportObject);
+                    getUiController().getAssetManager().buildAssetLoader(), Strings.SUPPORT_OBJECTS_DEFAULT_BEHAVIOR_CHOOSE_SUPPORT_OBJECT_TO_ADD, AssetType.SupportObject,
+                    oLastSODId.map(lastSODId -> acd -> acd.selectAsset(lastSODId)));
 
                 Optional<SupportObjectDescriptor> soResult = dialog.showAndWait();
 
                 if (soResult.isPresent()) {
                     SupportObjectDescriptor sod = soResult.get();
+                    config.setString(KEY_LAST_SELECTED_SUPPORT_OBJECT_DESCRIPTOR, sod.getId());
 
                     mParentMode.setBehavior(SupportObjectsAddSupportObjectBehavior.newSupportObject(sod, mParentMode));
                 }

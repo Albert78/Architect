@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import de.dh.cad.architect.model.assets.AssetRefPath;
 import de.dh.cad.architect.ui.assets.AssetLoader;
 import de.dh.utils.Vector2D;
+import de.dh.utils.io.obj.RawMaterialData;
 import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
 import javafx.scene.Group;
@@ -48,7 +49,12 @@ public class ThreeDPreview {
             box.setMaterial(material);
         } else {
             try {
-                assetLoader.configureMaterialEx(box, materialRef, Optional.of(new Vector2D(edgeLength, edgeLength)), !fallbackToPlaceholder);
+                RawMaterialData materialData = assetLoader.loadMaterialData(materialRef);
+                if (fallbackToPlaceholder) {
+                    assetLoader.configureMaterial_Lax(box, materialData, Optional.of(new Vector2D(edgeLength, edgeLength)));
+                } else {
+                    assetLoader.configureMaterial_Strict(box, materialData, Optional.of(new Vector2D(edgeLength, edgeLength)));
+                }
             } catch (IOException e) {
                 String msg = "Error loading material <" + materialRef + ">";
                 if (fallbackToPlaceholder) {

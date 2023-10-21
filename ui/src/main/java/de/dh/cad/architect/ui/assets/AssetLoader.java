@@ -776,8 +776,13 @@ public class AssetLoader {
     }
 
     public void configureMaterial(Shape3D shape, AssetRefPath materialRefPath, Optional<Vector2D> oSurfaceSize) {
+        if (materialRefPath == null) {
+            shape.setMaterial(new PhongMaterial(Color.WHITE));
+            return;
+        }
         try {
-            configureMaterialEx(shape, materialRefPath, oSurfaceSize, false);
+            RawMaterialData materialData = loadMaterialData(materialRefPath);
+            configureMaterial_Lax(shape, materialData, oSurfaceSize);
         } catch (IOException e) {
             Image placeholder = loadMaterialPlaceholderTextureImage();
             PhongMaterial material = new PhongMaterial(Color.WHITE);
@@ -786,17 +791,12 @@ public class AssetLoader {
         }
     }
 
-    public void configureMaterialEx(Shape3D shape, AssetRefPath materialRefPath, Optional<Vector2D> oSurfaceSize, boolean failOnError) throws IOException {
-        if (materialRefPath == null) {
-            shape.setMaterial(new PhongMaterial(Color.WHITE));
-            return;
-        }
-        RawMaterialData materialData = loadMaterialData(materialRefPath);
-        configureMaterial(shape, materialData, oSurfaceSize, failOnError);
+    public void configureMaterial_Strict(Shape3D shape, RawMaterialData materialData, Optional<Vector2D> oSurfaceSize) throws IOException {
+        FxMeshBuilder.configureMaterial_Strict(shape, materialData, oSurfaceSize);
     }
 
-    public void configureMaterial(Shape3D shape, RawMaterialData materialData, Optional<Vector2D> oSurfaceSize, boolean failOnError) throws IOException {
-        FxMeshBuilder.configureMaterial(shape, materialData, oSurfaceSize, failOnError);
+    public void configureMaterial_Lax(Shape3D shape, RawMaterialData materialData, Optional<Vector2D> oSurfaceSize) {
+        FxMeshBuilder.configureMaterial_Lax(shape, materialData, oSurfaceSize);
     }
 
     protected void logMissingDescriptor(AssetRefPath descriptorRef, Throwable e) {

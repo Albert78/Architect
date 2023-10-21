@@ -22,42 +22,54 @@ import de.dh.cad.architect.ui.view.construction.Abstract2DView;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
 import de.dh.cad.architect.ui.view.construction.feedback.AncillaryPosition;
 import javafx.geometry.Point2D;
-import javafx.scene.shape.Circle;
-import javafx.scene.shape.StrokeType;
+import javafx.scene.Group;
+import javafx.scene.shape.Line;
 import javafx.scene.transform.Scale;
 
-public class PositionMarkerAncillary extends Abstract2DAncillaryObject {
-    protected final Circle mShape = new Circle();
+/**
+ * Paints an ancillary cross at a given position.
+ */
+public class PositionCrossMarkerAncillary extends Abstract2DAncillaryObject {
+    protected static final double CROSS_SIZE = 20;
+
+    protected final Line mSlashLine = new Line();
+    protected final Line mBackslashLine = new Line();
+    protected final Group mCrossShapes = new Group(mSlashLine, mBackslashLine);
     protected final Scale mScaleCompensation;
 
-    public PositionMarkerAncillary(Abstract2DView parentView) {
+    public PositionCrossMarkerAncillary(Abstract2DView parentView) {
         super(parentView);
-        mShape.setStroke(ANCILLARY_OBJECTS_COLOR);
-        mShape.setStrokeWidth(5);
-        mShape.setFill(null);
-        mShape.setStrokeType(StrokeType.CENTERED);
-        mShape.setVisible(false);
-        mShape.setRadius(20);
+        configureAncillaryStroke(mSlashLine);
+        configureAncillaryStroke(mBackslashLine);
+        mCrossShapes.setVisible(false);
 
-        mScaleCompensation = addUnscaled(mShape);
+        mScaleCompensation = addUnscaled(mCrossShapes);
         setMouseTransparent(true);
     }
 
-    public PositionMarkerAncillary create(AncillaryPosition position, ConstructionView parentView) {
-        PositionMarkerAncillary result = new PositionMarkerAncillary(parentView);
+    public PositionCrossMarkerAncillary create(AncillaryPosition position, ConstructionView parentView) {
+        PositionCrossMarkerAncillary result = new PositionCrossMarkerAncillary(parentView);
         result.update(position);
         return result;
     }
 
     public void update(AncillaryPosition position) {
         if (position == null) {
-            mShape.setVisible(false);
+            mCrossShapes.setVisible(false);
             return;
         }
-        mShape.setVisible(true);
         Point2D center = CoordinateUtils.positionToPoint2D(position.getPosition());
-        mShape.setCenterX(center.getX());
-        mShape.setCenterY(center.getY());
+        double crossSize2 = CROSS_SIZE / 2;
+        mSlashLine.setStartX(center.getX() - crossSize2);
+        mSlashLine.setStartY(center.getY() - crossSize2);
+        mSlashLine.setEndX(center.getX() + crossSize2);
+        mSlashLine.setEndY(center.getY() + crossSize2);
+        mBackslashLine.setStartX(center.getX() + crossSize2);
+        mBackslashLine.setStartY(center.getY() - crossSize2);
+        mBackslashLine.setEndX(center.getX() - crossSize2);
+        mBackslashLine.setEndY(center.getY() + crossSize2);
+
+        mCrossShapes.setVisible(true);
         mScaleCompensation.setPivotX(center.getX());
         mScaleCompensation.setPivotY(center.getY());
     }

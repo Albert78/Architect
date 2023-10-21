@@ -20,30 +20,25 @@ package de.dh.cad.architect.ui.logoutput;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
-import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
 
 public class LogOutputControl extends BorderPane {
+    protected TextArea mLogView = new TextArea();
+
     protected LogOutputControl() {
-//        FXMLLoader fxmlLoader = new FXMLLoader(LogOutputControl.class.getResource(FXML));
-//        fxmlLoader.setRoot(this);
-//        fxmlLoader.setController(this);
-//        try {
-//            fxmlLoader.load();
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        }
-//        initialize();
-        setCenter(new Label("Log Output Dummy"));
+        setCenter(mLogView);
     }
 
     public static LogOutputControl create() {
         return new LogOutputControl();
     }
 
-    protected void initialize() {
-        // TODO
+    public TextArea getLogView() {
+        return mLogView;
     }
 
     public Writer getLogOutputWriter() {
@@ -51,7 +46,7 @@ public class LogOutputControl extends BorderPane {
             @Override
             public void write(char[] cbuf, int off, int len) throws IOException {
                 String out = new String(cbuf, off, len);
-                // TODO: Write out to output
+                mLogView.appendText(out);
             }
 
             @Override
@@ -64,5 +59,16 @@ public class LogOutputControl extends BorderPane {
                 // Nothing to do
             }
         });
+    }
+
+    public void clearLog() {
+        mLogView.setText("");
+    }
+
+    public void log(String msg) {
+        LocalTime now = LocalTime.now();
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm:ss");
+        mLogView.appendText(now.format(dtf) + " - " + msg);
+        mLogView.appendText("\n");
     }
 }

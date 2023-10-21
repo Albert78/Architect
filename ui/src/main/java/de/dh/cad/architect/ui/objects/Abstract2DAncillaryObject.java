@@ -20,10 +20,14 @@ package de.dh.cad.architect.ui.objects;
 import de.dh.cad.architect.ui.view.construction.Abstract2DView;
 import de.dh.cad.architect.utils.IdGenerator;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Shape;
+import javafx.scene.shape.StrokeType;
 
 public class Abstract2DAncillaryObject extends Abstract2DUiObject {
     public static Color ANCILLARY_OBJECTS_COLOR = Color.LIGHTBLUE;
     public static Color ANCILLARY_FEEDBACK_OBJECTS_COLOR = Color.DARKBLUE;
+
+    public static int ANCILLARY_OBJECTS_DEFAULT_STROKE_WIDTH = 5;
 
     protected Abstract2DAncillaryObject(Abstract2DView parentView) {
         super(parentView);
@@ -32,6 +36,13 @@ public class Abstract2DAncillaryObject extends Abstract2DUiObject {
 
     public String getAncillaryObjectId() {
         return getId();
+    }
+
+    protected void configureAncillaryStroke(Shape shape) {
+        shape.setStroke(ANCILLARY_OBJECTS_COLOR);
+        shape.setStrokeWidth(ANCILLARY_OBJECTS_DEFAULT_STROKE_WIDTH);
+        shape.setFill(null);
+        shape.setStrokeType(StrokeType.CENTERED);
     }
 
     public void removeFromView() {

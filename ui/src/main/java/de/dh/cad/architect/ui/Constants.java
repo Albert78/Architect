@@ -56,6 +56,7 @@ public class Constants {
     public static final NumberFormat LOCALIZED_NUMBER_FORMAT = NumberFormat.getInstance(Locale.GERMAN);
 
     public static final URL APPLICATION_CSS = Constants.class.getResource("view/application.css");
+    public static final String ARCHITECT_VIEWS_LAYOUT_FILE_NAME = "ArchitectLayout.xml";
 
     public static String BEHAVIOR_TITLE_STYLE = "-fx-font-size: 150%; -fx-font-weight: bold;";
 

@@ -119,7 +119,7 @@ public class FxMeshBuilder {
         }
     }
 
-    public static void configureMaterial(Shape3D shape, RawMaterialData materialData, Optional<Vector2D> oSurfaceSize, boolean failOnError) throws IOException {
+    public static void configureMaterial_Strict(Shape3D shape, RawMaterialData materialData, Optional<Vector2D> oSurfaceSize) throws IOException {
         PhongMaterial material = new PhongMaterial(Color.WHITE);
         if (materialData != null) {
             int lineNo = 0;
@@ -249,12 +249,7 @@ public class FxMeshBuilder {
                                 material.setDiffuseMap(textureImage);
                             }
                         } catch (IOException e) {
-                            String msg = "Unable to load image for diffuse map";
-                            if (failOnError) {
-                                throw new IOException(msg, e);
-                            } else {
-                                log.error(msg, e);
-                            }
+                            throw new IOException("Unable to load image for diffuse map", e);
                         }
                         // TODO: Other map_ commands
 //                        material.setSelfIlluminationMap(loadImage(line.substring("map_Kd ".length())));
@@ -297,18 +292,22 @@ public class FxMeshBuilder {
                         log.trace("Material line ignored for material '" + materialData.getName() + "': '" + line + "'");
                     }
                 } catch (Exception e) {
-                    String msg = "Failed in line " + lineNo + ": " + line;
-                    if (failOnError) {
-                        throw new IOException(msg, e);
-                    } else {
-                        log.error(msg, e);
-                    }
+                    throw new IOException("Failed in line " + lineNo + ": " + line, e);
                 }
             }
         }
 
         shape.setMaterial(material);
     }
+
+    public static void configureMaterial_Lax(Shape3D shape, RawMaterialData materialData, Optional<Vector2D> oSurfaceSize) {
+        try {
+            configureMaterial_Strict(shape, materialData, oSurfaceSize);
+        } catch (IOException e) {
+            log.error("Error whil configuring material", e);
+        }
+    }
+
 
     public static Mesh buildMesh(MeshData meshData) {
         TriangleMesh result = new TriangleMesh();
@@ -364,7 +363,11 @@ public class FxMeshBuilder {
         for (MeshData meshData : meshes) {
             MeshView meshView = FxMeshBuilder.buildMeshView(meshData);
             RawMaterialData materialData = meshNamesToMaterials.get(meshData.getName());
-            configureMaterial(meshView, materialData, Optional.empty(), failOnError);
+            if (failOnError) {
+                configureMaterial_Strict(meshView, materialData, Optional.empty());
+            } else {
+                configureMaterial_Lax(meshView, materialData, Optional.empty());
+            }
             result.add(meshView);
         }
         return result;

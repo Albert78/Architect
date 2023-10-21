@@ -271,6 +271,9 @@ mCenterPane.setStyle("-fx-background-color: cornsilk;");
         return mScale;
     }
 
+    /**
+     * Gets a double value, a scene node can be scaled with to neutralize the scaling of the transform root node.
+     */
     public double getScaleCompensation() {
         return mScaleCompensation;
     }

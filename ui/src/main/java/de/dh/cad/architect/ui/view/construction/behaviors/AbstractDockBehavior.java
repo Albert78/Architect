@@ -57,17 +57,17 @@ public abstract class AbstractDockBehavior extends AbstractConstructionBehavior 
      * <b>Handle anchor to dock</b>
      * Comes as constructor parameter, constant over the lifetime of this behavior
      *  -> Passed to DockInteractionsPane, never changed
-     *  - Managed by DockInteractionsPane
+     *  - Then managed by DockInteractionsPane
      * <b>Target object to dock to</b>
      * Can be choosen by the user via object selection, either by clicking in the construction view or in object explorer, e.g.
      *  -> Passed to DockInteractionsPane
-     *  - Managed by DockInteractionsPane
+     *  - Then managed by DockInteractionsPane
      * <b>Target anchor to dock</b>
      * Can be choosen by the user via object selection, either by clicking in the construction view or in object explorer, e.g.
      *  -> Choosen in DockInteractionsPane or passed to there
      *  - Managed by DockInteractionsPane
      * <b>Ancillary objects in view representing dock source and target anchors</b>
-     * Managed by this behavior, derived from DockInteractionsPane
+     * Managed by this behavior, derived from information in DockInteractionsPane
      */
     protected final Cursor mCursorForbidden = Cursors.createCursorForbidden();
     protected final Cursor mCursorCrosshair = Cursors.createCursorCrossHair();

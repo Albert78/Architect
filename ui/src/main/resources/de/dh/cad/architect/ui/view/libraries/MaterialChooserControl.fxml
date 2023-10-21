@@ -4,7 +4,7 @@
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.layout.BorderPane?>
 
-<fx:root type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+<fx:root type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1">
 	<center>
 		<SplitPane dividerPositions="0.7" BorderPane.alignment="CENTER">
 			<items>
@@ -12,7 +12,7 @@
 					<bottom>
 					</bottom>
 				</BorderPane>
-				<BorderPane fx:id="mContentPane" minWidth="300.0" prefWidth="350.0" SplitPane.resizableWithParent="false">
+				<BorderPane fx:id="mContentPane" minWidth="400.0" prefWidth="400.0" SplitPane.resizableWithParent="false">
 					<padding>
 						<Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
 					</padding>

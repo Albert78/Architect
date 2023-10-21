@@ -53,10 +53,7 @@ public class DockableFloatingStage extends Stage implements IDockableUIRepresent
         mTab.setClosable(false);
         focusedProperty().addListener((obs, oldValue, newValue) -> {
             if (newValue) {
-                Node focusControl = mDockable.getFocusControl();
-                if (focusControl != null) {
-                    focusControl.requestFocus();
-                }
+                mDockable.requestFocus();
             }
         });
         setOnCloseRequest(event -> {
@@ -68,10 +65,7 @@ public class DockableFloatingStage extends Stage implements IDockableUIRepresent
             // Hack to let our dockable get the focus at once instead of focusing the tab pane
             @Override
             public void requestFocus() {
-                Node focusControl = mDockable.getFocusControl();
-                if (focusControl != null) {
-                    focusControl.requestFocus();
-                } else {
+                if (!mDockable.requestFocus()) {
                     super.requestFocus();
                 }
             }

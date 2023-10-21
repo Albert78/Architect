@@ -44,7 +44,7 @@ import de.dh.cad.architect.ui.objects.WallConstructionRepresentation;
 import de.dh.cad.architect.ui.view.AbstractPlanView;
 import de.dh.cad.architect.ui.view.AbstractUiMode;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
-import de.dh.cad.architect.ui.view.construction.GroundPlanLowerUIElementFilter;
+import de.dh.cad.architect.ui.view.construction.GroundPlanLowerUIElementsFilter;
 import de.dh.cad.architect.ui.view.construction.feedback.AncillaryPosition;
 import de.dh.cad.architect.ui.view.construction.feedback.polygon.AddPolylineShapeVisualFeedbackManager;
 
@@ -78,7 +78,7 @@ public class GroundPlanAddFloorBehavior extends AbstractConstructionSelectAnchor
 
     @Override
     protected void initializeUiElementFilter() {
-        setUIElementFilter(new GroundPlanLowerUIElementFilter());
+        setUIElementFilter(new GroundPlanLowerUIElementsFilter());
     }
 
     @Override

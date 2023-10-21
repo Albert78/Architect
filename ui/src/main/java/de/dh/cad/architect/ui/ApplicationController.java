@@ -23,7 +23,6 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Optional;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,6 +95,19 @@ public class ApplicationController {
         return result;
     }
 
+    protected void saveStageState() {
+        Optional<StageState> oFormerStageState = StageState.buildStageState(mConfig.getLastWindowState());
+        String stageState = StageState.fromStage(mPrimaryStage, oFormerStageState).serializeState();
+        mConfig.setLastWindowState(stageState);
+    }
+
+    protected void restoreStageState() {
+        Optional<StageState> oFormerStageState = StageState.buildStageState(mConfig.getLastWindowState());
+        oFormerStageState.ifPresent(formerStageState -> {
+            formerStageState.applyToStage(mPrimaryStage);
+        });
+    }
+
     public void startup() {
         ChangeListener<Object> updateTitleChangeListener = new ChangeListener<>() {
             @Override
@@ -116,12 +128,7 @@ public class ApplicationController {
 
         mAssetManager.start();
         mUiController.initialize(mPrimaryStage, this);
-
-        String stageState = mConfig.getLastWindowState();
-        if (!StringUtils.isEmpty(stageState)) {
-            StageState stageSizer = StageState.fromSerializedState(stageState);
-            stageSizer.writeToStage(mPrimaryStage);
-        }
+        restoreStageState();
 
         updateTitle();
 
@@ -142,10 +149,7 @@ public class ApplicationController {
         log.info("Exiting from application");
         mUiController.shutdown();
         mAssetManager.shutdown();
-
-        String stageState = StageState.fromStage(mPrimaryStage).serializeState();
-        mConfig.setLastWindowState(stageState);
-
+        saveStageState();
         Platform.exit();
     }
 

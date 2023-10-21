@@ -407,8 +407,8 @@ public class Strings {
     public static final String DOCK_OPERATION_SOURCE_ANCHOR = "Anzupassender Anker:";
     public static final String DOCK_OPERATION_TARGET_OBJECT = "Ziel-Objekt:";
     public static final String DOCK_OPERATION_TARGET_ANCHOR = "Ziel-Anker:";
-    public static final String DOCK_OPERATION_NO_TARGET_OBJECT = "Kein gültiges Ziel-Objekt ausgewählt";
-    public static final String DOCK_OPERATION_NO_TARGET_ANCHOR = "Kein gültiger Ziel-Anker ausgewählt";
+    public static final String DOCK_OPERATION_NO_TARGET_OBJECT = "Wähle ein Ziel-Objekt aus";
+    public static final String DOCK_OPERATION_NO_TARGET_ANCHOR = "Wähle einen Ziel-Anker aus";
     public static final String DOCK_OPERATION_CHOOSE_TARGET_OBJECT_0 = "Klicken, um Ziel-Objekt {0} auszuwählen";
     public static final String DOCK_OPERATION_TARGET_ANCHOR_0 = "Klicken, um Ziel-Anker {0} auszuwählen";
 
