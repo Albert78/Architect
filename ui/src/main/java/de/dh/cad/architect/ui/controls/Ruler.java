@@ -124,7 +124,7 @@ public class Ruler extends Pane {
         setPrefHeight(RULER_WIDTH);
 
         setOnMouseClicked(mouseEvent -> {
-            if (!mouseEvent.isStillSincePress()) {
+            if (mouseEvent.getButton() != MouseButton.PRIMARY || !mouseEvent.isStillSincePress()) {
                 return;
             }
             mouseEvent.consume();

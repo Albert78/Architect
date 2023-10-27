@@ -149,7 +149,7 @@ public class Anchor extends BaseObject implements IDeserializationHandler {
     }
 
     public void undockAllDockSlaves(List<IModelChange> changeTrace) {
-        for (Anchor dockSlave : mDockSlaves) {
+        for (Anchor dockSlave : new ArrayList<>(mDockSlaves)) {
             dockSlave.setDockMaster(null, changeTrace);
         }
         mDockSlaves.clear();
@@ -301,6 +301,7 @@ public class Anchor extends BaseObject implements IDeserializationHandler {
      * That root master is the root of the dock hierarchy which controls the dock position. All other anchors
      * in the dock are direct or indirect slaves of that root master anchor and cannot change their
      * positions theirselves while docked.
+     * @return Root of the dock hierarchy or this if not docked.
      */
     @XmlTransient
     public Anchor getRootMasterOfAnchorDock() {

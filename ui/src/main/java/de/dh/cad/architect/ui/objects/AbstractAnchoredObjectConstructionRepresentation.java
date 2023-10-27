@@ -22,7 +22,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -31,10 +30,7 @@ import de.dh.cad.architect.model.objects.Anchor;
 import de.dh.cad.architect.model.objects.BaseAnchoredObject;
 import de.dh.cad.architect.ui.view.construction.Abstract2DView;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
-import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.MenuItem;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 
@@ -95,7 +91,7 @@ public class AbstractAnchoredObjectConstructionRepresentation extends Abstract2D
 
     public boolean installAnchorChoiceFeature(Predicate<Anchor> anchorFilter,
         Consumer<AnchorConstructionRepresentation> anchorAimedHandler, Consumer<AnchorConstructionRepresentation> anchorClickHandler) {
-        return installAnchorChoiceFeature(anchorFilter, null, null, anchorAimedHandler, anchorClickHandler, null, Optional.empty());
+        return installAnchorChoiceFeature(anchorFilter, null, null, anchorAimedHandler, anchorClickHandler, null);
     }
 
     public boolean installAnchorChoiceFeature(Predicate<Anchor> visibleAnchorsFilter,
@@ -103,8 +99,7 @@ public class AbstractAnchoredObjectConstructionRepresentation extends Abstract2D
         Consumer<AbstractAnchoredObjectConstructionRepresentation> objectClickHandler,
         Consumer<AnchorConstructionRepresentation> anchorAimedHandler,
         Consumer<AnchorConstructionRepresentation> anchorClickHandler,
-        Predicate<AnchorConstructionRepresentation> forceAnchorVisible,
-        Optional<IObjectContextMenuProvider<Anchor>> oAnchorContextMenuProvider) {
+        Predicate<AnchorConstructionRepresentation> forceAnchorVisible) {
         if (mAnchorClickContext != null) {
             return false;
         }
@@ -170,7 +165,6 @@ public class AbstractAnchoredObjectConstructionRepresentation extends Abstract2D
         addEventHandler(MouseEvent.MOUSE_ENTERED, mAnchorClickContext.MouseEnteredHandler);
         addEventHandler(MouseEvent.MOUSE_EXITED, mAnchorClickContext.MouseExitedHandler);
 
-        List<MenuItem> contextMenuItems = new ArrayList<>();
         for (Anchor anchor : getModelObject().getAnchors()) {
             AnchorConstructionRepresentation anchorRepr = (AnchorConstructionRepresentation) getParentView().getRepresentationByModelId(anchor.getId());
             String anchorModelId = anchorRepr.getModelId();
@@ -191,56 +185,13 @@ public class AbstractAnchoredObjectConstructionRepresentation extends Abstract2D
                 };
                 anchorRepr.setOnMouseClicked(anchorMouseClickHandler);
             }
-            oAnchorContextMenuProvider.flatMap(anchorMenuItemProvider -> anchorMenuItemProvider.getObjectMenuItemData(anchor)).ifPresent(anchorMenuItemData -> {
-                String menuItemTitle = anchorMenuItemData.getMenuItemTitle();
-                Consumer<Anchor> menuItemClicked = anchorMenuItemData.getMenuItemClicked();
-                MenuItem item = new MenuItem(menuItemTitle);
-//                Text textNode = new Text(menuItemTitle);
-//                /* TODO: Problem: A standard menu item doesn't support mouse handlers.
-//                 * As workaround, we try to use a CustomMenuItem with a custom node inside, with a mouse handler attached.
-//                 * Problem: The custom node (textNode) doesn't take whole the space of the menu item which means the mouse handler
-//                 * only works for the inner space occupied by the custom node, which produces a weird user experience.
-//                 * There are two problems:
-//                 * 1) Spacing between the menu items. This is solved by https://stackoverflow.com/questions/19284411/how-to-make-the-menuitems-in-a-javafx-context-menu-support-an-onmouseover-event
-//                 * 2) Space behind/right of the menu items because the menu items have different widths. This could be solved by wrapping all text nodes to panels and setting their preferred width to the width of the longest item.
-//                 */
-//                textNode.setOnMouseEntered(event -> {
-//                    anchorRepr.setObjectSpotted(true);
-//                    mAnchorClickContext.MouseOverAnchors.put(anchorModelId, anchorRepr);
-//                    checkAnchorVisibility(mAnchorClickContext);
-//                });
-//                textNode.setOnMouseExited(event -> {
-//                    mAnchorClickContext.MouseOverAnchors.remove(anchorModelId);
-//                    checkAnchorVisibility(mAnchorClickContext);
-//                    anchorRepr.setObjectSpotted(false);
-//                });
-//                CustomMenuItem item = new CustomMenuItem(textNode);
-                item.setOnAction(event -> {
-                    menuItemClicked.accept(anchor);
-                });
-                contextMenuItems.add(item);
-            });
         }
 
-        ContextMenu contextMenu = null;
-        if (!contextMenuItems.isEmpty()) { // This is only the case if the context menu provider is present
-            IObjectContextMenuProvider<Anchor> contextMenuProvider = oAnchorContextMenuProvider.get();
-            contextMenu = contextMenuProvider.getContextMenu();
-
-            ObservableList<MenuItem> itemsInsertPoint = contextMenuProvider.getItemsInsertPoint();
-            itemsInsertPoint.addAll(contextMenuItems);
-        }
-        if (contextMenu != null || objectClickHandler != null) {
-            ContextMenu fContextMenu = contextMenu;
+        if (objectClickHandler != null) {
             mAnchorClickContext.MouseClickedHandler = new EventHandler<>() {
                 @Override
                 public void handle(MouseEvent event) {
-                    if (fContextMenu != null) {
-                        fContextMenu.show(AbstractAnchoredObjectConstructionRepresentation.this, event.getScreenX(), event.getScreenY());
-                    }
-                    if (objectClickHandler != null) {
-                        objectClickHandler.accept(AbstractAnchoredObjectConstructionRepresentation.this);
-                    }
+                    objectClickHandler.accept(AbstractAnchoredObjectConstructionRepresentation.this);
                     event.consume();
                 }
             };

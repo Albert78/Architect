@@ -42,10 +42,11 @@ public class PlanFileIO {
 
     public static final String PLAN_FILE_SCHEMA_URL = "http://www.dh-software.de/architect/v2/planfile";
 
+    protected static final JAXBContext mJAXBContext = JAXBUtility.initializeJAXBContext(PlanFile.class);
+
     public static void serializePlanFile(PlanFile planFile, Writer writer) {
         try {
-            JAXBContext context = JAXBContext.newInstance(PlanFile.class);
-            Marshaller m = context.createMarshaller();
+            Marshaller m = mJAXBContext.createMarshaller();
             m.setProperty(Marshaller.JAXB_SCHEMA_LOCATION, PLAN_FILE_SCHEMA_URL);
             JAXBUtility.configureMarshaller(m);
             m.marshal(planFile, writer);
@@ -82,8 +83,7 @@ public class PlanFileIO {
 
     public static PlanFile deserializePlanFile(Reader reader) {
         try {
-            JAXBContext context = JAXBContext.newInstance(PlanFile.class);
-            Unmarshaller u = context.createUnmarshaller();
+            Unmarshaller u = mJAXBContext.createUnmarshaller();
             List<PendingUnmarshalCall> pendingUnmarshalCalls = new ArrayList<>();
             u.setListener(new Listener() {
                 @Override

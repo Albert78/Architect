@@ -93,7 +93,7 @@ public class DimensioningVisual {
         };
         Abstract2DView parentView = mParent.getParentView();
         mText.setOnMousePressed(mouseEvent -> {
-            if (!mouseEvent.isPrimaryButtonDown()) {
+            if (mouseEvent.getButton() != MouseButton.PRIMARY) {
                 return;
             }
             UiPlanPosition pos = parentView.getPlanPositionFromScene(mouseEvent.getSceneX(), mouseEvent.getSceneY());

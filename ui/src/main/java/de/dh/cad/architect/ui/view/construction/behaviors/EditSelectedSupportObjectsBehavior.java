@@ -244,7 +244,7 @@ public class EditSelectedSupportObjectsBehavior extends AbstractConstructionBeha
                     Position2D newCenterPoint = locationData.getCenterPoint();
                     if (!newCenterPoint.equals(supportObject.getCenterPoint())) {
                         Anchor handleAnchor = supportObject.getHandleAnchor();
-                        handleAnchor.setPosition(handleAnchor.getPosition().withXY(newCenterPoint), changeTrace);
+                        uiController.doSetDockPosition(handleAnchor, handleAnchor.getPosition().withXY(newCenterPoint), changeTrace);
                         positionChangedObjects.add(supportObject);
                     }
 

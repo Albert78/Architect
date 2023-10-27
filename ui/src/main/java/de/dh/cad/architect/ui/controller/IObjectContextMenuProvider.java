@@ -18,6 +18,7 @@
 package de.dh.cad.architect.ui.controller;
 
 import java.util.Collection;
+import java.util.Optional;
 
 import javafx.scene.control.MenuItem;
 
@@ -31,7 +32,7 @@ public interface IObjectContextMenuProvider {
      * Gets a collection of menu items which apply for the objects which are currently in context,
      * i.e. which are selected or on which the user clicked.
      * @param objectIdsInContext Collection of ids of the model objects which are in context.
-     * @return Menu part to be contributed or {@code null}.
+     * @return Menu part to be contributed or {@code Optional.empty()}.
      */
-    Collection<MenuItem> getMenuItems(Collection<String> objectIdsInContext);
+    Optional<Collection<MenuItem>> getMenuItems(Collection<String> objectIdsInContext);
 }

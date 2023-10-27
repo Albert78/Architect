@@ -153,10 +153,13 @@ public class Strings {
     public static final String REMOVE_OBJECTS_FROM_GROUP_GROUP_CHOICE_DIALOG_TITLE = "Objekte von einer Gruppe entfernen";
     public static final String REMOVE_OBJECTS_FROM_GROUP_GROUP_CHOICE_DIALOG_HEADER_TEXT = "Wähle die Gruppe, von der die Objekte {0} entfernt werden sollen";
 
-    public static final String PERMANENT_DOCK_ANCHOR_ACTION_TITLE = "Anker andocken";
+    public static final String ACTION_PERMANENT_DOCK_ANCHOR_TITLE = "Anker andocken";
     public static final String ACTION_CANCEL_PERMANENT_DOCK = "Abbrechen: Andocken";
-    public static final String UNDOCK_ANCHOR_ACTION_TITLE = "Anker abdocken";
+    public static final String ACTION_UNDOCK_ANCHOR_TITLE = "Anker abdocken";
     public static final String ACTION_CANCEL_UNDOCK = "Abbrechen: Abdocken";
+    public static final String ACTION_ANCHOR_UNDOCK_FROM_MASTER = "Von Master-Anker abdocken";
+    public static final String ACTION_ANCHOR_REMOVE_FROM_DOCK = "Anker aus Dock-Hierarchie entfernen";
+    public static final String ACTION_ANCHOR_UNDOCK_ALL_CHILDREN = "Alle Kind-Anker abdocken";
     public static final String ACTION_PERMANENT_DOCK_TO_SELECTED_ANCHOR_TITLE = "An selektierten Anker ''{0}'' andocken";
     public static final String SOFT_DOCK_ANCHOR_ACTION_TITLE = "Ankerposition angleichen";
     public static final String ACTION_CANCEL_SOFT_DOCK = "Abbrechen: Ankerposition angleichen";

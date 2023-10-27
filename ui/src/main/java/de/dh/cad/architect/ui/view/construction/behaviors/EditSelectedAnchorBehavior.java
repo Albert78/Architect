@@ -171,7 +171,7 @@ public class EditSelectedAnchorBehavior extends AbstractConstructionBehavior {
         return new IContextAction() {
             @Override
             public String getTitle() {
-                return Strings.PERMANENT_DOCK_ANCHOR_ACTION_TITLE;
+                return Strings.ACTION_PERMANENT_DOCK_ANCHOR_TITLE;
             }
 
             @Override
@@ -201,7 +201,7 @@ public class EditSelectedAnchorBehavior extends AbstractConstructionBehavior {
         return new IContextAction() {
             @Override
             public String getTitle() {
-                return Strings.UNDOCK_ANCHOR_ACTION_TITLE;
+                return Strings.ACTION_UNDOCK_ANCHOR_TITLE;
             }
 
             @Override
@@ -248,6 +248,17 @@ public class EditSelectedAnchorBehavior extends AbstractConstructionBehavior {
         if (reprs.contains(mEditAnchorRepr)) {
             updateToSelection();
         }
+        updateInteractionsPane();
+    }
+
+    @Override
+    public void onObjectsAdded(Collection<Abstract2DRepresentation> reprs) {
+        updateInteractionsPane();
+    }
+
+    @Override
+    public void onObjectsRemoved(Collection<Abstract2DRepresentation> reprs) {
+        updateInteractionsPane();
     }
 
     @Override

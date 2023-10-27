@@ -59,9 +59,9 @@ public class TreeViewUtils {
         // for example to break infinite recursive selection callbacks. Furthermore, the user doesn't
         // want the TreeView to jump to the selected position if it didn't change.
         if (selectionModel.getSelectedIndex() != index) {
+            treeTableView.scrollTo(index);
             selectionModel.select(index);
         }
-        treeTableView.scrollTo(index);
     }
 
     public static <T> TreeItem<T> findItemOfValue(TreeItem<T> root, T value) {

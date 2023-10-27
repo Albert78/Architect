@@ -20,9 +20,12 @@ package de.dh.cad.architect.utils.jaxb;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.PropertyException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +33,15 @@ public class JAXBUtility {
     private static final Logger log = LoggerFactory.getLogger(JAXBUtility.class);
 
     public static ThreadLocal<Collection<Runnable>> mFinishCallbacksTL = new ThreadLocal<>();
+
+    public static JAXBContext initializeJAXBContext(Class<?>... classesToBeBound) {
+        try {
+            return JAXBContext.newInstance(classesToBeBound);
+        } catch (JAXBException e) {
+            log.error("Error initializing JAXB context for classes " + StringUtils.join(classesToBeBound, ", "), e);
+            throw new RuntimeException(e);
+        }
+    }
 
     public static void addFinishCallback(Runnable r) {
         Collection<Runnable> finishCallbacks = mFinishCallbacksTL.get();

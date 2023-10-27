@@ -88,22 +88,33 @@ public class AnchorConstructionRepresentation extends Abstract2DRepresentation {
         return anchorOwner == null ? null : mParentView.getRepresentationByModelId(anchorOwner.getId());
     }
 
+    protected Abstract2DRepresentation getAnchorDockOwnerRepresentation() {
+        BaseAnchoredObject rootAnchorOwner = getAnchor().getRootMasterOfAnchorDock().getAnchorOwner();
+        return mParentView.getRepresentationByModelId(rootAnchorOwner.getId());
+    }
+
     public Anchor getAnchor() {
         return (Anchor) mModelObject;
     }
 
     protected void updateProperties() {
+        Anchor anchor = getAnchor();
         mShape.setStrokeType(StrokeType.OUTSIDE);
         tryAttachOwnerListeners();
         Abstract2DRepresentation anchorOwnerRepresentation = getAnchorOwnerRepresentation();
         final double ownerViewOrder = anchorOwnerRepresentation == null ? Constants.VIEW_ORDER_ANCHOR : anchorOwnerRepresentation.getViewOrder();
         double viewOrderOffset = Constants.VIEW_ORDER_OFFSET_NORMAL;
-        if (isSelected()) {
-            mShape.setStroke(SELECTED_OBJECTS_COLOR);
-            viewOrderOffset = Constants.VIEW_ORDER_OFFSET_FOCUSED;
+        Color strokeColor;
+        if (anchor.getDockMaster().isPresent()) {
+            strokeColor = Color.ORANGERED;
         } else {
-            mShape.setStroke(Color.GOLD);
+            strokeColor = Color.GOLD;
         }
+        if (isSelected()) {
+            strokeColor = SELECTED_OBJECTS_COLOR;
+            viewOrderOffset = Constants.VIEW_ORDER_OFFSET_FOCUSED;
+        }
+        mShape.setStroke(strokeColor);
         if (isObjectFocused()) {
             viewOrderOffset = Constants.VIEW_ORDER_OFFSET_FOCUSED;
         }
@@ -150,12 +161,7 @@ public class AnchorConstructionRepresentation extends Abstract2DRepresentation {
         mTrackedOwner = null;
     }
 
-    protected boolean isDragSupported() {
-        Abstract2DRepresentation anchorOwnerRepresentation = getAnchorOwnerRepresentation();
-        return anchorOwnerRepresentation != null && anchorOwnerRepresentation.isAnchorDragSupported(getAnchor());
-    }
-
-    // Could be moved ot Abstract2DUiObject, if needed
+    // Could be moved to Abstract2DUiObject, if needed
     protected void installDragHandlers() {
         var dragControl = new DragControl2D() {
             boolean FirstMoveEvent = true;
@@ -216,22 +222,27 @@ public class AnchorConstructionRepresentation extends Abstract2DRepresentation {
         setOnMouseExited(null);
     }
 
+    protected boolean isDragSupported() {
+        Abstract2DRepresentation anchorOwnerRepresentation = getAnchorDockOwnerRepresentation();
+        return anchorOwnerRepresentation != null && anchorOwnerRepresentation.isAnchorDragSupported(getAnchor());
+    }
+
     protected void dragStart(Position2D pos) {
-        Abstract2DRepresentation repr = getAnchorOwnerRepresentation();
+        Abstract2DRepresentation repr = getAnchorDockOwnerRepresentation();
         if (repr != null) {
             repr.startAnchorDrag(getAnchor(), pos);
         }
     }
 
     protected void dragEnd() {
-        Abstract2DRepresentation repr = getAnchorOwnerRepresentation();
+        Abstract2DRepresentation repr = getAnchorDockOwnerRepresentation();
         if (repr != null) {
             repr.endAnchorDrag(getAnchor());
         }
     }
 
     protected void drag(Position2D dragStartPos, Position2D currentPos, boolean firstMoveEvent, boolean shiftDown, boolean altDown, boolean controlDown) {
-        Abstract2DRepresentation repr = getAnchorOwnerRepresentation();
+        Abstract2DRepresentation repr = getAnchorDockOwnerRepresentation();
         if (repr != null) {
             repr.dragAnchor(getAnchor(), dragStartPos, currentPos, firstMoveEvent, shiftDown, altDown, controlDown);
         }

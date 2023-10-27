@@ -280,8 +280,7 @@ public abstract class AbstractDockBehavior extends AbstractConstructionBehavior 
                     this::onTargetObjectClicked,
                     this::showAnchorFeedback,
                     this::onTargetAnchorClicked,
-                    this::isAnchorVisible,
-                    Optional.empty());
+                    this::isAnchorVisible);
             }
         }
         if (repr.equals(mAnchorOwnerRepresentation)) {

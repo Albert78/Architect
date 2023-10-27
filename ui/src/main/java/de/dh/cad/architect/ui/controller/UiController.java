@@ -572,7 +572,7 @@ public class UiController {
      * Undocks the given anchor from its dock master, retaining all its dock slaves docked, if any.
      * To remove an anchor completely from a dock, call {@link #doRemoveAnchorFromDock(Anchor, ChangeSet)}.
      */
-    public void doUndock(Anchor handleToUndock, List<IModelChange> changeTrace) {
+    public void doUndockFromMaster(Anchor handleToUndock, List<IModelChange> changeTrace) {
         List<BaseAnchoredObject> formerDockOwners = handleToUndock.getAllDockOwners();
         handleToUndock.undockFromDockMaster(changeTrace);
 
@@ -580,10 +580,22 @@ public class UiController {
         doReconcileObjects(oro, changeTrace);
     }
 
-    public void doUndockIfDocked(Anchor anchorToUndock, List<IModelChange> changeTrace) {
+    public void undockFromMasterIfDocked(Anchor anchorToUndock) {
+        List<IModelChange> changeTrace = new ArrayList<>();
+        doUndockFromMasterIfDocked(anchorToUndock, changeTrace);
+        notifyChange(changeTrace, Strings.ACTION_ANCHOR_UNDOCK_FROM_MASTER);
+    }
+
+    public void doUndockFromMasterIfDocked(Anchor anchorToUndock, List<IModelChange> changeTrace) {
         if (anchorToUndock.getDockMaster().isPresent()) {
-            doUndock(anchorToUndock, changeTrace);
+            doUndockFromMaster(anchorToUndock, changeTrace);
         }
+    }
+
+    public void undockAllChildren(Anchor anchor) {
+        List<IModelChange> changeTrace = new ArrayList<>();
+        anchor.undockAllDockSlaves(changeTrace);
+        notifyChange(changeTrace, Strings.ACTION_ANCHOR_UNDOCK_ALL_CHILDREN);
     }
 
     public ObjectsGroup groupObjects(Collection<BaseObject> objects, String groupName) {
@@ -690,7 +702,7 @@ public class UiController {
         notifyChange(changeTrace, Strings.SET_DOCK_POSITION_CHANGE, tryMergeChange);
     }
 
-    protected void doSetDockPosition(Anchor anchor, IPosition position, List<IModelChange> changeTrace) {
+    public void doSetDockPosition(Anchor anchor, IPosition position, List<IModelChange> changeTrace) {
         doSetDockPosition_Internal(anchor, position, changeTrace, true);
     }
 
@@ -700,7 +712,7 @@ public class UiController {
      * operations where the undo operation should skip repeated dock positions change, for example in case of a drag operation.
      * ATTENTION: With parameter {@code generateMergeableChange} set to {@code true}, this method assumes that all docked
      * anchors already had the same (dock) position. For the initial docking operation, that parameter must be set to
-     * {@code false}.
+     * {@code false} to ensure that the undo of the given anchor will position it at it's former place (instead of leaving it at the dock's position).
      */
     protected void doSetDockPosition_Internal(Anchor anchor, IPosition position, List<IModelChange> changeTrace, boolean generateMergeableChange) {
         IPosition oldPosition = anchor.getPosition();

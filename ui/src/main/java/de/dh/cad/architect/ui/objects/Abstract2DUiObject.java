@@ -197,7 +197,7 @@ public abstract class Abstract2DUiObject extends Group {
         return new MouseHandlerContext(
             // Mouse pressed
             mouseEvent -> {
-                if (!mouseEvent.isPrimaryButtonDown()) {
+                if (mouseEvent.getButton() != MouseButton.PRIMARY) {
                     return;
                 }
                 UiPlanPosition uiPosition = mParentView.getPlanPositionFromScene(mouseEvent.getSceneX(), mouseEvent.getSceneY());
@@ -206,10 +206,7 @@ public abstract class Abstract2DUiObject extends Group {
                 }
                 dragControl.setPosition(uiPosition);
                 getScene().setCursor(dragCursor);
-                if (mouseEvent.getButton() == MouseButton.PRIMARY) {
-                    // Only consume event for our button - others might be needed in other handlers
-                    mouseEvent.consume();
-                }
+                mouseEvent.consume();
             },
             // Mouse released
             mouseEvent -> {

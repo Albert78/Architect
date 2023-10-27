@@ -36,10 +36,12 @@ import de.dh.cad.architect.utils.jaxb.JAXBUtility;
 public class AssetDescriptorsIO {
     public static final String ASSET_FILE_SCHEMA_URL = "http://www.dh-software.de/architect/v2.1/assets";
 
+    protected static final JAXBContext mSO_JAXBContext = JAXBUtility.initializeJAXBContext(SupportObjectDescriptor.class);
+    protected static final JAXBContext mMS_JAXBContext = JAXBUtility.initializeJAXBContext(MaterialSetDescriptor.class);
+
     public static void serializeSupportObjectDescriptor(SupportObjectDescriptor descriptor, Writer writer) {
         try {
-            JAXBContext context = JAXBContext.newInstance(SupportObjectDescriptor.class);
-            Marshaller m = context.createMarshaller();
+            Marshaller m = mSO_JAXBContext.createMarshaller();
             m.setProperty(Marshaller.JAXB_SCHEMA_LOCATION, ASSET_FILE_SCHEMA_URL);
             JAXBUtility.configureMarshaller(m);
             m.marshal(descriptor, writer);
@@ -58,8 +60,7 @@ public class AssetDescriptorsIO {
 
     public static void serializeMaterialSetDescriptor(MaterialSetDescriptor descriptor, Writer writer) {
         try {
-            JAXBContext context = JAXBContext.newInstance(MaterialSetDescriptor.class);
-            Marshaller m = context.createMarshaller();
+            Marshaller m = mMS_JAXBContext.createMarshaller();
             m.setProperty(Marshaller.JAXB_SCHEMA_LOCATION, ASSET_FILE_SCHEMA_URL);
             JAXBUtility.configureMarshaller(m);
             m.marshal(descriptor, writer);
@@ -96,8 +97,7 @@ public class AssetDescriptorsIO {
 
     public static SupportObjectDescriptor deserializeSupportObjectDescriptor(Reader reader, AssetRefPath descriptorRef) {
         try {
-            JAXBContext context = JAXBContext.newInstance(SupportObjectDescriptor.class);
-            Unmarshaller u = context.createUnmarshaller();
+            Unmarshaller u = mSO_JAXBContext.createUnmarshaller();
             SupportObjectDescriptor result = (SupportObjectDescriptor) u.unmarshal(reader);
             result.setSelfRef(descriptorRef);
             return result;
@@ -116,8 +116,7 @@ public class AssetDescriptorsIO {
 
     public static MaterialSetDescriptor deserializeMaterialSetDescriptor(Reader reader, AssetRefPath descriptorRef) {
         try {
-            JAXBContext context = JAXBContext.newInstance(MaterialSetDescriptor.class);
-            Unmarshaller u = context.createUnmarshaller();
+            Unmarshaller u = mMS_JAXBContext.createUnmarshaller();
             MaterialSetDescriptor result = (MaterialSetDescriptor) u.unmarshal(reader);
             result.setSelfRef(descriptorRef);
             return result;

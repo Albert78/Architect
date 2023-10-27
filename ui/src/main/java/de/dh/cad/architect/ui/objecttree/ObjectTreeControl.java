@@ -22,6 +22,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -218,11 +219,11 @@ public class ObjectTreeControl extends BorderPane {
             ObservableList<MenuItem> resultItems = contextMenu.getItems();
             resultItems.clear();
             for (IObjectContextMenuProvider menuProvider : mContextMenuProviders) {
-                Collection<MenuItem> items = menuProvider.getMenuItems(mSelectedObjectIds);
-                if (items == null) {
+                Optional<Collection<MenuItem>> oItems = menuProvider.getMenuItems(mSelectedObjectIds);
+                if (oItems.isEmpty()) {
                     continue;
                 }
-                resultItems.addAll(items);
+                resultItems.addAll(oItems.get());
             }
             // This does not work because the Control's context menu is shown before this OnContextMenuRequested event is fired:
             //mTreeTableView.setContextMenu(contextMenu);

@@ -39,10 +39,11 @@ public class LibraryIO {
 
     public static final String ASSET_LIBRARY_FILE_SCHEMA_URL = "http://www.dh-software.de/architect/v2.1/assetlibrary";
 
+    protected static final JAXBContext mJAXBContext = JAXBUtility.initializeJAXBContext(AssetLibrary.class);
+
     public static void serializeAssetLibrary(AssetLibrary library, Writer writer) {
         try {
-            JAXBContext context = JAXBContext.newInstance(AssetLibrary.class);
-            Marshaller m = context.createMarshaller();
+            Marshaller m = mJAXBContext.createMarshaller();
             m.setProperty(Marshaller.JAXB_SCHEMA_LOCATION, ASSET_LIBRARY_FILE_SCHEMA_URL);
             JAXBUtility.configureMarshaller(m);
             m.marshal(library, writer);
@@ -61,8 +62,7 @@ public class LibraryIO {
 
     public static AssetLibrary deserializeAssetLibrary(Reader reader) {
         try {
-            JAXBContext context = JAXBContext.newInstance(AssetLibrary.class);
-            Unmarshaller u = context.createUnmarshaller();
+            Unmarshaller u = mJAXBContext.createUnmarshaller();
             AssetLibrary result = (AssetLibrary) u.unmarshal(reader);
             return result;
         } catch (JAXBException e) {

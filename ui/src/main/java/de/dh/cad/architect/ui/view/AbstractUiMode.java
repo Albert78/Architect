@@ -19,6 +19,7 @@ package de.dh.cad.architect.ui.view;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Optional;
 
 import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.controller.IObjectContextMenuProvider;
@@ -36,9 +37,9 @@ public abstract class AbstractUiMode<TRepr extends IModelBasedObject, TAnc exten
         }
 
         @Override
-        public Collection<MenuItem> getMenuItems(Collection<String> objectIdsInContext) {
+        public Optional<Collection<MenuItem>> getMenuItems(Collection<String> objectIdsInContext) {
             if (objectIdsInContext.isEmpty()) {
-                return null;
+                return Optional.empty();
             }
             MenuItem turnVisibleItem = new MenuItem(objectIdsInContext.size() == 1 ? Strings.CONSTRUCTION_BEHAVIOR_TURN_VISIBLE_1 : Strings.CONSTRUCTION_BEHAVIOR_TURN_VISIBLE_N);
             turnVisibleItem.setOnAction(actionEvent -> {
@@ -48,7 +49,7 @@ public abstract class AbstractUiMode<TRepr extends IModelBasedObject, TAnc exten
             turnInvisibleItem.setOnAction(actionEvent -> {
                 mUiController.setObjectsVisibilityByIds(objectIdsInContext, true);
             });
-            return Arrays.asList(turnVisibleItem, turnInvisibleItem);
+            return Optional.of(Arrays.asList(turnVisibleItem, turnInvisibleItem));
         }
     };
 
