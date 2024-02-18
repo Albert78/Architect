@@ -176,10 +176,7 @@ public class EditSelectedSupportObjectsBehavior extends AbstractConstructionBeha
             }
             actions.add(createCopySupportObjectAction(selectedSupportObjects));
 
-            if (selectedObjects.size() > 1) {
-                // Grouping
-                actions.add(createGroupAction(selectedObjects));
-            }
+            addGroupingActionsForSelection(selectedObjects, actions);
         }
 
         // Delete

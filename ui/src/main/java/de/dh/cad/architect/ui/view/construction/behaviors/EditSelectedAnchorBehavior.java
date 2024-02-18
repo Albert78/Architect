@@ -258,6 +258,10 @@ public class EditSelectedAnchorBehavior extends AbstractConstructionBehavior {
 
     @Override
     public void onObjectsRemoved(Collection<Abstract2DRepresentation> reprs) {
+        if (reprs.contains(mEditAnchorRepr)) {
+            mParentMode.resetBehavior();
+            return;
+        }
         updateInteractionsPane();
     }
 

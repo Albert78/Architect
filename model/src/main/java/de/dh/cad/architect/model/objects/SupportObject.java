@@ -19,7 +19,6 @@ package de.dh.cad.architect.model.objects;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import javax.xml.bind.annotation.XmlElement;
@@ -28,6 +27,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import de.dh.cad.architect.model.assets.AssetRefPath;
 import de.dh.cad.architect.model.changes.IModelChange;
+import de.dh.cad.architect.model.changes.SimpleMergeableObjectModificationChange;
 import de.dh.cad.architect.model.changes.ObjectModificationChange;
 import de.dh.cad.architect.model.coords.Dimensions2D;
 import de.dh.cad.architect.model.coords.Length;
@@ -133,15 +133,7 @@ public class SupportObject extends BaseSolidObject {
     public void setSize(Dimensions2D value, List<IModelChange> changeTrace) {
         Dimensions2D oldSize = mSize;
         mSize = value;
-        changeTrace.add(new ObjectModificationChange(this) {
-            @Override
-            public Optional<IModelChange> tryMerge(IModelChange oldChange) {
-                if (getClass().equals(oldChange.getClass())) {
-                    return Optional.of(oldChange);
-                }
-                return Optional.empty();
-            }
-
+        changeTrace.add(new SimpleMergeableObjectModificationChange(this) {
             @Override
             public void undo(List<IModelChange> undoChangeTrace) {
                 setSize(oldSize, undoChangeTrace);
@@ -160,15 +152,7 @@ public class SupportObject extends BaseSolidObject {
     public void setRotationDeg(float value, List<IModelChange> changeTrace) {
         float oldRotationDeg = mRotationDeg;
         mRotationDeg = value;
-        changeTrace.add(new ObjectModificationChange(this) {
-            @Override
-            public Optional<IModelChange> tryMerge(IModelChange oldChange) {
-                if (getClass().equals(oldChange.getClass())) {
-                    return Optional.of(oldChange);
-                }
-                return Optional.empty();
-            }
-
+        changeTrace.add(new SimpleMergeableObjectModificationChange(this) {
             @Override
             public void undo(List<IModelChange> undoChangeTrace) {
                 setRotationDeg(oldRotationDeg, undoChangeTrace);
@@ -184,15 +168,7 @@ public class SupportObject extends BaseSolidObject {
     public void setHeight(Length value, List<IModelChange> changeTrace) {
         Length oldHeight = mHeight;
         mHeight = value;
-        changeTrace.add(new ObjectModificationChange(this) {
-            @Override
-            public Optional<IModelChange> tryMerge(IModelChange oldChange) {
-                if (getClass().equals(oldChange.getClass())) {
-                    return Optional.of(oldChange);
-                }
-                return Optional.empty();
-            }
-
+        changeTrace.add(new SimpleMergeableObjectModificationChange(this) {
             @Override
             public void undo(List<IModelChange> undoChangeTrace) {
                 setHeight(oldHeight, undoChangeTrace);
@@ -208,15 +184,7 @@ public class SupportObject extends BaseSolidObject {
     public void setElevation(Length value, List<IModelChange> changeTrace) {
         Length oldElevation = mElevation;
         mElevation = value;
-        changeTrace.add(new ObjectModificationChange(this) {
-            @Override
-            public Optional<IModelChange> tryMerge(IModelChange oldChange) {
-                if (getClass().equals(oldChange.getClass())) {
-                    return Optional.of(oldChange);
-                }
-                return Optional.empty();
-            }
-
+        changeTrace.add(new SimpleMergeableObjectModificationChange(this) {
             @Override
             public void undo(List<IModelChange> undoChangeTrace) {
                 setElevation(oldElevation, undoChangeTrace);

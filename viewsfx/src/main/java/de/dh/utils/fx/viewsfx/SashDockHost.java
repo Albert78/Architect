@@ -116,7 +116,7 @@ public final class SashDockHost extends StackPane implements IDockZoneParent, ID
         mDockZoneParent = null;
     }
 
-    // This is a little hack to prevent overcomplication for the situation this sash is chosen as
+    // This is a little hack to prevent overcomplicating the situation when this sash is chosen as
     // docking target but needs to be removed during the rearrangement of the zones. See
     // docs in Dockable#dockAt(IDockZone, DockSide).
     public void disposeAndReplace(IDockZone replacementZone) {
@@ -231,7 +231,7 @@ public final class SashDockHost extends StackPane implements IDockZoneParent, ID
         Node remainingItem = SashUtils.getSashItem(mSash, remainingSide);
 
         SashUtils.setSashItem(mSash, invalidatedSide, null);
-        // Only one child left, need to cleanup dock hierarchy, i.e. parent will remove this instance and
+        // Only one child left, need to clean up dock hierarchy, i.e. parent will remove this instance and
         // put the child in place of it
         mDockZoneParent.compressDockHierarchy(this, (IDockZone) remainingItem);
     }

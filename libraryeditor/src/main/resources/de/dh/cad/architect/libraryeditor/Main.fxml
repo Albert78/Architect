@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.CheckMenuItem?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.SeparatorMenuItem?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.StackPane?>
+
+<BorderPane fx:id="mRoot" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1">
+   <top>
+      <MenuBar minHeight="-Infinity" BorderPane.alignment="CENTER">
+        <menus>
+          <Menu mnemonicParsing="false" text="Datei">
+            <items>
+                  <MenuItem mnemonicParsing="false" onAction="#onLoadFile" text="Datei laden" />
+                  <MenuItem mnemonicParsing="false" onAction="#onSaveFile" text="Datei speichern" />
+                  <MenuItem mnemonicParsing="false" onAction="#onExportAsPngFile" text="Als PNG exportieren" />
+              <MenuItem mnemonicParsing="false" onAction="#onClose" text="Beenden" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="Compilieren">
+            <items>
+              <MenuItem mnemonicParsing="false" onAction="#onCompileAndRun" text="Compilieren &amp; zeigen" />
+                  <CheckMenuItem mnemonicParsing="false" onAction="#onAutoCompile" selected="true" text="Auto-Compile" />
+            </items>
+          </Menu>
+            <Menu mnemonicParsing="false" text="Fenster">
+              <items>
+                  <MenuItem mnemonicParsing="false" onAction="#onShowLogOutput" text="Log-Fenster" />
+                  <SeparatorMenuItem mnemonicParsing="false" />
+                <MenuItem mnemonicParsing="false" onAction="#onResetPerspective" text="Fensterlayout zurücksetzen" />
+              </items>
+            </Menu>
+        </menus>
+      </MenuBar>
+   </top>
+   <center>
+      <StackPane fx:id="mDockHostParent" prefHeight="150.0" prefWidth="200.0" BorderPane.alignment="CENTER" />
+   </center>
+</BorderPane>

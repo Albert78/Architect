@@ -48,6 +48,7 @@ module de.dh.cad.architect.ui {
     requires transitive javafx.fxml;
     requires transitive javafx.controls;
     requires org.slf4j;
+    requires org.apache.logging.log4j;
     requires java.desktop;
     requires org.apache.commons.collections4;
     requires org.apache.commons.lang3;

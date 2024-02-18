@@ -41,7 +41,6 @@ import javafx.beans.property.Property;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonBar.ButtonData;
@@ -52,10 +51,10 @@ import javafx.stage.Stage;
 import javafx.stage.Window;
 
 /**
- * Root application controller, responsible for managing the open file, the configuration and the UI controller.
+ * Root application controller, responsible for managing the opened file, the configuration and the UI controller.
  */
 public class ApplicationController {
-    private static Logger log = LoggerFactory.getLogger(ApplicationController.class);
+    private static final Logger log = LoggerFactory.getLogger(ApplicationController.class);
 
     protected final Stage mPrimaryStage;
     protected final Configuration mConfig;
@@ -65,9 +64,10 @@ public class ApplicationController {
     protected final UiController mUiController;
     protected final AssetManager mAssetManager;
 
-    public ApplicationController(Configuration config, Stage primaryStage) {
+    public ApplicationController(Configuration config, Stage primaryStage, AssetManager assetManager) {
         mPrimaryStage = primaryStage;
         mConfig = config;
+        mAssetManager = assetManager;
         mUiController = new UiController(mPlanProperty, mConfig);
         mUiController.addChangeHandler(new ObjectsChangeHandler() {
             @Override
@@ -85,12 +85,12 @@ public class ApplicationController {
                 setDirty(true);
             }
         });
-        mAssetManager = AssetManager.create();
     }
 
     public static ApplicationController create(Configuration config, Stage primaryStage) {
         log.info("Creating application controller");
-        ApplicationController result = new ApplicationController(config, primaryStage);
+        AssetManager assetManager = AssetManager.create();
+        ApplicationController result = new ApplicationController(config, primaryStage, assetManager);
         result.setPlan(Plan.newPlan(), null); // To avoid initialization issues in main window, which always needs an active plan object
         return result;
     }
@@ -103,24 +103,15 @@ public class ApplicationController {
 
     protected void restoreStageState() {
         Optional<StageState> oFormerStageState = StageState.buildStageState(mConfig.getLastWindowState());
-        oFormerStageState.ifPresent(formerStageState -> {
-            formerStageState.applyToStage(mPrimaryStage);
-        });
+        oFormerStageState.ifPresent(formerStageState -> formerStageState.applyToStage(mPrimaryStage));
+        mPrimaryStage.show(); // Avoid hiding primary stage if erroneously hidden in config state
     }
 
     public void startup() {
-        ChangeListener<Object> updateTitleChangeListener = new ChangeListener<>() {
-            @Override
-            public void changed(ObservableValue<? extends Object> observable, Object oldValue, Object newValue) {
-                updateTitle();
-            }
-        };
-        ChangeListener<Plan> updateAssetManagerListener = new ChangeListener<>() {
-            @Override
-            public void changed(ObservableValue<? extends Plan> observable, Plan oldValue, Plan newValue) {
-                // Attention: Ensure that mPlanFilePath is always set before setting mPlanProperty
-                mAssetManager.setCurrentPlan(newValue.getId(), new PlainFileSystemDirectoryLocator(getPlanFilePath()));
-            }
+        ChangeListener<Object> updateTitleChangeListener = (observable, oldValue, newValue) -> updateTitle();
+        ChangeListener<Plan> updateAssetManagerListener = (observable, oldValue, newValue) -> {
+            // Attention: Ensure that mPlanFilePath is always set before setting mPlanProperty
+            mAssetManager.setCurrentPlan(newValue.getId(), new PlainFileSystemDirectoryLocator(getPlanFilePath()));
         };
         mPlanFilePathProperty.addListener(updateTitleChangeListener);
         mPlanProperty.addListener(updateAssetManagerListener);
@@ -158,9 +149,9 @@ public class ApplicationController {
     }
 
     protected void updateTitle() {
-        Path planFilePath = getPlanFilePath();
+        Path filePath = getPlanFilePath();
         String dirtyMarker = isDirty() ? "*" : "";
-        String firstPart = planFilePath == null ? (Strings.NEW_PLAN_FILE + dirtyMarker) : (getPlanName(planFilePath) + dirtyMarker + " - " + planFilePath.toString());
+        String firstPart = filePath == null ? (Strings.NEW_PLAN_FILE + dirtyMarker) : (getPlanName(filePath) + dirtyMarker + " - " + filePath.toString());
         String title = firstPart + " - " + Strings.MAIN_WINDOW_TITLE;
         mPrimaryStage.setTitle(title);
     }
@@ -263,7 +254,6 @@ public class ApplicationController {
      */
     public boolean queryQuitApplication(Window parentWindow) {
         if (querySavePlanBeforeClose(parentWindow)) {
-            shutdown();
             return true;
         } else {
             return false;
@@ -271,7 +261,7 @@ public class ApplicationController {
     }
 
     /**
-     * Checks if the currnt plan is unsaved, queries the user to save the plan and opens a new plan, if not cancelled.
+     * Checks if the current plan is unsaved, queries the user to save the plan and opens a new plan, if not cancelled.
      */
     public boolean queryNewPlan(Window parentWindow) {
         if (!querySavePlanBeforeClose(parentWindow)) {
@@ -290,8 +280,8 @@ public class ApplicationController {
     }
 
     /**
-     * Checks if the user wants to save an potentially unsaved plan before an operation which would
-     * close the current plan. This method will save the plan as side-effect if the user wants to do that,
+     * Checks if the user wants to save a potentially unsaved plan before an operation which would
+     * close the current plan. This method will save the plan as side effect if the user wants to do that,
      * returning the information whether the ongoing process can continue or not.
      * Returns {@code true} if the process can continue, {@code false} if not.
      */
@@ -312,6 +302,10 @@ public class ApplicationController {
         alert.getButtonTypes().setAll(buttonTypeYes, buttonTypeNo, buttonTypeCancel);
 
         Optional<ButtonType> result = alert.showAndWait();
+        if (result.isEmpty()) {
+            // This never happens, the dialog always returns a value
+            return false;
+        }
         if (result.get() == buttonTypeYes) {
             log.debug("Plan was changed and user wants to save");
             return saveOrQueryPath(parentWindow);
@@ -338,7 +332,7 @@ public class ApplicationController {
     }
 
     // TODO: Replace by nice class which chooses the plan file directory instead of the file itself, with preview etc.
-    class PlanFileChooser {
+    static class PlanFileChooser {
         protected final FileChooser mFileChooser = new FileChooser();
 
         public void setTitle(String dialogTitle) {
@@ -404,7 +398,7 @@ public class ApplicationController {
     }
 
     /**
-     * Shows an open dialog to the user and loads the choosen plan, if the user didn't cancel.
+     * Shows an open dialog to the user and loads the chosen plan, if the user didn't cancel.
      */
     public boolean queryOpen(Window parentWindow) {
         PlanFileChooser fileChooser = new PlanFileChooser();

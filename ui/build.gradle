@@ -1,0 +1,23 @@
+plugins {
+    id 'buildlogic.java-library-conventions'
+    id 'buildlogic.javafx-conventions'
+}
+
+dependencies {
+    implementation libs.slf4j.api
+    implementation libs.log4j.api
+    implementation libs.jakarta.xml.bind.api
+    implementation libs.jaxb.runtime
+    implementation libs.commons.collections4
+    implementation libs.commons.lang3
+    implementation libs.commons.io
+    implementation libs.controlsfx
+
+    api project(':model')
+
+    implementation project(':utilities')
+    implementation project(':fxutils')
+    implementation project(':viewsfx')
+    implementation project(':codeeditors')
+    implementation project(':richtextfx')
+}

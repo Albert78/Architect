@@ -11,14 +11,11 @@
 
 ## tl;dr
 Notwendig:
-- Apache Maven 3.x
-- JDK Version >=17
+- JDK Version >= 21
 
 ```
 cd Architect
-mvn install
-cd main
-mvn javafx:run
+gradlew :main:run
 ```
 
 ## Was ist Architect?
@@ -29,7 +26,7 @@ Als Anwendungsentwickler ist mir neben guter Usability vor allem die Codearchite
 Das Programm wird immer mal wieder erweitert und verbessert, ich nehme auch gerne sinnvolle Featurewünsche oder andere Vorschläge entgegen.
 
 ## Was ist Architect nicht?
-Erwartet bitte (noch) kein komplett rundes, installierbares Programm. Es kann im aktuellen Zustand nur über Maven oder Eclipse gestartet werden. Wer einen Installer beisteuern will, nur her damit!
+Erwartet bitte (noch) kein komplett fertiges Programm. Es kann im aktuellen Zustand über IntelliJ oder Gradle gestartet werden, über Gradle kann auch eine installierbare Version gebaut werden.
 Das Programm ist aktuell ausschließlich in deutsch lokalisiert, andere Sprachen können programmatisch leicht ergänzt werden.
 
 Außerdem:
@@ -59,40 +56,39 @@ Das Dateihandling ist noch nicht ganz fertig; Architect sieht das Verzeichnis ei
 
 ## Programmiersprache, Ausführung, Installation
 #### Programmiersprache und Build-System
-- Das Programm ist in Java geschrieben, die grafische Oberfläche verwendet JavaFX, das alles in Java 17 (Stand 2022)
-- Das System besteht aus einer Handvoll Modulen, die mithilfe von Maven als Multi-Module-Project gebaut werden
-- Das Programm, die Möbel- und Oberflächenbibliotheksverwaltung und der SweetHome3D-Bibliotheksimporter können aktuell nur nur aus Maven bzw. aus einer IDE (Eclipse) gestartet werden, gibt es noch keine Installation
+- Das Programm ist in Java geschrieben, komplett modularisiert, die grafische Oberfläche verwendet JavaFX, das alles in Java 21 (Stand Februar 2024)
+- Das System besteht aus einer Handvoll Modulen, die mithilfe von Gradle gebaut werden
+- Das Programm, die Möbel- und Oberflächenbibliotheksverwaltung und der SweetHome3D-Bibliotheksimporter können über Gradle bzw. aus einer IDE (z.B. IntelliJ) gestartet werden
 
-### Quick-Start mit Maven
+### Quick-Start mit Gradle
 #### Benötigt:
-- Apache Maven 3.x
-- JDK Version >=17
+- JDK Version >= 21
+- Download des Architect-Repositories über `git clone`
 
-#### Bauen und Ausführen über Maven:
-- Download des Architect-Repositories über `git clone` oder als Verzeichnis
-- Im Architect-Hauptverzeichnis: `mvn install`
-- `cd main`
-- `mvn javafx:run`
+#### Bauen und Ausführen über Gradle:
+- Architect-Hauptprogramm: `gradlew :main:run`
+- SweetHome3D-Importer: `gradlew :sh3dimporter:run`
 
-### Quick-Start mit Eclipse
+### Quick-Start mit IntelliJ
 #### Benötigt:
-- Eclipse Standard, neuere Version
-- JDK Version >=17, in Eclipse unter Preferences/Java/Installed JREs registriert
+- IntelliJ
+- JDK Version >= 21
+- Download des Architect-Repositories über `git clone`
 
-#### Ausführen über Eclipse:
-- Download des Architect-Repositories über `git clone` oder als Verzeichnis
-- Importieren der enthaltenen Projekte in Eclipse (Import/General/Existing Projects into Workspace)
-- Ausführen von `de.dh.cad.architect.ArchitectApplication` im Projekt `main`
+#### Ausführen über IntelliJ:
+- Ausführen von `de.dh.cad.architect.ArchitectApplication` im Modul `main`
 
 ### Verwendung des Programms
-Zu Beginn solltet ihr euch mit der Architect Hauptanwendung vertraut machen, sie läuft ohne weitere Vorbereitung. Macht euch mit der Mausbedienung vertraut, erstellt Wände, Böden, Decken, schaut euch das Resultat in 3D an und macht euch mit dem Konzept der Verbindungsanker vertraut.
+Zu Beginn solltet ihr euch mit der Architect Hauptanwendung vertraut machen, sie läuft ohne weitere Vorbereitung. Es gibt einen 2D- und einen 3D-Modus. Ein Plan wird im 2D-Modus erstellt und kann jederzeit im 3D-Modus angesehen werden. Macht euch mit der Mausbedienung vertraut, erstellt Wände, Böden, Decken, schaut euch das Resultat in 3D an und macht euch mit dem Konzept der Verbindungsanker vertraut.
 
-Zur Gestaltung von Objektoberflächen (Wand-Texturen, Möbelfarben, ...) und zur Möblierung braucht ihr mindestens eine *Asset-Bibliothek*, die ihr mit dem Bibliotheksmanager anlegt. Dieser wird über das Architect-Menü oder als eigenständige Anwendung gestartet. Darin könnt ihr die einzelnen Oberflächen und Möbelstücke von Hand anlegen oder über den SweetHome3D-Importer aus dessen Bibliotheken bedienen. Ihr braucht die entpackten Bibliotheken, die dort im git im Projekt "3DModels" eingecheckt sind (Siehe https://svn.code.sf.net/p/sweethome3d/code/trunk).
+Zur Gestaltung von Objektoberflächen (Wand-Texturen, Möbelfarben, ...) und zur Möblierung braucht ihr mindestens eine *Asset-Bibliothek*, die ihr mit dem Bibliotheksmanager anlegt. Dieser wird über das Architect-Menü oder als eigenständige Anwendung gestartet. Darin könnt ihr die einzelnen Oberflächen und Möbelstücke von Hand anlegen oder über den SweetHome3D-Importer aus dessen Bibliotheken importieren. Ihr braucht die entpackten Bibliotheken, die dort im git im Projekt "3DModels" eingecheckt sind (Siehe https://svn.code.sf.net/p/sweethome3d/code/trunk).
 
-Importiert die Java-Projekte in Eclipse und führt die Main-Klassen aus:
-- **Hauptanwendung:** `de.dh.cad.architect.ArchitectApplication`
-- **Bibliotheksverwaltung:** `de.dh.cad.architect.AssetManagerApplication`
-- **SweetHome3D-Bibliotheksimporter:** `de.dh.cad.architect.libraryimporter.TextureImporterMain` und `de.dh.cad.architect.libraryimporter.SupportObjectsImporterMain`
+Importiert Das Hauptverzeichnis in IntelliJ und führt die Main-Klassen aus:
+- Aus dem main-Modul/Projekt:
+  - **Hauptanwendung:** `de.dh.cad.architect.ArchitectApplication`
+  - **Bibliotheksverwaltung:** `de.dh.cad.architect.AssetManagerApplication`
+- Aus dem Modul sh3dimporter:
+  - **SweetHome3D-Bibliotheksimporter:** `de.dh.cad.architect.libraryimporter.TextureImporterMain` und `de.dh.cad.architect.libraryimporter.SupportObjectsImporterMain`
 
 ## Motivation hinter Architect
 Das Programm ist aus zwei Bedürfnissen entstanden:

@@ -304,7 +304,7 @@ public class FxMeshBuilder {
         try {
             configureMaterial_Strict(shape, materialData, oSurfaceSize);
         } catch (IOException e) {
-            log.error("Error whil configuring material", e);
+            log.error("Error while configuring material", e);
         }
     }
 

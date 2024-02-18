@@ -1,0 +1,25 @@
+plugins {
+    id 'buildlogic.java-application-conventions'
+    id 'buildlogic.javafx-conventions'
+}
+
+description = 'Sweet Home 3D importer'
+
+application {
+    mainModule = "de.dh.cad.architect.libraryimporter.sh3dimporter"
+    mainClass = "de.dh.cad.architect.libraryimporter.SupportObjectsImporterMain"
+}
+
+dependencies {
+    implementation libs.slf4j.api
+    implementation libs.log4j.slf4j18.impl
+    implementation libs.commons.collections4
+    implementation libs.commons.lang3
+    implementation libs.commons.io
+    implementation libs.jakarta.xml.bind.api
+
+    implementation project(':utilities')
+    implementation project(':model')
+    implementation project(':fxutils')
+    implementation project(':ui')
+}

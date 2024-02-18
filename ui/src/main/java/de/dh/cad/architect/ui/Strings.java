@@ -138,20 +138,20 @@ public class Strings {
     public static final String MAIN_WINDOW_REDO_MENU_ITEM_VALID = "Wiederherstellen: {0}";
 
     // Actions
-    public static final String UNGROUP_ACTION_TITLE = "Gruppe auflösen";
+    public static final String UNGROUP_ACTION_TITLE = "Gruppe {0} auflösen";
     public static final String GROUP_N_OBJECTS_ACTION_TITLE = "{0} Objekte gruppieren";
-    public static final String ADD_OBJECTS_TO_GROUP_ACTION_TITLE = "{0} Objekte zu einer Gruppe hinzufügen";
-    public static final String REMOVE_OBJECTS_FROM_GROUP_ACTION_TITLE = "{0} Objekte aus einer Gruppe entfernen";
-    public static final String REMOVE_OBJECTS_FROM_GROUP_NO_GROUPS_ERROR_TEXT = "Es gibt keine Objektgruppe, die die selektierten Objekte enthält";
+    public static final String CF_ADD_OBJECTS_TO_GROUP_ACTION_TITLE = "1#1 Objekt zu einer Gruppe hinzufügen |1<{0} Objekte zu einer Gruppe hinzufügen";
+    public static final String CF_REMOVE_OBJECTS_FROM_GROUP_ACTION_TITLE = "1#1 Objekt aus einer Gruppe entfernen |1<{0} Objekte aus einer Gruppe entfernen";
+    public static final String CF_REMOVE_OBJECTS_FROM_GROUP_NO_GROUPS_ERROR_TEXT = "1#Es gibt keine Objektgruppe, die das selektierte Objekt enthält |1<Es gibt keine Objektgruppe, die die selektierten Objekte enthält";
     public static final String GROUP_ACTION_EDIT_GROUP_NAME_DIALOG_TITLE = "Gruppenname eingeben";
     public static final String GROUP_ACTION_EDIT_GROUP_NAME_DIALOG_HEADER_TEXT = "Gib einen Namen für die neue Gruppe ein";
     public static final String GROUP_ACTION_EDIT_GROUP_NAME_DIALOG_CONTENT_TEXT = "Gruppenname";
-    public static final String ADD_OBJECTS_TO_GROUP_CHANGE = "Objekte zu Gruppe hinzufügen";
-    public static final String REMOVE_OBJECTS_FROM_GROUP_CHANGE = "Objekte aus Gruppe entfernen";
-    public static final String ADD_OBJECTS_TO_GROUP_GROUP_CHOICE_DIALOG_TITLE = "Objekte zu vorhandener Gruppe hinzufügen";
-    public static final String ADD_OBJECTS_TO_GROUP_GROUP_CHOICE_DIALOG_HEADER_TEXT = "Wähle die Gruppe, zu der die Objekte {0} hinzugefügt werden sollen";
-    public static final String REMOVE_OBJECTS_FROM_GROUP_GROUP_CHOICE_DIALOG_TITLE = "Objekte von einer Gruppe entfernen";
-    public static final String REMOVE_OBJECTS_FROM_GROUP_GROUP_CHOICE_DIALOG_HEADER_TEXT = "Wähle die Gruppe, von der die Objekte {0} entfernt werden sollen";
+    public static final String ADD_OBJECTS_TO_GROUP_CHANGE = "Objekt(e) zu Gruppe hinzufügen";
+    public static final String REMOVE_OBJECTS_FROM_GROUP_CHANGE = "Objekt(e) aus Gruppe entfernen";
+    public static final String CF_ADD_OBJECTS_TO_GROUP_GROUP_CHOICE_DIALOG_TITLE = "1#Objekt zu vorhandener Gruppe hinzufügen |1<Objekte zu vorhandener Gruppe hinzufügen";
+    public static final String CF_ADD_OBJECTS_TO_GROUP_GROUP_CHOICE_DIALOG_HEADER_TEXT = "1#Wähle die Gruppe, zu der das Objekt {0} hinzugefügt werden soll |1<Wähle die Gruppe, zu der die Objekte {0} hinzugefügt werden sollen";
+    public static final String CF_REMOVE_OBJECTS_FROM_GROUP_GROUP_CHOICE_DIALOG_TITLE = "1#Objekt aus einer Gruppe entfernen |1<Objekte aus einer Gruppe entfernen";
+    public static final String CF_REMOVE_OBJECTS_FROM_GROUP_GROUP_CHOICE_DIALOG_HEADER_TEXT = "1#Wähle die Gruppe, aus der das Objekt {0} entfernt werden soll |1<Wähle die Gruppe, aus der die Objekte {0} entfernt werden sollen";
 
     public static final String ACTION_PERMANENT_DOCK_ANCHOR_TITLE = "Anker andocken";
     public static final String ACTION_CANCEL_PERMANENT_DOCK = "Abbrechen: Andocken";
@@ -183,6 +183,7 @@ public class Strings {
     public static final String BASE_OBJECT_PROPERTIES_GENERAL_SECTION = "Allgemein";
     public static final String BASE_OBJECT_PROPERTIES_TYPE = "Typ";
     public static final String BASE_OBJECT_PROPERTIES_ID = "Id";
+    public static final String BASE_OBJECT_PROPERTIES_ID_MULTIPLE = "[{0} Objekte]";
     public static final String BASE_OBJECT_PROPERTIES_NAME = "Name";
     public static final String BASE_OBJECT_PROPERTIES_SURFACES_SECTION = "Oberflächen";
     public static final String BASE_OBJECT_PROPERTIES_SURFACES_STANDARD = "<Standard>";
@@ -292,16 +293,11 @@ public class Strings {
     // Ground plan
     public static final String BEHAVIORS_OBJ_NAME = "{0}";
 
-    public static final String CEILING_MODE_ACTION_TOOLTIP = "Decken-Modus";
-    public static final String ADD_CEILING_BEHAVIOR_TITLE = "Decken-Modus";
-    public static final String ADD_CEILING_BEHAVIOR_USER_HINT = "Wähle drei Anker am oberen Wandende, um die Decke aufzuhängen";
-
     public static final String CONSTRUCTION_SELECTION_MODE_ACTION_TOOLTIP = "Selektionsmodus";
     public static final String CONSTRUCTION_SELECTION_BEHAVIOR_TITLE = "Selektionsmodus";
     public static final String CONSTRUCTION_SELECTION_BEHAVIOR_USER_HINT = "Selektiere Objekte durch Klicken";
 
     public static final String CONSTRUCTION_MODE_ACTION_TOOLTIP = "Konstruktionsmodus";
-    public static final String CONSTRUCTION_BEHAVIOR_TITLE = "Konstruktionsmodus";
     public static final String CONSTRUCTION_BEHAVIOR_USER_HINT = "Konstruiere deine Wohnung!";
     public static final String CONSTRUCTION_BEHAVIOR_USER_HINT_N_OBJECTS_SELECTED = "{0} Objekte ausgewählt";
     public static final String CONSTRUCTION_BEHAVIOR_CONTEXT_MENU_NAME = "Objektmenü";
@@ -393,7 +389,7 @@ public class Strings {
     public static final String ACTION_GROUND_PLAN_ADD_CEILING_BETWEEN_ANCHORS_TITLE = "Decke zwischen {0}, {1} und {2} einfügen";
     public static final String ACTION_GROUND_PLAN_CANCEL_ADD_CEILING_TITLE = "Abbrechen: Decke einfügen";
     public static final String GROUND_PLAN_ADD_CEILING_BEHAVIOR_TITLE = "Decke hinzufügen";
-    public static final String GROUND_PLAN_ADD_CEILING_BEHAVIOR_DEFAULT_USER_HINT = "Platziere die 3 Stützpunkte der Decke";
+    public static final String GROUND_PLAN_ADD_CEILING_BEHAVIOR_DEFAULT_USER_HINT = "Platziere die 3 Stützpunkte der Decke am oberen Wandende";
     public static final String GROUND_PLAN_ADD_CEILING_BEHAVIOR_ANCHOR_AIMED = "Stützpunkt setzen bei {0}";
 
     // Add Covering

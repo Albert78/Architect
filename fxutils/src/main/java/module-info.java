@@ -31,7 +31,6 @@ module de.dh.cad.architect.fxutils {
     exports de.dh.utils.csg;
     opens de.dh.cad.architect.fx.nodes.objviewer;
 
-    requires transitive javafx.base;
     requires transitive javafx.graphics;
     requires transitive javafx.swing; // Necessary for image IO utilities
     requires javafx.controls;

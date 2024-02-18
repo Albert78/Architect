@@ -45,7 +45,7 @@ public class ThreeDPreview {
         Box box = new Box(edgeLength, edgeLength, edgeLength);
         if (materialRef == null) {
             PhongMaterial material = new PhongMaterial();
-            material.setDiffuseMap(AssetLoader.loadMaterialPlaceholderTextureImage());
+            material.setDiffuseMap(AssetLoader.loadMaterialPlaceholderTextureImage(Optional.of(new ImageLoadOptions(edgeLength, edgeLength))));
             box.setMaterial(material);
         } else {
             try {

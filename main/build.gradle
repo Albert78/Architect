@@ -1,0 +1,21 @@
+plugins {
+    id 'buildlogic.java-application-conventions'
+    id 'buildlogic.javafx-conventions'
+}
+
+application {
+    mainModule = "de.dh.cad.architect.main"
+    mainClass = "de.dh.cad.architect.ArchitectApplication"
+}
+
+dependencies {
+    implementation libs.slf4j.api
+    implementation libs.log4j.slf4j18.impl
+    implementation libs.jakarta.xml.bind.api
+
+    implementation project(':fxutils')
+    implementation project(':model')
+    implementation project(':ui')
+    implementation project(':libraryeditor')
+    implementation project(':utilities')
+}

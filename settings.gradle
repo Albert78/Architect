@@ -1,0 +1,23 @@
+plugins {
+    id 'org.openjfx.javafxplugin' version '0.1.0' apply false
+}
+
+dependencyResolutionManagement {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+}
+
+include(':reactfx')
+include(':richtextfx')
+
+include(':model')
+include(':utilities')
+include(':viewsfx')
+include(':fxutils')
+include(':codeeditors')
+include(':ui')
+include(':main')
+include(':libraryeditor')
+include(':sh3dimporter')

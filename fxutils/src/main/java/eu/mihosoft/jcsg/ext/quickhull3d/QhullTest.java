@@ -2,7 +2,7 @@ package eu.mihosoft.jcsg.ext.quickhull3d;
 
 class QhullTest
 {
-	static double[] coords = new double[] 
+	static double[] coords = new double[]
 	{
 	};
 
@@ -18,7 +18,7 @@ class QhullTest
 	   hull = new QuickHull3D();
 
 	   for (int i=0; i<100; i++)
-	    { 
+	    {
 	      double[] pnts = tester.randomCubedPoints (100, 1.0, 0.5);
 
 	      hull.setFromQhull (pnts, pnts.length/3, /*triangulated=*/false);

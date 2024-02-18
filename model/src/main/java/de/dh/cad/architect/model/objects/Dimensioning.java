@@ -18,12 +18,12 @@
 package de.dh.cad.architect.model.objects;
 
 import java.util.List;
-import java.util.Optional;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlTransient;
 
 import de.dh.cad.architect.model.changes.IModelChange;
+import de.dh.cad.architect.model.changes.SimpleMergeableObjectModificationChange;
 import de.dh.cad.architect.model.changes.ObjectModificationChange;
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.utils.IdGenerator;
@@ -77,15 +77,7 @@ public class Dimensioning extends BaseAnchoredObject {
     public void setLabelDistance(double value, List<IModelChange> changeTrace) {
         double oldLabelDistancePt = mLabelDistancePt;
         mLabelDistancePt = value;
-        changeTrace.add(new ObjectModificationChange(this) {
-            @Override
-            public Optional<IModelChange> tryMerge(IModelChange oldChange) {
-                if (getClass().equals(oldChange.getClass())) {
-                    return Optional.of(oldChange);
-                }
-                return Optional.empty();
-            }
-
+        changeTrace.add(new SimpleMergeableObjectModificationChange(this) {
             @Override
             public void undo(List<IModelChange> undoChangeTrace) {
                 setLabelDistance(oldLabelDistancePt, undoChangeTrace);

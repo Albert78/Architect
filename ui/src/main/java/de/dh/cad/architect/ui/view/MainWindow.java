@@ -429,8 +429,13 @@ public class MainWindow implements Initializable {
 
         // Step 3: Restore or initialize perspective layout
         if (oViewsLayoutState.isPresent()) {
-            ViewsLayoutState viewsLayoutState = oViewsLayoutState.get();
-            DockSystem.restoreLayoutState(viewsLayoutState);
+            try {
+                ViewsLayoutState viewsLayoutState = oViewsLayoutState.get();
+                DockSystem.restoreLayoutState(viewsLayoutState);
+            } catch (Exception e) {
+                log.warn("Error restoring window and views layout, ressetting perspective", e);
+                DockSystem.resetPerspective();
+            }
         } else {
             DockSystem.resetPerspective();
         }

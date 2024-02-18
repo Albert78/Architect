@@ -1,0 +1,8 @@
+plugins {
+    id 'org.openjfx.javafxplugin'
+}
+
+javafx {
+    version = libs.versions.javafx.get()
+    modules = ['javafx.graphics', 'javafx.controls', 'javafx.fxml', 'javafx.web', 'javafx.swing']
+}

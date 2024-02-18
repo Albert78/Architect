@@ -17,6 +17,7 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.view;
 
+import java.text.ChoiceFormat;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -312,7 +313,7 @@ public abstract class AbstractViewBehavior<TRepr extends IModelBasedObject, TAnc
      * Tries to switch to the given desired behavior but first checks if the current
      * behavior can also handle the current (changed) situation. This check is needed to suppress
      * behavior changes for behaviors which want to maintain their state, for example after a selection change,
-     * for example {@link EditSelectedAnchorBehavior} doesn't want to dispose and recreate it's interaction pane.
+     * for example {@link EditSelectedAnchorBehavior} doesn't want to dispose and recreate its interaction pane.
      */
     protected boolean trySetBehaviorAfterSelectionChange(AbstractViewBehavior<TRepr, TAnc> desiredBehavior) {
         AbstractViewBehavior<TRepr, TAnc> currentBehavior = mParentMode.getBehavior();
@@ -573,7 +574,7 @@ public abstract class AbstractViewBehavior<TRepr extends IModelBasedObject, TAnc
         return new IContextAction() {
             @Override
             public String getTitle() {
-                return Strings.UNGROUP_ACTION_TITLE;
+                return MessageFormat.format(Strings.UNGROUP_ACTION_TITLE, BaseObjectUIRepresentation.getShortName(group));
             }
 
             @Override
@@ -587,23 +588,28 @@ public abstract class AbstractViewBehavior<TRepr extends IModelBasedObject, TAnc
     }
 
     protected IContextAction createAddObjectsToGroupAction(Collection<BaseObject> objectsToAdd) {
+        int numObjects = objectsToAdd.size();
         return new IContextAction() {
             @Override
             public String getTitle() {
-                return MessageFormat.format(Strings.ADD_OBJECTS_TO_GROUP_ACTION_TITLE, objectsToAdd.size());
+                return MessageFormat.format(new ChoiceFormat(Strings.CF_ADD_OBJECTS_TO_GROUP_ACTION_TITLE).format(numObjects), numObjects);
             }
 
             @Override
             public void execute() {
                 Collection<ObjectsGroup> groups = getPlan().getGroups().values();
                 ChoiceDialog<ObjectStringAdapter<ObjectsGroup>> choiceDialog =
-                        new ChoiceDialog<>(null, ObjectStringAdapter.wrap(groups, g -> BaseObjectUIRepresentation.getShortName(g)));
-                choiceDialog.setTitle(Strings.ADD_OBJECTS_TO_GROUP_GROUP_CHOICE_DIALOG_TITLE);
+                        new ChoiceDialog<>(null, ObjectStringAdapter.wrap(groups, BaseObjectUIRepresentation::getShortName));
+                choiceDialog.setTitle(MessageFormat.format(
+                        new ChoiceFormat(Strings.CF_ADD_OBJECTS_TO_GROUP_GROUP_CHOICE_DIALOG_TITLE).format(numObjects),
+                        numObjects
+                ));
                 choiceDialog.setHeaderText(
-                        MessageFormat.format(Strings.ADD_OBJECTS_TO_GROUP_GROUP_CHOICE_DIALOG_HEADER_TEXT,
+                        MessageFormat.format(
+                                new ChoiceFormat(Strings.CF_ADD_OBJECTS_TO_GROUP_GROUP_CHOICE_DIALOG_HEADER_TEXT).format(numObjects),
                             StringUtils.join(objectsToAdd
                                     .stream()
-                                    .map(o -> BaseObjectUIRepresentation.getShortName(o))
+                                    .map(BaseObjectUIRepresentation::getShortName)
                                     .toList()), ", "));
                 Optional<ObjectStringAdapter<ObjectsGroup>> oRes = choiceDialog.showAndWait();
                 oRes.ifPresent(osaGroup -> {
@@ -629,28 +635,38 @@ public abstract class AbstractViewBehavior<TRepr extends IModelBasedObject, TAnc
     }
 
     protected IContextAction createRemoveObjectsFromGroupAction(Collection<BaseObject> objectsToRemove) {
+        int numObjects = objectsToRemove.size();
         return new IContextAction() {
             @Override
             public String getTitle() {
-                return MessageFormat.format(Strings.REMOVE_OBJECTS_FROM_GROUP_ACTION_TITLE, objectsToRemove.size());
+                return MessageFormat.format(
+                        new ChoiceFormat(Strings.CF_REMOVE_OBJECTS_FROM_GROUP_ACTION_TITLE).format(numObjects),
+                        numObjects);
             }
 
             @Override
             public void execute() {
                 Collection<ObjectsGroup> groups = getCompletelyContainingGroups(objectsToRemove);
                 if (groups.isEmpty()) {
-                    new Alert(AlertType.ERROR, Strings.REMOVE_OBJECTS_FROM_GROUP_NO_GROUPS_ERROR_TEXT, ButtonType.OK)
+                    new Alert(AlertType.ERROR,
+                            MessageFormat.format(
+                                    new ChoiceFormat(Strings.CF_REMOVE_OBJECTS_FROM_GROUP_NO_GROUPS_ERROR_TEXT).format(numObjects),
+                                    numObjects),
+                            ButtonType.OK)
                         .showAndWait();
                     return;
                 }
                 ChoiceDialog<ObjectStringAdapter<ObjectsGroup>> choiceDialog =
                         new ChoiceDialog<>(null, ObjectStringAdapter.wrap(groups, g -> BaseObjectUIRepresentation.getShortName(g)));
-                choiceDialog.setTitle(Strings.REMOVE_OBJECTS_FROM_GROUP_GROUP_CHOICE_DIALOG_TITLE);
+                choiceDialog.setTitle(MessageFormat.format(
+                        new ChoiceFormat(Strings.CF_REMOVE_OBJECTS_FROM_GROUP_GROUP_CHOICE_DIALOG_TITLE).format(numObjects),
+                        numObjects));
                 choiceDialog.setHeaderText(
-                        MessageFormat.format(Strings.REMOVE_OBJECTS_FROM_GROUP_GROUP_CHOICE_DIALOG_HEADER_TEXT,
+                        MessageFormat.format(
+                                new ChoiceFormat(Strings.CF_REMOVE_OBJECTS_FROM_GROUP_GROUP_CHOICE_DIALOG_HEADER_TEXT).format(numObjects),
                                 objectsToRemove
                                     .stream()
-                                    .map(o -> BaseObjectUIRepresentation.getShortName(o))
+                                    .map(BaseObjectUIRepresentation::getShortName)
                                     .toList()));
                 Optional<ObjectStringAdapter<ObjectsGroup>> oRes = choiceDialog.showAndWait();
                 oRes.ifPresent(osaGroup -> {
@@ -669,23 +685,25 @@ public abstract class AbstractViewBehavior<TRepr extends IModelBasedObject, TAnc
      * Adds actions when multiple objects are selected.
      */
     protected void addGroupingActionsForSelection(List<BaseObject> selectedObjects, Collection<IContextAction> actions) {
-        // Create group for selected objects
-        if (selectedObjects.size() > 1) {
-            actions.add(createGroupAction(selectedObjects));
-        }
+        if (!selectedObjects.isEmpty()) {
+            // Create group for selected objects
+            if (selectedObjects.size() > 1) {
+                actions.add(createGroupAction(selectedObjects));
+            }
 
-        // Add selected objects to existing group
-        Collection<ObjectsGroup> groups = new ArrayList<>(getPlan().getGroups().values());
-        groups.removeAll(selectedObjects); // Don't offer group as target which is contained in the selection
-        groups.removeAll(selectedObjects.stream().flatMap(bo -> bo.getGroups().stream()).toList());
-        if (groups.size() > 0 && !selectedObjects.isEmpty()) {
-            actions.add(createAddObjectsToGroupAction(selectedObjects));
-        }
+            // Add selected objects to existing group
+            Collection<ObjectsGroup> groups = new ArrayList<>(getPlan().getGroups().values());
+            groups.removeAll(selectedObjects); // Don't offer group as target which is contained in the selection
+            groups.removeAll(selectedObjects.stream().flatMap(bo -> bo.getGroups().stream()).toList());
+            if (!groups.isEmpty() && !selectedObjects.isEmpty()) {
+                actions.add(createAddObjectsToGroupAction(selectedObjects));
+            }
 
-        // Remove objects from group action
-        Collection<ObjectsGroup> possibleRemoveGroups = getCompletelyContainingGroups(selectedObjects);
-        if (!possibleRemoveGroups.isEmpty()) {
-            actions.add(createRemoveObjectsFromGroupAction(selectedObjects));
+            // Remove objects from group action
+            Collection<ObjectsGroup> possibleRemoveGroups = getCompletelyContainingGroups(selectedObjects);
+            if (!possibleRemoveGroups.isEmpty()) {
+                actions.add(createRemoveObjectsFromGroupAction(selectedObjects));
+            }
         }
     }
 

@@ -1,0 +1,17 @@
+plugins {
+    id 'buildlogic.java-library-conventions'
+}
+
+dependencies {
+    implementation libs.jakarta.xml.bind.api
+    implementation libs.slf4j.api
+    implementation libs.commons.collections4
+    implementation libs.commons.lang3
+    implementation libs.commons.io
+
+    implementation project(':utilities')
+
+    testImplementation libs.junit.jupiter.api
+    testRuntimeOnly libs.junit.jupiter.engine
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}

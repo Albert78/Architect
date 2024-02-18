@@ -766,7 +766,7 @@ public class UiController {
     public void setGuideLinePosition(GuideLine guideLine, Length position) {
         List<IModelChange> changeTrace = new ArrayList<>();
         guideLine.setPosition(position, changeTrace);
-        notifyChange(changeTrace, Strings.GUIDE_LINE_SET_PROPERTY_CHANGE);
+        notifyChange(changeTrace, Strings.GUIDE_LINE_SET_PROPERTY_CHANGE, true);
     }
 
     public void setWallBevelTypeOfAnchorDock(Anchor anchorDock, WallBevelType wallBevel) {

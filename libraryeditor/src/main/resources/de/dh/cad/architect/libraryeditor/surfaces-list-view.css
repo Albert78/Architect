@@ -1,0 +1,3 @@
+#mSurfacesListView {
+    -fx-selection-bar: derive(-fx-accent,30%);
+}

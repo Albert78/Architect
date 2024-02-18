@@ -90,9 +90,9 @@ public abstract class AbstractAssetEditControl extends AbstractEditControl {
 
     protected Image loadImage(Path imageFile) {
         try {
-            return AssetManager.loadImage(new PlainFileSystemResourceLocator(imageFile));
+            return AssetManager.loadImage(new PlainFileSystemResourceLocator(imageFile), Optional.empty());
         } catch (IOException e) {
-            return AssetLoader.loadBrokenImageBig();
+            return AssetLoader.loadBrokenImageBig(Optional.empty());
         }
     }
 
@@ -104,7 +104,7 @@ public abstract class AbstractAssetEditControl extends AbstractEditControl {
             log.error("Icon image of asset <" + mDescriptor + "> could not be loaded", e);
         }
         if (image == null) {
-            image = AssetLoader.loadBrokenImageSmall();
+            image = AssetLoader.loadBrokenImageSmall(Optional.empty());
         }
         return image;
     }

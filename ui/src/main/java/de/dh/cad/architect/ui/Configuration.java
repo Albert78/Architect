@@ -75,10 +75,10 @@ public class Configuration implements IConfig {
         }
     }
 
-    public void putLastPlanFileToFrontInHistory(Path planFilePath) {
+    public void putLastPlanFileToFrontInHistory(Path filePath) {
         List<Path> history = getPlanFilesHistory();
-        while (history.remove(planFilePath)) { /* Intentionally empty */ }
-        history.add(0, planFilePath);
+        while (history.remove(filePath)) { /* Intentionally empty */ }
+        history.add(0, filePath);
         writePlanFileHistory(history);
     }
 

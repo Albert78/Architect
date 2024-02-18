@@ -18,6 +18,7 @@
 package de.dh.cad.architect.ui.properties;
 
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -26,6 +27,8 @@ import java.util.Map.Entry;
 
 import org.apache.commons.collections4.map.LinkedMap;
 
+import de.dh.cad.architect.ui.Strings;
+import de.dh.cad.architect.ui.objects.BaseObjectUIRepresentation;
 import de.dh.cad.architect.ui.objects.ObjectProperties;
 import de.dh.cad.architect.ui.properties.UiProperty.PropertyType;
 import javafx.beans.property.SimpleObjectProperty;
@@ -242,7 +245,16 @@ public class PropertiesControl extends BorderPane {
                 for (UiProperty<?> currentProperty : currentProperties) {
                     String currentKey = currentProperty.getKey();
                     ConsolidatedUiProperty consolidatedProperty = contentsOfCategory.computeIfAbsent(currentKey, key -> new ConsolidatedUiProperty(
-                        currentKey, currentProperty.getDisplayName(), currentProperty.getType(), currentProperty.isEditable()));
+                        currentKey, currentProperty.getDisplayName(), currentProperty.getType(), currentProperty.isEditable()) {
+                        @Override
+                        public Object getValue() {
+                            if (Strings.BASE_OBJECT_PROPERTIES_GENERAL_SECTION.equals(currentCategory) && BaseObjectUIRepresentation.KEY_PROPERTY_ID.equals(currentKey)) {
+                                // Special handling for "ID" property
+                                return MessageFormat.format(Strings.BASE_OBJECT_PROPERTIES_ID_MULTIPLE, getChildren().size());
+                            }
+                            return super.getValue();
+                        }
+                    });
                     consolidatedProperty.getChildren().add(currentProperty);
                 }
             }

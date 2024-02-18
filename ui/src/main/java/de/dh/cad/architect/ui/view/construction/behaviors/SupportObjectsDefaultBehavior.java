@@ -74,8 +74,7 @@ public class SupportObjectsDefaultBehavior extends AbstractConstructionBehavior 
         } else {
             // More than 1 object selected
 
-            // Grouping
-            actions.add(createGroupAction(selectedObjects));
+            addGroupingActionsForSelection(selectedObjects, actions);
         }
 
         // TODO: Restrict action to support objects?

@@ -21,10 +21,8 @@ module de.dh.cad.architect.codeeditors {
     requires transitive org.slf4j;
     requires org.apache.commons.lang3;
     requires org.apache.commons.io;
-    requires org.fxmisc.richtext;
-    requires org.fxmisc.undo;
     requires reactfx;
-    requires flowless;
+    requires org.fxmisc.richtext;
     requires javafx.graphics;
     requires javafx.controls;
 }

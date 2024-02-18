@@ -334,7 +334,7 @@ public class SupportObjectEditControl extends AbstractAssetEditControl implement
             log.error("Plan view image of support object <" + descriptor + "> could not be loaded", e);
         }
         if (image == null) {
-            image = AssetLoader.loadBrokenImageBig();
+            image = AssetLoader.loadBrokenImageBig(Optional.empty());
         }
         return image;
     }

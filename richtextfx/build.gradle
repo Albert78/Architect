@@ -1,0 +1,25 @@
+plugins {
+    id 'buildlogic.java-library-conventions'
+    id 'buildlogic.javafx-conventions'
+}
+
+group = 'org.fxmisc.richtext'
+
+test {
+    useJUnit()
+}
+
+dependencies {
+    api project(':reactfx')
+
+    testImplementation group: 'junit', name: 'junit', version: '4.13.2'
+    testImplementation group: 'org.junit.contrib', name: 'junit-theories', version: '4.12'
+    testImplementation group: 'com.nitorcreations', name: 'junit-runners', version: '1.2'
+    testImplementation "org.testfx:testfx-core:4.0.16-alpha"
+    testImplementation ("org.testfx:testfx-junit:4.0.15-alpha") {
+        exclude(group: "junit", module: "junit")
+    }
+
+    testRuntimeOnly libs.junit.jupiter.engine
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}

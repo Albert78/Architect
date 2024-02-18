@@ -22,6 +22,5 @@ module de.dh.cad.architect.main {
     requires de.dh.cad.architect.model;
     requires de.dh.cad.architect.libraryeditor;
 
-    requires transitive javafx.graphics;
     requires org.slf4j;
 }

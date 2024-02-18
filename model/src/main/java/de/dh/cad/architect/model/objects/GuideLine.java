@@ -24,6 +24,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import de.dh.cad.architect.model.changes.IModelChange;
+import de.dh.cad.architect.model.changes.SimpleMergeableObjectModificationChange;
 import de.dh.cad.architect.model.changes.ObjectModificationChange;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.jaxb.LengthJavaTypeAdapter;
@@ -85,7 +86,7 @@ public class GuideLine extends BaseObject {
     public void setPosition(Length value, List<IModelChange> changeTrace) {
         Length oldPosition = mPosition;
         mPosition = value;
-        changeTrace.add(new ObjectModificationChange(this) {
+        changeTrace.add(new SimpleMergeableObjectModificationChange(this) {
             @Override
             public void undo(List<IModelChange> undoChangeTrace) {
                 setPosition(oldPosition, undoChangeTrace);

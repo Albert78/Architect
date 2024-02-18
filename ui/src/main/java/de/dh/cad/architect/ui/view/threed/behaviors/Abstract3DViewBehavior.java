@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeSet;
 
+import de.dh.cad.architect.fx.nodes.CombinedTransformGroup;
 import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.dialogs.CameraPositionsManagerDialog;
 import de.dh.cad.architect.ui.objects.Abstract3DAncillaryObject;
@@ -37,6 +38,7 @@ import de.dh.cad.architect.utils.Namespace;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.scene.Cursor;
+import javafx.scene.Group;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
@@ -56,8 +58,12 @@ public abstract class Abstract3DViewBehavior extends AbstractViewBehavior<Abstra
     protected void enablePlanMouseGestures() {
         DragController3D dragController = new DragController3D();
 
+        ThreeDView view = getView();
+        Group rootGroup = view.getRootGroup();
+        CombinedTransformGroup transformedRoot = view.getTransformedRoot();
+
         mView.setOnMousePressed(event -> {
-            dragController.mousePressed(event, getView().getTransformedRoot());
+            dragController.mousePressed(event, transformedRoot);
             if (dragController.getCurrentDragMode() == DragMode.None) {
                 mView.setCursor(Cursor.DEFAULT);
             } else {
@@ -72,8 +78,7 @@ public abstract class Abstract3DViewBehavior extends AbstractViewBehavior<Abstra
 
         mView.setOnMouseDragged(event -> {
             try {
-                ThreeDView view = getView();
-                dragController.mouseDragged(event, view.getRootGroup(), view.getTransformedRoot());
+                dragController.mouseDragged(event, rootGroup, transformedRoot);
                 view.setDirty();
             } catch (Exception e) {
                 throw new RuntimeException("Unable to translate plan coordinates", e);
@@ -81,15 +86,12 @@ public abstract class Abstract3DViewBehavior extends AbstractViewBehavior<Abstra
         });
 
         if (mZoomEventHandler == null) {
-            mZoomEventHandler = new EventHandler<>() {
-                @Override
-                public void handle(ScrollEvent event) {
-                    // DeltaX is produced by scrolling Y and pressing shift
-                    getView().moveNearClip(-event.getDeltaX());
+            mZoomEventHandler = event -> {
+                // DeltaX is produced by scrolling Y and pressing shift
+                view.moveNearClip(-event.getDeltaX());
 
-                    // Normal scroll wheel
-                    getView().zoom(event.getDeltaY());
-                }
+                // Normal scroll wheel
+                view.zoom(event.getDeltaY());
             };
             mView.addEventHandler(ScrollEvent.SCROLL, mZoomEventHandler);
         }

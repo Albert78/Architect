@@ -58,6 +58,7 @@ import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.ui.assets.AssetLoader.ThreeDResourceImportMode;
 import de.dh.cad.architect.ui.persistence.AssetDescriptorsIO;
 import de.dh.cad.architect.ui.persistence.LibraryIO;
+import de.dh.cad.architect.ui.view.libraries.ImageLoadOptions;
 import de.dh.cad.architect.utils.IdGenerator;
 import de.dh.cad.architect.utils.vfs.ClassLoaderFileSystemResourceLocator;
 import de.dh.cad.architect.utils.vfs.IDirectoryLocator;
@@ -383,7 +384,7 @@ public class AssetManager {
         // TODO: Cache in AssetCollection
         public Image loadImage(String imageFileName) throws IOException {
             IResourceLocator resourceLocator = resolveResource(imageFileName);
-            return AssetManager.loadImage(resourceLocator);
+            return AssetManager.loadImage(resourceLocator, Optional.empty());
         }
 
         // TODO: Cache in AssetCollection
@@ -922,9 +923,9 @@ public class AssetManager {
             LOCAL_RESOURCE_BASE + "/" + localResourceName), AssetLoader.class);
     }
 
-    public static Image loadImage(IResourceLocator imageFileLocator) throws IOException {
+    public static Image loadImage(IResourceLocator imageFileLocator, Optional<ImageLoadOptions> oLoadOptions) throws IOException {
         try (InputStream is = imageFileLocator.inputStream()) {
-            return new Image(is);
+            return oLoadOptions.map(loadOptions -> new Image(is, loadOptions.getWidth(), loadOptions.getHeight(), loadOptions.isPreserveRatio(), loadOptions.isSmooth())).orElse(new Image(is));
         }
     }
 

@@ -1,0 +1,23 @@
+plugins {
+    id 'buildlogic.java-library-conventions'
+    id 'buildlogic.javafx-conventions'
+}
+
+test {
+    filter {
+        // We currently only have a standalone test class, which causes a warning
+        // because the test class is present but not executed by JUnit.
+        // To avoid that warning, we just exclude the test source.
+        exclude "*"
+        setFailOnNoMatchingTests false
+    }
+}
+
+dependencies {
+    implementation libs.slf4j.api
+    implementation libs.commons.collections4
+    implementation libs.commons.lang3
+    implementation libs.jakarta.xml.bind.api
+
+    implementation project(':utilities')
+}

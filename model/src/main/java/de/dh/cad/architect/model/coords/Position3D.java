@@ -58,6 +58,7 @@ public class Position3D implements IPosition {
         return mZ;
     }
 
+    @Override
     public Position3D withX(Length x) {
         return new Position3D(x, mY, mZ);
     }
@@ -66,6 +67,7 @@ public class Position3D implements IPosition {
         return withX(mX.plus(x));
     }
 
+    @Override
     public Position3D withY(Length y) {
         return new Position3D(mX, y, mZ);
     }

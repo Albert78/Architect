@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+
+<fx:root prefHeight="714.0" prefWidth="877.0" type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+   <center>
+      <GridPane hgap="5.0" vgap="5.0" BorderPane.alignment="CENTER">
+        <columnConstraints>
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+        </columnConstraints>
+        <rowConstraints>
+          <RowConstraints vgrow="NEVER" />
+          <RowConstraints vgrow="NEVER" />
+          <RowConstraints vgrow="NEVER" />
+          <RowConstraints vgrow="NEVER" />
+          <RowConstraints vgrow="NEVER" />
+          <RowConstraints vgrow="NEVER" />
+          <RowConstraints vgrow="NEVER" />
+        </rowConstraints>
+         <children>
+            <Label text="Möbelstück-Id" />
+            <Label fx:id="mIdLabel" text="-" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" />
+            <Label text="Name" GridPane.rowIndex="1" />
+            <Label fx:id="mNameLabel" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+            <Label text="Beschreibung" GridPane.rowIndex="2" />
+            <TextArea fx:id="mDescriptionTextArea" editable="false" prefHeight="166.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+            <Label text="Information" GridPane.rowIndex="3" />
+            <TextArea fx:id="mInformationTextArea" editable="false" prefHeight="166.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+            <Label text="Icon" GridPane.rowIndex="4" />
+            <BorderPane fx:id="mIconImagePane" GridPane.columnIndex="1" GridPane.rowIndex="4">
+               <left>
+                  <ImageView fx:id="mIconImageView" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="CENTER" />
+               </left>
+            </BorderPane>
+            <Label text="Bild im Grundriss-Plan" wrapText="true" GridPane.rowIndex="5" />
+            <BorderPane fx:id="mPlanViewImagePane" GridPane.columnIndex="1" GridPane.rowIndex="5">
+               <left>
+                  <ImageView fx:id="mPlanViewImageView" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="CENTER" />
+               </left>
+            </BorderPane>
+            <Label text="3D-Objekt" wrapText="true" GridPane.rowIndex="6" />
+            <BorderPane fx:id="mThreeDResourcePane" prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+         </children>
+      </GridPane>
+   </center>
+</fx:root>

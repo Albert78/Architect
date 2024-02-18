@@ -56,6 +56,7 @@ import de.dh.cad.architect.model.assets.SupportObjectDescriptor;
 import de.dh.cad.architect.model.assets.ThreeDModelResource;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.ui.assets.AssetManager.AssetLocation;
+import de.dh.cad.architect.ui.view.libraries.ImageLoadOptions;
 import de.dh.cad.architect.utils.vfs.IDirectoryLocator;
 import de.dh.cad.architect.utils.vfs.IPathLocator;
 import de.dh.cad.architect.utils.vfs.IResourceLocator;
@@ -132,48 +133,56 @@ public class AssetLoader {
         return AssetLoader.class.getResource(localResourceName);
     }
 
-    protected static Image loadImageFromResource(String localResourceName) {
+    protected static Image loadImageFromResource(String localResourceName, Optional<ImageLoadOptions> oLoadOptions) {
         try (InputStream is = getResource(localResourceName).openStream()) {
-            return new Image(is);
+            return oLoadOptions
+                    .map(loadOptions -> new Image(is, loadOptions.getWidth(), loadOptions.getHeight(), loadOptions.isPreserveRatio(), loadOptions.isSmooth()))
+                    .orElse(new Image(is));
         } catch (IOException e) {
             throw new RuntimeException("Image resource '" + localResourceName + "' could not be loaded", e);
         }
     }
 
-    public static Image loadBrokenImageSmall() {
-        return loadImageFromResource(BROKEN_IMAGE_SMALL);
+    public static Image loadBrokenImageSmall(Optional<ImageLoadOptions> oLoadOptions) {
+        return loadImageFromResource(BROKEN_IMAGE_SMALL, oLoadOptions);
     }
 
-    public static Image loadBrokenImageBig() {
-        return loadImageFromResource(BROKEN_IMAGE_BIG);
+    public static Image loadBrokenImageBig(Optional<ImageLoadOptions> oLoadOptions) {
+        return loadImageFromResource(BROKEN_IMAGE_BIG, oLoadOptions);
     }
 
-    public static Image loadSupportObjectPlaceholderIconImage() {
-        return loadImageFromResource(SUPPORT_OBJECT_PLACEHOLDER_ICON_IMAGE);
+    public static Image loadSupportObjectPlaceholderIconImage(Optional<ImageLoadOptions> oLoadOptions) {
+        return loadImageFromResource(SUPPORT_OBJECT_PLACEHOLDER_ICON_IMAGE, oLoadOptions);
     }
 
-    public static Image loadMaterialSetPlaceholderIconImage() {
-        return loadImageFromResource(MATERIAL_SET_PLACEHOLDER_ICON_IMAGE);
+    public static Image loadMaterialSetPlaceholderIconImage(Optional<ImageLoadOptions> oLoadOptions) {
+        return loadImageFromResource(MATERIAL_SET_PLACEHOLDER_ICON_IMAGE, oLoadOptions);
     }
 
-    public static Image loadMaterialPlaceholderTextureImage() {
-        return loadImageFromResource(MATERIAL_PLACEHOLDER_TEXTURE);
+    public static Image loadMaterialPlaceholderTextureImage(Optional<ImageLoadOptions> oLoadOptions) {
+        return loadImageFromResource(MATERIAL_PLACEHOLDER_TEXTURE, oLoadOptions);
     }
 
-    public static Image loadSupportObjectPlaceholderPlanViewImage() {
-        return loadImageFromResource(SUPPORT_OBJECT_PLACEHOLDER_PLAN_VIEW_IMAGE);
+    public static Image loadSupportObjectPlaceholderPlanViewImage(Optional<ImageLoadOptions> oLoadOptions) {
+        return loadImageFromResource(SUPPORT_OBJECT_PLACEHOLDER_PLAN_VIEW_IMAGE, oLoadOptions);
     }
 
     public static ThreeDObject loadBroken3DResource() {
-        MeshView result = new MeshView(BoxMesh.createMesh(100, 100, 100));
-        PhongMaterial material = new PhongMaterial(Color.RED, loadBrokenImageBig(), null, null, null);
+        int width = 100;
+        int height = 100;
+        int depth = 100;
+        MeshView result = new MeshView(BoxMesh.createMesh(width, height, depth));
+        PhongMaterial material = new PhongMaterial(Color.RED, loadBrokenImageBig(Optional.of(new ImageLoadOptions(width, height))), null, null, null);
         result.setMaterial(material);
         Length def = Length.ofCM(10);
         return new ThreeDObject(Collections.singleton(result), Optional.empty(), def, def, def);
     }
 
     public static ThreeDObject loadSupportObjectPlaceholder3DResource() {
-        MeshView result = new MeshView(BoxMesh.createMesh(100, 100, 100));
+        int width = 100;
+        int height = 100;
+        int depth = 100;
+        MeshView result = new MeshView(BoxMesh.createMesh(width, height, depth));
         PhongMaterial material = new PhongMaterial(Color.GREEN);
         result.setMaterial(material);
         Length def = Length.ofCM(10);
@@ -210,13 +219,11 @@ public class AssetLoader {
         if (model == null) {
             throw new NullPointerException("3D model is not assigned in descriptor <" + assetRefPath + ">");
         }
-        Collection<MeshView> meshes;
-        Optional<Transform> oTrans = Optional.empty();
-        if (model instanceof ObjModelResource omr) {
-            try {
-                ObjDataRaw objData = loadObjModelData(assetLocation, omr);
+        try {
+            if (model instanceof ObjModelResource omr) {
                 Map<String, MeshConfiguration> meshNamesToMeshConfigurations = soDescriptor.getMeshNamesToMeshConfigurations();
 
+                ObjDataRaw objData = loadObjModelData(assetLocation, omr);
                 Map<String, String> defaultMeshNamesToMaterialNames = objData.getMeshNamesToMaterialNames();
 
                 // Lookup material ref paths from SO descriptor by the mesh names given in obj file
@@ -266,16 +273,16 @@ public class AssetLoader {
                     }
                 }
 
-                meshes = FxMeshBuilder.buildMeshViews(objData.getMeshes(), meshNamesToMaterials, false);
-            } catch (IOException e) {
-                String msg = "Unable to load 3D model for support object descriptor <" + soDescriptor + ">";
-                throw new IOException(msg, e);
+                Collection<MeshView> meshes = FxMeshBuilder.buildMeshViews(objData.getMeshes(), meshNamesToMaterials, false);
+                Optional<Transform> oTrans = createTransform(omr.getModelRotationMatrix());
+                return new ThreeDObject(meshes, oTrans, soDescriptor.getWidth(), soDescriptor.getHeight(), soDescriptor.getDepth());
+            } else {
+                throw new NotImplementedException("Unable to load object 3D model of class <" + model.getClass() + "> in descriptor <" + assetRefPath + ">");
             }
-            oTrans = createTransform(omr.getModelRotationMatrix());
-        } else {
-            throw new NotImplementedException("Unable to load object 3D model of class <" + model.getClass() + "> in descriptor <" + assetRefPath + ">");
+        } catch (IOException e) {
+            String msg = "Unable to load 3D model for support object descriptor <" + soDescriptor + ">";
+            throw new IOException(msg, e);
         }
-        return new ThreeDObject(meshes, oTrans, soDescriptor.getWidth(), soDescriptor.getHeight(), soDescriptor.getDepth());
     }
 
     protected String importAssetResourceImage(AssetRefPath assetRefPath, Image image, String imageName) throws IOException {
@@ -690,7 +697,7 @@ public class AssetLoader {
             if (fallbackToPlaceholder) {
                 logMissingIconImage(descriptor.getSelfRef(), e);
                 // Should we return an error resource or fallback to placeholder?
-                return loadSupportObjectPlaceholderIconImage();
+                return loadSupportObjectPlaceholderIconImage(Optional.empty());
             }
             return null;
         }
@@ -703,7 +710,7 @@ public class AssetLoader {
             if (fallbackToPlaceholder) {
                 logMissingIconImage(descriptor.getSelfRef(), e);
                 // Should we return an error resource or fallback to placeholder?
-                return loadMaterialSetPlaceholderIconImage();
+                return loadMaterialSetPlaceholderIconImage(Optional.empty());
             }
             return null;
         }
@@ -726,7 +733,7 @@ public class AssetLoader {
         } catch (IOException e) {
             if (fallbackToPlaceholder) {
                 logMissingDescriptor(supportObjectDescriptorRef, e);
-                return loadSupportObjectPlaceholderPlanViewImage();
+                return loadSupportObjectPlaceholderPlanViewImage(Optional.empty());
             } else {
                 return null;
             }
@@ -740,7 +747,7 @@ public class AssetLoader {
         } catch (Exception e) {
             if (fallbackToPlaceholder) {
                 logMissingPlanViewImage(descriptor.getSelfRef(), e);
-                return loadSupportObjectPlaceholderPlanViewImage();
+                return loadSupportObjectPlaceholderPlanViewImage(Optional.empty());
             } else {
                 return null;
             }
@@ -784,7 +791,7 @@ public class AssetLoader {
             RawMaterialData materialData = loadMaterialData(materialRefPath);
             configureMaterial_Lax(shape, materialData, oSurfaceSize);
         } catch (IOException e) {
-            Image placeholder = loadMaterialPlaceholderTextureImage();
+            Image placeholder = loadMaterialPlaceholderTextureImage(Optional.empty());
             PhongMaterial material = new PhongMaterial(Color.WHITE);
             material.setDiffuseMap(placeholder);
             shape.setMaterial(material);

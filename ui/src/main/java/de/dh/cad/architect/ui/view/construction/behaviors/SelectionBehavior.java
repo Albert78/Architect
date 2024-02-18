@@ -81,8 +81,7 @@ public class SelectionBehavior extends AbstractConstructionBehavior {
         } else {
             // More than 1 object selected
 
-            // Grouping
-            actions.add(createGroupAction(selectedObjects));
+            addGroupingActionsForSelection(selectedObjects, actions);
         }
 
         mActionsList.setAll(actions);
@@ -188,8 +187,14 @@ public class SelectionBehavior extends AbstractConstructionBehavior {
     }
 
     @Override
+    public void setDefaultUserHint() {
+        setUserHint(Strings.CONSTRUCTION_SELECTION_BEHAVIOR_USER_HINT);
+    }
+
+    @Override
     public void install(AbstractPlanView<Abstract2DRepresentation, Abstract2DAncillaryObject> view) {
         super.install(view);
+
         ConstructionView constructionView = getView();
         Pane topLayer = constructionView.getTopLayer();
         topLayer.setMouseTransparent(false);
