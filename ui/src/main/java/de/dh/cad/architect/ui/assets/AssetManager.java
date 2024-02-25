@@ -27,6 +27,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -346,7 +347,7 @@ public class AssetManager {
         // TODO: Cache in AssetCollection
         protected SupportObjectDescriptor loadSupportObjectDescriptor() throws IOException {
             IResourceLocator resourceLocator = resolveResource(SUPPORT_OBJECT_DESCRIPTOR_NAME);
-            try (Reader reader = new BufferedReader(new InputStreamReader(resourceLocator.inputStream()))) {
+            try (Reader reader = new BufferedReader(new InputStreamReader(resourceLocator.inputStream(), StandardCharsets.UTF_8))) {
                 AssetRefPath supportObjectDescriptorRef = new AssetRefPath(AssetType.SupportObject, getAnchor(), mRelativePathInAssetCollection);
                 return AssetDescriptorsIO.deserializeSupportObjectDescriptor(reader, supportObjectDescriptorRef);
             }
@@ -355,7 +356,7 @@ public class AssetManager {
         // TODO: Cache in AssetCollection
         protected MaterialSetDescriptor loadMaterialSetDescriptor() throws IOException {
             IResourceLocator resourceLocator = resolveResource(MATERIAL_SET_DESCRIPTOR_NAME);
-            try (Reader reader = new BufferedReader(new InputStreamReader(resourceLocator.inputStream()))) {
+            try (Reader reader = new BufferedReader(new InputStreamReader(resourceLocator.inputStream(), StandardCharsets.UTF_8))) {
                 AssetRefPath materialDescriptorRef = new AssetRefPath(AssetType.MaterialSet, getAnchor(), mRelativePathInAssetCollection);
                 return AssetDescriptorsIO.deserializeMaterialSetDescriptor(reader, materialDescriptorRef);
             }
