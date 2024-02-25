@@ -63,7 +63,7 @@ public abstract class BaseObjectUIRepresentation extends AbstractObjectUIReprese
     protected void addProperties(Map<String, Collection<UiProperty<?>>> result, BaseObject bo, UiController uiController) {
         Collection<UiProperty<?>> commonProperties = result.computeIfAbsent(Strings.BASE_OBJECT_PROPERTIES_GENERAL_SECTION, cat -> new ArrayList<>());
         commonProperties.addAll(Arrays.<UiProperty<?>>asList(
-                new ConstantUiProperty<>(bo, KEY_PROPERTY_TYPE, Strings.BASE_OBJECT_PROPERTIES_TYPE, PropertyType.String, bo.getClass().getSimpleName()),
+                new ConstantUiProperty<>(bo, KEY_PROPERTY_TYPE, Strings.BASE_OBJECT_PROPERTIES_TYPE, PropertyType.String,  getObjectTypeName(bo, Cardinality.Singular)),
                 new ConstantUiProperty<>(bo, KEY_PROPERTY_ID, Strings.BASE_OBJECT_PROPERTIES_ID, PropertyType.String, bo.getId()),
                 new UiProperty<String>(bo, KEY_PROPERTY_NAME, Strings.BASE_OBJECT_PROPERTIES_NAME, PropertyType.String, true) {
                     @Override
