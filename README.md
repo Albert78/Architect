@@ -79,7 +79,7 @@ Das Dateihandling ist noch nicht ganz fertig; Architect sieht das Verzeichnis ei
 - Ausführen von `de.dh.cad.architect.ArchitectApplication` im Modul `main`
 
 ### Verwendung des Programms
-Zu Beginn solltet ihr euch mit der Architect Hauptanwendung vertraut machen, sie läuft ohne weitere Vorbereitung. Es gibt einen 2D- und einen 3D-Modus. Ein Plan wird im 2D-Modus erstellt und kann jederzeit im 3D-Modus angesehen werden. Macht euch mit der Mausbedienung vertraut, erstellt Wände, Böden, Decken, schaut euch das Resultat in 3D an und macht euch mit dem Konzept der Verbindungsanker vertraut. Sehr cool übrigens auch: Drückt mal <SHIFT>, während ihr mit dem Scrollrad zoomt.
+Zu Beginn solltet ihr euch mit der Architect Hauptanwendung vertraut machen, sie läuft ohne weitere Vorbereitung. Es gibt einen 2D- und einen 3D-Modus. Ein Plan wird im 2D-Modus erstellt und kann jederzeit im 3D-Modus angesehen werden. Macht euch mit der Mausbedienung vertraut, erstellt Wände, Böden, Decken, schaut euch das Resultat in 3D an und macht euch mit dem Konzept der Verbindungsanker vertraut. Sehr cool übrigens auch: Drückt mal SHIFT, während ihr mit dem Scrollrad zoomt.
 
 Zur Gestaltung von Objektoberflächen (Wand-Texturen, Möbelfarben, ...) und zur Möblierung braucht ihr mindestens eine *Asset-Bibliothek*, die ihr mit dem Bibliotheksmanager anlegt. Dieser wird über das Architect-Menü oder als eigenständige Anwendung gestartet. Darin könnt ihr die einzelnen Oberflächen und Möbelstücke von Hand anlegen oder über den SweetHome3D-Importer aus dessen Bibliotheken importieren. Ihr braucht die entpackten Bibliotheken, die dort im git im Projekt "3DModels" eingecheckt sind (Siehe https://svn.code.sf.net/p/sweethome3d/code/trunk).
 
