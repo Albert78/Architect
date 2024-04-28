@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 
-import de.dh.cad.architect.model.assets.AssetRefPath;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.coords.Position3D;
 import de.dh.cad.architect.model.objects.Anchor;
@@ -34,55 +33,46 @@ import de.dh.cad.architect.ui.assets.AssetLoader;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.threed.Abstract3DView;
 import de.dh.cad.architect.ui.view.threed.ThreeDView;
+import de.dh.utils.Vector2D;
 import de.dh.utils.Vector3D;
 import de.dh.utils.csg.CSGSurfaceAwareAddon;
 import de.dh.utils.csg.CSGs;
 import de.dh.utils.csg.CSGs.ExtrusionSurfaceDataProvider;
-import de.dh.utils.csg.TextureCoordinateSystem;
-import de.dh.utils.csg.TextureProjection;
 import de.dh.utils.io.MeshData;
 import de.dh.utils.io.fx.FxMeshBuilder;
 import eu.mihosoft.jcsg.CSG;
 import eu.mihosoft.jcsg.ext.org.poly2tri.PolygonUtil;
 import eu.mihosoft.vvecmath.Transform;
 import eu.mihosoft.vvecmath.Vector3d;
+import javafx.beans.value.ChangeListener;
 import javafx.geometry.Point3D;
+import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Mesh;
 import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Rotate;
 
-public class Covering3DRepresentation extends Abstract3DRepresentation {
-    protected final Map<Surface, SurfaceData> mSurfaces = new TreeMap<>();
+public class Covering3DRepresentation extends AbstractSolid3DRepresentation {
+    protected final Map<Surface, SurfaceData<MeshView>> mSurfaces = new TreeMap<>();
     protected final Rotate mRotation = new Rotate();
 
     public Covering3DRepresentation(Covering covering, Abstract3DView parentView) {
         super(covering, parentView);
         for (SurfaceConfiguration surfaceConfiguration : covering.getSurfaceTypeIdsToSurfaceConfigurations().values()) {
             String surfaceTypeId = surfaceConfiguration.getSurfaceTypeId();
-            SurfaceData sd = new SurfaceData(surfaceTypeId);
+            MeshView meshView = new MeshView();
+            SurfaceData<MeshView> sd = new SurfaceData<>(this, surfaceTypeId, meshView);
             Surface surface = Surface.ofSurfaceType(surfaceTypeId);
             mSurfaces.put(surface, sd);
-            MeshView meshView = sd.getMeshView();
             meshView.getTransforms().add(mRotation);
             meshView.getTransforms().add(0, CoordinateUtils.createTransformArchitectToJavaFx());
             add(meshView);
-            markSurfaceNode(meshView, new ObjectSurface(this, surfaceTypeId) {
-                @Override
-                public AssetRefPath getMaterialRef() {
-                    return surfaceConfiguration.getMaterialAssignment();
-                }
-
-                @Override
-                public boolean assignMaterial(AssetRefPath materialRef) {
-                    setObjectSurface(covering, mSurfaceTypeId, materialRef);
-                    return true;
-                }
-            });
+            registerSurface(sd);
         }
 
-        selectedProperty().addListener(change -> {
-            updateProperties();
-        });
+        ChangeListener<Boolean> bPropertiesUpdaterListener = (observable, oldValue, newValue) -> updateProperties();
+        selectedProperty().addListener(bPropertiesUpdaterListener);
+        objectFocusedProperty().addListener(bPropertiesUpdaterListener);
+        objectEmphasizedProperty().addListener(bPropertiesUpdaterListener);
     }
 
     public Covering getCovering() {
@@ -96,14 +86,12 @@ public class Covering3DRepresentation extends Abstract3DRepresentation {
     protected void updateProperties() {
         Covering covering = getCovering();
         AssetLoader assetLoader = getAssetLoader();
-        for (SurfaceData surfaceData : mSurfaces.values()) {
+        for (SurfaceData<MeshView> surfaceData : mSurfaces.values()) {
             String surfaceTypeId = surfaceData.getSurfaceTypeId();
             SurfaceConfiguration surfaceConfiguration = covering.getSurfaceTypeIdsToSurfaceConfigurations().get(surfaceTypeId);
-            AssetRefPath materialRefPath = surfaceConfiguration.getMaterialAssignment();
-            assetLoader.configureMaterial(surfaceData.getMeshView(), materialRefPath, Optional.ofNullable(surfaceData.getSurfaceSize()));
-            if (isSelected()) {
-                surfaceData.getMaterial().setDiffuseColor(SELECTED_OBJECTS_COLOR);
-            }
+            de.dh.cad.architect.model.objects.MaterialMappingConfiguration mmc = surfaceConfiguration.getMaterialMappingConfiguration();
+            PhongMaterial material = assetLoader.buildMaterial(mmc, surfaceData.getSurfaceSize());
+            surfaceData.setMaterial(material);
         }
     }
 
@@ -127,7 +115,7 @@ public class Covering3DRepresentation extends Abstract3DRepresentation {
                     return surface;
                 }
             }
-            throw new IllegalArgumentException("No surface of type " + type + "");
+            throw new IllegalArgumentException("No surface of type '" + type + "'");
         }
     }
 
@@ -173,7 +161,7 @@ public class Covering3DRepresentation extends Abstract3DRepresentation {
 
             bottomPointsCW.add(posNormalZ);
         }
-        if (PolygonUtil.isCCW(bottomPointsCW)) {
+        if (PolygonUtil.isCCW_XY(bottomPointsCW)) {
             Collections.reverse(bottomPointsCW);
         }
         List<Vector3d> topPointsCW = new ArrayList<>();
@@ -183,7 +171,7 @@ public class Covering3DRepresentation extends Abstract3DRepresentation {
 
         Vector3d textureDirectionX = ab.transformed(rotation);
 
-        CSG csg = CSGs.extrudeSurfaces(new ExtrusionSurfaceDataProvider<Surface>() {
+        ExtrusionSurfaceDataProvider<Surface> coveringSurfaceDataProvider = new ExtrusionSurfaceDataProvider<>() {
             @Override
             public List<Vector3d> getBottomPolygonPointsCW() {
                 return bottomPointsCW;
@@ -206,7 +194,7 @@ public class Covering3DRepresentation extends Abstract3DRepresentation {
 
             @Override
             public Surface getSurfaceCW(int startPointIndex) {
-                return Surface.S1;
+                return null;
             }
 
             @Override
@@ -218,21 +206,21 @@ public class Covering3DRepresentation extends Abstract3DRepresentation {
             public Surface getBottomSurface() {
                 return Surface.S2;
             }
-        }, 0, false);
-        TextureCoordinateSystem tcs = TextureCoordinateSystem.create(Vector3d.Z_ONE, textureDirectionX);
-        TextureProjection tp = TextureProjection.fromPointsBorder(tcs, bottomPointsCW);
+        };
+        Vector2D surfaceSize = coveringSurfaceDataProvider.getTopPolygonTextureProjection().getSpannedSize();
+        CSG csg = CSGs.extrudeSurfaces(coveringSurfaceDataProvider, 0, false);
         Map<Surface, MeshData> meshes = CSGSurfaceAwareAddon.createMeshes(csg, Optional.empty());
         for (Surface surface : Surface.values()) {
             MeshData meshData = meshes.get(surface);
-            SurfaceData surfaceData = mSurfaces.get(surface);
-            MeshView meshView = surfaceData.getMeshView();
+            SurfaceData<MeshView> surfaceData = mSurfaces.get(surface);
+            MeshView meshView = surfaceData.getShape();
             Mesh mesh = FxMeshBuilder.buildMesh(meshData);
             meshView.setMesh(mesh);
             Point3D axisP3D = new Point3D(axis.getX(), axis.getY(), axis.getZ());
             mRotation.setAngle(-angle);
             mRotation.setAxis(axisP3D);
 
-            surfaceData.setSurfaceSize(tp.getSpannedSize());
+            surfaceData.setSurfaceSize(surfaceSize);
         }
     }
 

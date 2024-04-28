@@ -27,6 +27,14 @@ public interface IResourceLocator extends IPathLocator {
     void delete() throws IOException;
     void mkParentDirs() throws IOException;
 
+    default boolean isDirectory() {
+        return false;
+    }
+
+    default boolean isFile() {
+        return true;
+    }
+
     default void copyFrom(InputStream inputStream) throws IOException {
         mkParentDirs();
         try (OutputStream os = outputStream()) {

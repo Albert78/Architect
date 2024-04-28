@@ -41,6 +41,14 @@ public interface IDirectoryLocator extends IPathLocator {
      */
     void clean() throws IOException;
 
+    default boolean isDirectory() {
+        return true;
+    }
+
+    default boolean isFile() {
+        return false;
+    }
+
     default void copyContentsTo(IDirectoryLocator targetDirectoryLocator) throws IOException {
         targetDirectoryLocator.mkDirs();
         for (IPathLocator sourceItemLocator : list(e -> true)) {

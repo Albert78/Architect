@@ -28,7 +28,7 @@
         </rowConstraints>
          <children>
             <Label text="Icon" />
-            <BorderPane fx:id="mIconImagePane" GridPane.columnIndex="1">
+            <BorderPane GridPane.columnIndex="1">
                <left>
                   <ImageView fx:id="mIconImageView" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="CENTER" />
                </left>

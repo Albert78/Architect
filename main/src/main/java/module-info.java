@@ -23,4 +23,5 @@ module de.dh.cad.architect.main {
     requires de.dh.cad.architect.libraryeditor;
 
     requires org.slf4j;
+    requires org.apache.logging.log4j; // Needed in main application to make log4j available at runtime
 }

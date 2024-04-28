@@ -6,6 +6,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
@@ -13,6 +14,7 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
 
 <fx:root prefHeight="800.0" prefWidth="800.0" type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <center>
@@ -30,7 +32,7 @@
           <RowConstraints vgrow="NEVER" />
           <RowConstraints vgrow="NEVER" />
           <RowConstraints vgrow="NEVER" />
-          <RowConstraints vgrow="NEVER" />
+          <RowConstraints vgrow="ALWAYS" />
         </rowConstraints>
          <children>
             <Label text="Basis" />
@@ -47,35 +49,57 @@
             <ComboBox fx:id="mTypeComboBox" editable="true" prefWidth="250.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
             <Label text="Beschreibung" GridPane.rowIndex="6" />
             <TextArea fx:id="mDescriptionTextArea" prefHeight="166.0" prefWidth="275.0" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="6" />
-            <Label text="Icon" GridPane.rowIndex="7" />
-            <HBox alignment="CENTER_LEFT" spacing="5.0" BorderPane.alignment="CENTER" GridPane.columnIndex="1" GridPane.rowIndex="7">
+            <Label text="Darstellung in Übersichten" wrapText="true" GridPane.rowIndex="7" />
+            <HBox BorderPane.alignment="CENTER" GridPane.columnIndex="1" GridPane.rowIndex="7">
                <children>
-                  <ImageView fx:id="mIconImageView" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" />
-                  <Button fx:id="mChooseIconImageButton" mnemonicParsing="false">
-                     <graphic>
-                        <ImageView fitHeight="16" fitWidth="16">
-                           <image>
-                              <Image url="@import.png" />
-                           </image>
-                        </ImageView>
-                     </graphic>
-                  </Button>
+                  <TitledPane animated="false" collapsible="false" text="Icon">
+                     <content>
+                        <BorderPane>
+                           <center>
+                              <ImageView fx:id="mIconImageView" fitHeight="200.0" fitWidth="250.0" pickOnBounds="true" preserveRatio="true" />
+                           </center>
+                           <right>
+                              <Button fx:id="mChooseIconImageButton" mnemonicParsing="false" BorderPane.alignment="CENTER">
+                                 <graphic>
+                                    <ImageView fitHeight="16" fitWidth="16">
+                                       <image>
+                                          <Image url="@import.png" />
+                                       </image>
+                                    </ImageView>
+                                 </graphic>
+                              </Button>
+                           </right>
+                        </BorderPane>
+                     </content>
+                  </TitledPane>
                </children>
             </HBox>
             <Label text="Enthaltene Materialien" wrapText="true" GridPane.rowIndex="8" />
-             <HBox fx:id="mMaterialChoiceParent" alignment="CENTER_LEFT" spacing="5" GridPane.columnIndex="1" GridPane.rowIndex="8">
-                 <children>
-                    <Button fx:id="mEditMaterialButton" mnemonicParsing="false">
-                       <graphic>
-                          <ImageView fitHeight="16" fitWidth="16">
-                             <image>
-                                <Image url="@edit.png" />
-                             </image>
-                        </ImageView>
-                       </graphic>
-                    </Button>
-                 </children>
-             </HBox>
+            <HBox GridPane.columnIndex="1" GridPane.rowIndex="8" GridPane.vgrow="ALWAYS">
+               <children>
+                  <TitledPane animated="false" collapsible="false" minWidth="500.0" text="Vorschau der Materialien">
+                     <content>
+                        <BorderPane fx:id="mMaterialChoiceParent">
+                           <right>
+                              <VBox BorderPane.alignment="CENTER">
+                                 <children>
+                                      <Button fx:id="mEditMaterialButton" mnemonicParsing="false">
+                                         <graphic>
+                                            <ImageView fitHeight="16" fitWidth="16">
+                                               <image>
+                                                  <Image url="@edit.png" />
+                                               </image>
+                                          </ImageView>
+                                         </graphic>
+                                      </Button>
+                                 </children>
+                              </VBox>
+                           </right>
+                        </BorderPane>
+                     </content>
+                  </TitledPane>
+               </children>
+            </HBox>
          </children>
          <BorderPane.margin>
             <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />

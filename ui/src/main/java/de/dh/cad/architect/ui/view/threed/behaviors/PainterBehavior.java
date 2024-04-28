@@ -28,13 +28,15 @@ import org.slf4j.LoggerFactory;
 import de.dh.cad.architect.fx.nodes.CombinedTransformGroup;
 import de.dh.cad.architect.model.assets.AssetRefPath;
 import de.dh.cad.architect.model.objects.BaseObject;
+import de.dh.cad.architect.model.objects.MaterialMappingConfiguration;
 import de.dh.cad.architect.ui.IConfig;
 import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.assets.AssetLoader;
 import de.dh.cad.architect.ui.objects.Abstract3DAncillaryObject;
 import de.dh.cad.architect.ui.objects.Abstract3DRepresentation;
-import de.dh.cad.architect.ui.objects.Abstract3DRepresentation.ObjectSurface;
+import de.dh.cad.architect.ui.objects.AbstractSolid3DRepresentation;
 import de.dh.cad.architect.ui.objects.BaseObjectUIRepresentation;
+import de.dh.cad.architect.ui.objects.SurfaceData;
 import de.dh.cad.architect.ui.utils.Cursors;
 import de.dh.cad.architect.ui.view.AbstractPlanView;
 import de.dh.cad.architect.ui.view.AbstractUiMode;
@@ -44,14 +46,15 @@ import de.dh.cad.architect.ui.view.threed.ThreeDUIElementFilter;
 import de.dh.cad.architect.ui.view.threed.ThreeDView;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
 import javafx.scene.Cursor;
+import javafx.scene.Scene;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.paint.PhongMaterial;
+import javafx.scene.shape.Shape3D;
 
-public class PainterBehavior extends Abstract3DViewBehavior {
+public class PainterBehavior extends AbstractPainterModeBehavior {
     private static final Logger log = LoggerFactory.getLogger(PainterBehavior.class);
 
     protected static String KEY_LAST_MATERIAL_REF = PainterBehavior.class.getSimpleName() + ".LAST_MATERIAL_REF";
@@ -60,71 +63,80 @@ public class PainterBehavior extends Abstract3DViewBehavior {
     protected static Cursor CURSOR_PICK_MATERIAL = Cursors.createCursorPickMaterial();
 
     protected interface ISurfaceAction {
-        void set(ObjectSurface surface);
-        void reset(ObjectSurface surface);
-        Cursor getMouseCursor();
+        void apply(SurfaceData<? extends Shape3D> surface);
+        void reset();
         void commit();
+        Cursor getMouseCursor();
     }
 
     protected class PaintSurfaceAction implements ISurfaceAction {
-        protected final AssetRefPath mMaterial;
-        protected AssetRefPath mOriginalMaterial = null;
+        protected final AssetRefPath mMaterialRef;
+        protected SurfaceData<? extends Shape3D> mSurface = null;
 
         public PaintSurfaceAction(AssetRefPath materialRef) {
-            mMaterial = materialRef;
+            mMaterialRef = materialRef;
         }
 
         @Override
-        public void set(ObjectSurface surface) {
-            mOriginalMaterial = surface.getMaterialRef();
-            if (mMaterial != null) {
-                if (!surface.assignMaterial(mMaterial)) {
-                    setUserHint(MessageFormat.format(Strings.THREE_D_PAINTER_BEHAVIOR_UNABLE_TO_ASSIGN_MATERIAL, BaseObjectUIRepresentation.getShortName(surface.getOwnerRepr().getModelObject())));
-                }
+        public void apply(SurfaceData<? extends Shape3D> surface) {
+            mSurface = surface;
+            if (surface == null) {
+                return;
+            }
+            if (mMaterialRef != null) {
+                // TODO: Compile material mapping config from surface size and configured material tile size
+                PhongMaterial mat = mAssetLoader.buildMaterial(MaterialMappingConfiguration.tile(mMaterialRef), surface.getSurfaceSize());
+                surface.setOverlayMaterial(mat);
             }
         }
 
         @Override
-        public void reset(ObjectSurface surface) {
-            surface.assignMaterial(mOriginalMaterial);
+        public void reset() {
+            if (mSurface == null) {
+                return;
+            }
+            mSurface.resetOverlayMaterial();
+        }
+
+        @Override
+        public void commit() {
+            AbstractSolid3DRepresentation ownerRepr = mSurface.getOwnerRepr();
+            ownerRepr.setSurfaceMaterial(mSurface.getSurfaceTypeId(), MaterialMappingConfiguration.tile(mMaterialRef));
         }
 
         @Override
         public Cursor getMouseCursor() {
             return CURSOR_PAINT;
         }
-
-        @Override
-        public void commit() {
-            // Nothing to do
-        }
     }
 
     protected class MaterialPipetAction implements ISurfaceAction {
-        protected AssetRefPath mSelectedMaterial = null;
+        protected AssetRefPath mSelectedMaterialRef = null;
 
         @Override
-        public void set(ObjectSurface surface) {
-            mSelectedMaterial = surface.getMaterialRef();
+        public void apply(SurfaceData<? extends Shape3D> surface) {
+            AbstractSolid3DRepresentation ownerRepr = surface.getOwnerRepr();
+            MaterialMappingConfiguration mmc = ownerRepr.getSurfaceMaterial(surface.getSurfaceTypeId());
+            mSelectedMaterialRef = mmc == null ? null : mmc.getMaterialRef();
         }
 
         @Override
-        public void reset(ObjectSurface surface) {
+        public void reset() {
             // Nothing to do
+        }
+
+        @Override
+        public void commit() {
+            mChoosePainterMaterialControl.setMaterial(mSelectedMaterialRef);
         }
 
         @Override
         public Cursor getMouseCursor() {
             return CURSOR_PICK_MATERIAL;
         }
-
-        @Override
-        public void commit() {
-            mChoosePainterMaterialControl.setMaterial(mSelectedMaterial);
-        }
     }
 
-    protected class MouseAndKeyState {
+    protected static class MouseAndKeyState {
         protected final boolean mMouseOverView;
         protected final boolean mControlDown;
 
@@ -144,19 +156,14 @@ public class PainterBehavior extends Abstract3DViewBehavior {
 
     /**
      * Contains the state of the highlighted object surface.
-     * The highlight mode/action can be switched between paint and pipet.
+     * The highlight mode/action can be switched between paint and pipette.
      */
     protected class SurfaceHighlight {
-        protected final ObjectSurface mSurface;
+        protected final SurfaceData<? extends Shape3D> mSurface;
         protected ISurfaceAction mAction = null;
-        protected ChangeListener<MouseAndKeyState> mMouseAndKeyStateListener = new ChangeListener<>() {
-            @Override
-            public void changed(ObservableValue<? extends MouseAndKeyState> observable, MouseAndKeyState oldValue, MouseAndKeyState newValue) {
-                checkActionAndCursor();
-            }
-        };
+        protected ChangeListener<MouseAndKeyState> mMouseAndKeyStateListener = (observable, oldValue, newValue) -> checkActionAndCursor();
 
-        public SurfaceHighlight(ObjectSurface surface) {
+        public SurfaceHighlight(SurfaceData<? extends Shape3D> surface) {
             mSurface = surface;
             checkActionAndCursor();
             mMouseAndKeyStateProperty.addListener(mMouseAndKeyStateListener);
@@ -169,15 +176,15 @@ public class PainterBehavior extends Abstract3DViewBehavior {
 
         public void setAction(ISurfaceAction action) {
             if (mAction != null) {
-                mAction.reset(mSurface);
+                mAction.reset();
             }
             mAction = action;
-            mAction.set(mSurface);
+            mAction.apply(mSurface);
             updateMouseCursor();
         }
 
         public void reset() {
-            mAction.reset(mSurface);
+            mAction.reset();
             dispose();
         }
 
@@ -226,13 +233,6 @@ public class PainterBehavior extends Abstract3DViewBehavior {
         setMouseAndKeyState(getMouseAndKeyState().isMouseOverView(), event.isControlDown());
     };
 
-    protected ChangeListener<ObjectSurface> MOUSE_OVER_SURFACE_CHANGE_LISTENER = new ChangeListener<>() {
-        @Override
-        public void changed(ObservableValue<? extends ObjectSurface> observable, ObjectSurface oldValue, ObjectSurface newValue) {
-            highlightSurface(newValue);
-        }
-    };
-
     protected SurfaceHighlight mHighlightedSurface = null;
     protected SimpleObjectProperty<MouseAndKeyState> mMouseAndKeyStateProperty = new SimpleObjectProperty<>();
     protected ChoosePainterMaterialControl mChoosePainterMaterialControl = null;
@@ -243,7 +243,17 @@ public class PainterBehavior extends Abstract3DViewBehavior {
         setUIElementFilter(new ThreeDUIElementFilter());
     }
 
-    protected void highlightSurface(ObjectSurface surface) {
+    @Override
+    protected void onMouseOverSurface(SurfaceData<? extends Shape3D> oldSurface, SurfaceData<? extends Shape3D> newSurface) {
+        setHighlightedSurface(newSurface);
+    }
+
+    @Override
+    protected void onMouseClick() {
+        commitHighlightedSurface();
+    }
+
+    protected void setHighlightedSurface(SurfaceData<? extends Shape3D> surface) {
         String surfaceTypeId = surface == null ? null : surface.getSurfaceTypeId();
         if (surfaceTypeId == null) {
             setDefaultUserHint();
@@ -261,15 +271,15 @@ public class PainterBehavior extends Abstract3DViewBehavior {
         }
     }
 
-    protected void setUserSurfaceHint(Abstract3DRepresentation ownerRepr, String surfaceId) {
-        setUserHint(MessageFormat.format(Strings.THREE_D_PAINTER_BEHAVIOR_SURFACE_HINT, BaseObjectUIRepresentation.getShortName(ownerRepr.getModelObject()), surfaceId));
-    }
-
     protected void commitHighlightedSurface() {
         if (mHighlightedSurface != null) {
             mHighlightedSurface.commit();
         }
         mHighlightedSurface = null;
+    }
+
+    protected void setUserSurfaceHint(Abstract3DRepresentation ownerRepr, String surfaceTypeId) {
+        setUserHint(MessageFormat.format(Strings.THREE_D_PAINTER_BEHAVIOR_SURFACE_HINT, BaseObjectUIRepresentation.getShortName(ownerRepr.getModelObject()), surfaceTypeId));
     }
 
     protected boolean isMouseOverView() {
@@ -294,28 +304,6 @@ public class PainterBehavior extends Abstract3DViewBehavior {
     }
 
     @Override
-    protected void configureObject(Abstract3DRepresentation repr) {
-        super.configureObject(repr);
-        repr.mouseOverSurfaceProperty().removeListener(MOUSE_OVER_SURFACE_CHANGE_LISTENER);
-        repr.mouseOverSurfaceProperty().addListener(MOUSE_OVER_SURFACE_CHANGE_LISTENER);
-        repr.setOnMouseClicked(new EventHandler<>() {
-            @Override
-            public void handle(MouseEvent event) {
-                if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 1) {
-                    commitHighlightedSurface();
-                }
-            }
-        });
-    }
-
-    @Override
-    protected void unconfigureObject(Abstract3DRepresentation repr, boolean objectRemoved) {
-        repr.mouseOverSurfaceProperty().removeListener(MOUSE_OVER_SURFACE_CHANGE_LISTENER);
-        repr.setOnMouseClicked(null);
-        super.unconfigureObject(repr, objectRemoved);
-    }
-
-    @Override
     protected boolean canHandleSelectionChange() {
         return true;
     }
@@ -331,11 +319,6 @@ public class PainterBehavior extends Abstract3DViewBehavior {
     }
 
     @Override
-    public ThreeDView getView() {
-        return (ThreeDView) mView;
-    }
-
-    @Override
     protected void updateActionsList(List<BaseObject> selectedObjects, List<BaseObject> selectedRootObjects) {
         Collection<IContextAction> actions = new ArrayList<>();
 
@@ -344,7 +327,7 @@ public class PainterBehavior extends Abstract3DViewBehavior {
 
         }
 
-        actions.add(createCameraPositionsMenuAction());
+        actions.add(createCancelBehaviorAction(Strings.THREE_D_PAINTER_BEHAVIOR_CANCEL_BEHAVIOR_ACTION_TITLE));
         actions.add(createResetSupportObjectBehaviorAction());
 
         mActionsList.setAll(actions);
@@ -373,6 +356,7 @@ public class PainterBehavior extends Abstract3DViewBehavior {
     public void install(AbstractPlanView<Abstract3DRepresentation, Abstract3DAncillaryObject> view) {
         super.install(view);
         initMouseAndKeyState();
+        installDefaultEscapeBehaviorKeyHandler();
         mAssetLoader = getUiController().getAssetManager().buildAssetLoader();
         createInteractionsTab();
         IConfig configuration = getUiController().getConfiguration();
@@ -386,21 +370,23 @@ public class PainterBehavior extends Abstract3DViewBehavior {
             }
         }
         ThreeDView threeDView = getView();
+        Scene scene = threeDView.getScene();
         CombinedTransformGroup transformedRoot = threeDView.getTransformedRoot();
         transformedRoot.addEventHandler(MouseEvent.MOUSE_ENTERED, SET_MOUSE_OVER_EVENT_HANDLER);
         transformedRoot.addEventHandler(MouseEvent.MOUSE_EXITED, RESET_MOUSE_OVER_EVENT_HANDLER);
-        view.addEventHandler(KeyEvent.KEY_PRESSED, CHECK_CONTROL_EVENT_HANDLER);
-        view.addEventHandler(KeyEvent.KEY_RELEASED, CHECK_CONTROL_EVENT_HANDLER);
+        scene.addEventHandler(KeyEvent.KEY_PRESSED, CHECK_CONTROL_EVENT_HANDLER);
+        scene.addEventHandler(KeyEvent.KEY_RELEASED, CHECK_CONTROL_EVENT_HANDLER);
     }
 
     @Override
     public void uninstall() {
-        ThreeDView view = getView();
-        CombinedTransformGroup transformedRoot = view.getTransformedRoot();
+        ThreeDView threeDView = getView();
+        Scene scene = threeDView.getScene();
+        CombinedTransformGroup transformedRoot = threeDView.getTransformedRoot();
         transformedRoot.removeEventHandler(MouseEvent.MOUSE_ENTERED, SET_MOUSE_OVER_EVENT_HANDLER);
         transformedRoot.removeEventHandler(MouseEvent.MOUSE_EXITED, RESET_MOUSE_OVER_EVENT_HANDLER);
-        view.removeEventHandler(KeyEvent.KEY_PRESSED, CHECK_CONTROL_EVENT_HANDLER);
-        view.removeEventHandler(KeyEvent.KEY_RELEASED, CHECK_CONTROL_EVENT_HANDLER);
+        scene.removeEventHandler(KeyEvent.KEY_PRESSED, CHECK_CONTROL_EVENT_HANDLER);
+        scene.removeEventHandler(KeyEvent.KEY_RELEASED, CHECK_CONTROL_EVENT_HANDLER);
 
         IConfig configuration = getUiController().getConfiguration();
         AssetRefPath selectedMaterial = mChoosePainterMaterialControl.getSelectedMaterial();
@@ -408,7 +394,8 @@ public class PainterBehavior extends Abstract3DViewBehavior {
             configuration.setString(KEY_LAST_MATERIAL_REF, selectedMaterial.toPathString());
         }
 
+        uninstallDefaultEscapeBehaviorKeyHandler();
         super.uninstall();
-        highlightSurface(null);
+        setHighlightedSurface(null);
     }
 }

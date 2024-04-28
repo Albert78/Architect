@@ -41,6 +41,7 @@ import de.dh.cad.architect.ui.assets.AssetLoader;
 import de.dh.cad.architect.ui.assets.AssetManager;
 import de.dh.cad.architect.ui.logoutput.LogOutputControl;
 import de.dh.cad.architect.ui.view.libraries.MaterialChooserDialog;
+import de.dh.utils.MaterialMapping;
 import de.dh.utils.csg.CSGSurfaceAwareAddon;
 import de.dh.utils.fx.ImageUtils;
 import de.dh.utils.fx.StageState;
@@ -494,7 +495,7 @@ public class LibraryEditorMainWindow implements Initializable {
             return scd;
         });
 
-        configureSurfaceMaterial(meshView, surfaceConfiguration);
+        meshView.setMaterial(buildSurfaceMaterial(surfaceConfiguration));
 
         meshView.setOnMouseEntered(event -> {
             surfaceConfiguration.setFocused(true);
@@ -508,7 +509,8 @@ public class LibraryEditorMainWindow implements Initializable {
         });
 
         surfaceConfiguration.getMaterialRefProperty().addListener((prop, oldVal, newVal) -> {
-            mAssetLoader.configureMaterial(meshView, newVal, Optional.empty());
+            PhongMaterial material = buildSurfaceMaterial(surfaceConfiguration);
+            meshView.setMaterial(material);
         });
 
         meshView.setOnMouseClicked(event -> {
@@ -524,8 +526,10 @@ public class LibraryEditorMainWindow implements Initializable {
         });
     }
 
-    protected void configureSurfaceMaterial(MeshView meshView, SurfaceConfigurationData surfaceConfiguration) {
-        mAssetLoader.configureMaterial(meshView, surfaceConfiguration.getMaterialRef(), Optional.empty());
+    protected PhongMaterial buildSurfaceMaterial(SurfaceConfigurationData surfaceConfiguration) {
+        // TODO: If we want to support "tile" mode for the applied material, we need to extend the SupportObjectDescriptor's
+        // capabilities, see comment in class MeshConfiguration
+        return mAssetLoader.buildMaterial(surfaceConfiguration.getMaterialRef(), MaterialMapping.stretch());
     }
 
     public void updateSurfaceList(Collection<String> currentSurfaceTypeIds) {

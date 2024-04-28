@@ -26,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import de.dh.cad.architect.model.assets.AssetRefPath;
 import de.dh.cad.architect.model.assets.MaterialSetDescriptor;
 import de.dh.cad.architect.ui.assets.AssetLoader;
+import de.dh.utils.io.fx.MaterialData;
 import de.dh.utils.io.obj.RawMaterialData;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
@@ -58,9 +59,6 @@ public class ShowMaterialSetControl extends BorderPane implements Initializable 
 
     @FXML
     protected TextArea mDescriptionTextArea;
-
-    @FXML
-    protected BorderPane mIconImagePane;
 
     @FXML
     protected ImageView mIconImageView;
@@ -104,7 +102,7 @@ public class ShowMaterialSetControl extends BorderPane implements Initializable 
         return mMaterialControl.selectedMaterialProperty();
     }
 
-    public RawMaterialData getSelectedMaterial() {
+    public MaterialData getSelectedMaterial() {
         return mMaterialControl.getSelectedMaterial();
     }
 

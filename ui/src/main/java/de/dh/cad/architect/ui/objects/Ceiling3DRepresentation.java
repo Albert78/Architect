@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import de.dh.cad.architect.model.assets.AssetRefPath;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.coords.Position3D;
 import de.dh.cad.architect.model.objects.Anchor;
@@ -37,47 +36,37 @@ import de.dh.utils.Vector3D;
 import de.dh.utils.csg.CSGSurfaceAwareAddon;
 import de.dh.utils.csg.CSGs;
 import de.dh.utils.csg.CSGs.ExtrusionSurfaceDataProvider;
-import de.dh.utils.csg.TextureCoordinateSystem;
-import de.dh.utils.csg.TextureProjection;
 import de.dh.utils.io.MeshData;
 import de.dh.utils.io.fx.FxMeshBuilder;
 import eu.mihosoft.jcsg.CSG;
 import eu.mihosoft.jcsg.ext.org.poly2tri.PolygonUtil;
 import eu.mihosoft.vvecmath.Transform;
 import eu.mihosoft.vvecmath.Vector3d;
+import javafx.beans.value.ChangeListener;
 import javafx.geometry.Point3D;
+import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Mesh;
 import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Rotate;
 
-public class Ceiling3DRepresentation extends Abstract3DRepresentation {
-    protected final SurfaceData mSurfaceData;
+public class Ceiling3DRepresentation extends AbstractSolid3DRepresentation {
+    protected final SurfaceData<MeshView> mSurfaceData;
     protected final Rotate mRotation = new Rotate();
 
     public Ceiling3DRepresentation(Ceiling ceiling, Abstract3DView parentView) {
         super(ceiling, parentView);
         SurfaceConfiguration surfaceConfiguration = ceiling.getSurfaceConfigurations().iterator().next();
-        mSurfaceData = new SurfaceData(surfaceConfiguration.getSurfaceTypeId());
-        MeshView meshView = mSurfaceData.getMeshView();
+        MeshView meshView = new MeshView();
+        mSurfaceData = new SurfaceData<>(this, surfaceConfiguration.getSurfaceTypeId(), meshView);
         meshView.getTransforms().add(mRotation);
-        meshView.getTransforms().add(0, CoordinateUtils.createTransformArchitectToJavaFx());
+        meshView.getTransforms().addFirst(CoordinateUtils.createTransformArchitectToJavaFx());
         add(meshView);
-        markSurfaceNode(meshView, new ObjectSurface(this, surfaceConfiguration.getSurfaceTypeId()) {
-            @Override
-            public AssetRefPath getMaterialRef() {
-                return surfaceConfiguration.getMaterialAssignment();
-            }
+        registerSurface(mSurfaceData);
 
-            @Override
-            public boolean assignMaterial(AssetRefPath materialRef) {
-                setObjectSurface(ceiling, mSurfaceTypeId, materialRef);
-                return true;
-            }
-        });
-
-        selectedProperty().addListener(change -> {
-            updateProperties();
-        });
+        ChangeListener<Boolean> bPropertiesUpdaterListener = (observable, oldValue, newValue) -> updateProperties();
+        selectedProperty().addListener(bPropertiesUpdaterListener);
+        objectFocusedProperty().addListener(bPropertiesUpdaterListener);
+        objectEmphasizedProperty().addListener(bPropertiesUpdaterListener);
     }
 
     public Ceiling getCeiling() {
@@ -91,16 +80,15 @@ public class Ceiling3DRepresentation extends Abstract3DRepresentation {
     protected void updateProperties() {
         Ceiling ceiling = getCeiling();
         SurfaceConfiguration surfaceConfiguration = ceiling.getSurfaceTypeIdsToSurfaceConfigurations().get(mSurfaceData.getSurfaceTypeId());
-        AssetRefPath materialRefPath = surfaceConfiguration.getMaterialAssignment();
+        de.dh.cad.architect.model.objects.MaterialMappingConfiguration mmc = surfaceConfiguration.getMaterialMappingConfiguration();
         AssetLoader assetLoader = getAssetLoader();
-        assetLoader.configureMaterial(mSurfaceData.getMeshView(), materialRefPath, Optional.ofNullable(mSurfaceData.getSurfaceSize()));
-        if (isSelected()) {
-            mSurfaceData.getMaterial().setDiffuseColor(SELECTED_OBJECTS_COLOR);
-        }
+        PhongMaterial material = assetLoader.buildMaterial(mmc, mSurfaceData.getSurfaceSize());
+
+        mSurfaceData.setMaterial(material);
     }
 
     protected enum Surface {
-        S1
+        Bottom
     }
 
     protected void updateNode() {
@@ -145,7 +133,7 @@ public class Ceiling3DRepresentation extends Abstract3DRepresentation {
 
             bottomPointsCW.add(posNormalZ);
         }
-        if (PolygonUtil.isCCW(bottomPointsCW)) {
+        if (PolygonUtil.isCCW_XY(bottomPointsCW)) {
             Collections.reverse(bottomPointsCW);
         }
         List<Vector3d> topPointsCW = new ArrayList<>();
@@ -155,7 +143,7 @@ public class Ceiling3DRepresentation extends Abstract3DRepresentation {
 
         Vector3d textureDirectionX = ab.transformed(rotation);
 
-        CSG csg = CSGs.extrudeSurfaces(new ExtrusionSurfaceDataProvider<Surface>() {
+        ExtrusionSurfaceDataProvider<Surface> ceilingSurfaceDataProvider = new ExtrusionSurfaceDataProvider<>() {
             @Override
             public List<Vector3d> getBottomPolygonPointsCW() {
                 return bottomPointsCW;
@@ -178,31 +166,29 @@ public class Ceiling3DRepresentation extends Abstract3DRepresentation {
 
             @Override
             public Surface getSurfaceCW(int startPointIndex) {
-                return Surface.S1;
+                return null;
             }
 
             @Override
             public Surface getTopSurface() {
-                return Surface.S1;
+                return null;
             }
 
             @Override
             public Surface getBottomSurface() {
-                return Surface.S1;
+                return Surface.Bottom;
             }
-        }, 0, false);
+        };
+        mSurfaceData.setSurfaceSize(ceilingSurfaceDataProvider.getBottomPolygonTextureProjection().getSpannedSize());
+        CSG csg = CSGs.extrudeSurfaces(ceilingSurfaceDataProvider, 0, false);
         Map<Surface, MeshData> meshes = CSGSurfaceAwareAddon.createMeshes(csg, Optional.empty());
-        MeshData meshData = meshes.get(Surface.S1);
+        MeshData meshData = meshes.get(Surface.Bottom);
         Mesh mesh = FxMeshBuilder.buildMesh(meshData);
-        MeshView meshView = mSurfaceData.getMeshView();
+        MeshView meshView = mSurfaceData.getShape();
         meshView.setMesh(mesh);
         Point3D axisP3D = new Point3D(axis.getX(), axis.getY(), axis.getZ());
         mRotation.setAngle(-angle);
         mRotation.setAxis(axisP3D);
-
-        TextureCoordinateSystem tcs = TextureCoordinateSystem.create(Vector3d.Z_ONE, textureDirectionX);
-        TextureProjection tp = TextureProjection.fromPointsBorder(tcs, bottomPointsCW);
-        mSurfaceData.setSurfaceSize(tp.getSpannedSize());
     }
 
     @Override

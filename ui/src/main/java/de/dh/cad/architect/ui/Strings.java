@@ -61,20 +61,19 @@ public class Strings {
     public static final StringConverter<WallBevelType> WALL_BEVEL_TYPE_TITLE_PROVIDER = new StringConverter<>() {
         @Override
         public String toString(WallBevelType wallBevel) {
-            switch (wallBevel) {
-            case Miter: return MITER_STRING;
-            case Bevel: return BEVEL_STRING;
-            }
-            throw new RuntimeException("No title string found for wall bevel type " + wallBevel);
+            return switch (wallBevel) {
+                case Miter -> MITER_STRING;
+                case Bevel -> BEVEL_STRING;
+            };
         }
 
         @Override
         public WallBevelType fromString(String str) {
-            switch (str) {
-            case MITER_STRING : return WallBevelType.Miter;
-            case BEVEL_STRING : return WallBevelType.Bevel;
-            }
-            throw new RuntimeException("No wall bevel type found for string " + str);
+            return switch (str) {
+                case MITER_STRING -> WallBevelType.Miter;
+                case BEVEL_STRING -> WallBevelType.Bevel;
+                default -> throw new RuntimeException("No wall bevel type found for string " + str);
+            };
         }
     };
 
@@ -122,7 +121,6 @@ public class Strings {
     public static final String GUIDE_LINE_SET_PROPERTY_CHANGE = "Hilfslinien-Eigenschaft ändern";
 
     // Main window
-    public static final String ACTION_OPEN_ROOT_PLAN = "Plan öffnen...";
     public static final String MAIN_WINDOW_TITLE = APPLICATION_NAME;
     public static final String DIALOG_SAVE_PLAN_TITLE = "Plan speichern";
     public static final String DIALOG_SAVE_PLAN_ON_CLOSE_TITLE = "Plan schließen";
@@ -156,7 +154,6 @@ public class Strings {
     public static final String ACTION_PERMANENT_DOCK_ANCHOR_TITLE = "Anker andocken";
     public static final String ACTION_CANCEL_PERMANENT_DOCK = "Abbrechen: Andocken";
     public static final String ACTION_UNDOCK_ANCHOR_TITLE = "Anker abdocken";
-    public static final String ACTION_CANCEL_UNDOCK = "Abbrechen: Abdocken";
     public static final String ACTION_ANCHOR_UNDOCK_FROM_MASTER = "Von Master-Anker abdocken";
     public static final String ACTION_ANCHOR_REMOVE_FROM_DOCK = "Anker aus Dock-Hierarchie entfernen";
     public static final String ACTION_ANCHOR_UNDOCK_ALL_CHILDREN = "Alle Kind-Anker abdocken";
@@ -210,8 +207,6 @@ public class Strings {
     public static final String FLOOR_PROPERTIES_LEVEL = "Etage";
     public static final String FLOOR_PROPERTIES_HEIGHT = "Höhe";
     public static final String FLOOR_PROPERTIES_SET_HEIGHT_OPERATION_NAME = "Fußbodenhöhe setzen";
-    public static final String FLOOR_PROPERTIES_THICKNESS = "Dicke";
-    public static final String FLOOR_PROPERTIES_SET_THICKNESS_OPERATION_NAME = "Fußbodendicke setzen";
     public static final String FLOOR_PROPERTIES_AREA = "Fläche";
     public static final String FLOOR_CREATE_CORNER_CHANGE = "Fußboden-Ecke hinzufügen";
     public static final String FLOOR_REMOVE_CORNER_CHANGE = "Fußboden-Ecke entfernen";
@@ -374,6 +369,7 @@ public class Strings {
     public static final String ACTION_GROUND_PLAN_DIVIDE_WALL_LENGTH_TITLE = "Wand teilen";
     public static final String ACTION_GROUND_PLAN_ADD_WALL_HOLE_TITLE = "Wandöffnung einfügen";
     public static final String ACTION_GROUND_PLAN_REMOVE_WALL_HOLE_TITLE = "Wandöffnung entfernen";
+    public static final String GROUND_PLAN_EDIT_ANCHOR_INTERACTIONS_TAB_TITLE = "Anker-Dockhierarchie";
 
     // Add Floor Behavior
     public static final String ACTION_GROUND_PLAN_ADD_FLOOR_TITLE = "Fußboden einfügen";
@@ -394,9 +390,6 @@ public class Strings {
 
     // Add Covering
     public static final String ACTION_GROUND_PLAN_ADD_COVERING_BETWEEN_ANCHORS_TITLE = "Abdeckung zwischen {0}, {1} und {2} einfügen";
-
-    // Edit Selected Anchor
-    public static final String INTERACTIONS_TAB_SELECTED_ANCHOR_TITLE = "Anker-Dockhierarchie";
 
     // Dock Behaviors
     public static final String INTERACTIONS_TAB_PERMANENT_DOCK_OPERATION_TITLE = "Anker verbinden";
@@ -425,7 +418,7 @@ public class Strings {
     public static final String SUPPORT_OBJECTS_DEFAULT_BEHAVIOR_CHOOSE_SUPPORT_OBJECT_TO_ADD = "Hilfsobjekt auswählen";
 
     // Edit Support Object Behavior
-    public static final String INTERACTIONS_TAB_SELECTED_SUPPORT_OBJECT_TITLE = "Hilfsobjekt(e) bearbeiten";
+    public static final String SUPPORT_OBJECTS_EDIT_BEHAVIOR_INTERACTIONS_TAB_TITLE = "Hilfsobjekt(e) bearbeiten";
     public static final String SUPPORT_OBJECTS_EDIT_BEHAVIOR_USER_HINT = "Ordne die Hilfsobjekte an oder verändere sie";
     public static final String SUPPORT_OBJECTS_EDIT_BEHAVIOR_TITLE = "Hilfsobjekt(e) bearbeiten";
     public static final String SUPPORT_OBJECT_RESIZE_USER_HINT = "Objektgröße ändern";
@@ -457,14 +450,27 @@ public class Strings {
     public static final String THREE_D_SELECTION_BEHAVIOR_USER_HINT = "Selektiere Objekte durch Klicken";
 
     public static final String PAINTER_MODE_ACTION_TOOLTIP = "Oberflächen bearbeiten";
-    public static final String THREE_D_PAINTER_BEHAVIOR_TITLE = "Objektoberflächen-Bearbeitungsmodus";
+
+    public static final String THREE_D_PAINTER_CONFIG_SURFACE_BEHAVIOR_TITLE = "Oberflächen-Bearbeitung";
+    public static final String THREE_D_PAINTER_CONFIG_SURFACE_BEHAVIOR_DEFAULT_USER_HINT = "Selektiere eine Oberfläche zur Bearbeitung";
+    public static final String THREE_D_PAINTER_CONFIG_SURFACE_BEHAVIOR_SURFACE_USER_HINT = "Oberfläche ''{1}'' von {0}";
+
+    public static final String THREE_D_PAINTER_BEHAVIOR_ACTION_TITLE = "Oberflächen anmalen";
+    public static final String THREE_D_PAINTER_BEHAVIOR_CANCEL_BEHAVIOR_ACTION_TITLE = "Abbrechen: Oberflächen anmalen";
+
+    public static final String THREE_D_PAINTER_BEHAVIOR_TITLE = "Objektoberflächen anmalen";
     public static final String THREE_D_PAINTER_BEHAVIOR_USER_HINT = "Trage das gewählte Material durch Klicken auf eine Objektoberfläche auf. Halte <Strg> zum Kopieren des angeklickten Materials.";
     public static final String THREE_D_PAINTER_BEHAVIOR_MATERIAL_TAB = "Material";
     public static final String THREE_D_PAINTER_BEHAVIOR_MATERIAL_CONTROL_TITLE = "Aufzutragendes Material";
     public static final String THREE_D_PAINTER_BEHAVIOR_NO_MATERIAL_CHOOSEN = "- Keine Material gewählt -";
     public static final String THREE_D_PAINTER_BEHAVIOR_CHOOSE_MATERIAL_DIALOG_TITLE = "Material auswählen";
     public static final String THREE_D_PAINTER_BEHAVIOR_SURFACE_HINT = "Oberfläche ''{1}'' von {0}";
-    public static final String THREE_D_PAINTER_BEHAVIOR_UNABLE_TO_ASSIGN_MATERIAL = "{0} scheint einen inkonsistenten Zustand zu haben. Das kann während der Weiterentwicklung am Objekt-Ladecode passieren. Versuche, das Objekt zurückzusetzen.";
+
+    public static final String THREE_D_SURFACE_CONFIG_BEHAVIOR_TITLE = "Oberfläche bearbeiten";
+    public static final String THREE_D_SURFACE_CONFIG_BEHAVIOR_USER_HINT = "Richte das Material an der Oberfläche aus";
+    public static final String THREE_D_SURFACE_CONFIG_BEHAVIOR_INTERACTIONS_TAB_TITLE = "Oberfläche";
+    public static final String THREE_D_SURFACE_CONFIG__BEHAVIOR_CANCEL_BEHAVIOR_ACTION_TITLE = "Abbrechen: Oberflächenbearbeitung";
+    public static final String THREE_D_SURFACE_CONFIG_BEHAVIOR_CHOOSE_MATERIAL_DIALOG_TITLE = "Material auswählen";
 
     public static final String ACTION_THREE_D_RESET_SUPPORT_OBJECT_SURFACES = "Objektoberflächen zurücksetzen/reparieren";
     public static final String THREE_D_RESET_SUPPORT_OBJECT_SURFACES_BEHAVIOR_TITLE = "Oberflächen von Hilfsobjekten zurücksetzen";
@@ -476,7 +482,7 @@ public class Strings {
     public static final String LIBRARY_MANAGER_LOADING_SUPPORT_OBJECTS_PROGRESS_TITLE = "Lade Hilfsobjekte";
     public static final String LIBRARY_MANAGER_WINDOW_TITLE = APPLICATION_NAME + " - Bibliotheksverwaltung";
     public static final String LIBRARY_MANAGER_NEW_ASSET_LIBRARY_DIALOG_TITLE = "Leeres Verzeichnis für neue Bibliothek wählen";
-    public static final String LIBRARY_MANAGER_IMPORT_DIALOG_TITLE = "Bibliotheken öffnen";
+    public static final String LIBRARY_MANAGER_IMPORT_LIBRARIES_DIALOG_TITLE = "Bibliotheken öffnen";
     public static final String LIBRARY_MANAGER_IMPORT_DIALOG_HEADER = "Wähle Bibliotheken vom Datenträger aus";
     public static final String LIBRARY_MANAGER_IMPORT_OPEN_BUTTON_TITLE = "Öffnen";
     public static final String LIBRARY_MANAGER_IMPORT_NO_DIRECTORY = "Wähle ein Verzeichnis aus";
@@ -486,8 +492,7 @@ public class Strings {
     public static final String LIBRARY_MANAGER_NEW_ASSET_LIBRARY_NAME = "Asset-Bibliothek";
     public static final String NEW_MATERIAL_SET_NAME_PATTERN = "Material-Kollektion {0}";
     public static final String NEW_MATERIAL_SET_IN_SO_NAME_PATTERN = "{0} in Hilfsobjekt ''{1}''";
-    public static final String SELECT_TEXTURE_IMAGE_DIALOG_TITLE = "Textur für Material wählen";
-    public static final String NEW_TEXTURE_NAME = "Textur {0}";
+    public static final String NEW_MATERIAL_NAME = "Material";
     public static final String NEW_SUPPORT_OBJECT_NAME_PATTERN = "Hilfsobjekt {0}";
     public static final String SELECT_ICON_IMAGE_DIALOG_TITLE = "Objekt-Icon wählen";
     public static final String SELECT_PLAN_VIEW_IMAGE_DIALOG_TITLE = "Objekt-Ansicht im Grundriss wählen";
@@ -507,18 +512,20 @@ public class Strings {
     public static final String LIBRARY_MANAGER_EDIT_LIBRARY_TOOLTIP = "Bibliothek {0} bearbeiten...";
     public static final String LIBRARY_MANAGER_REMOVE_LIBRARY_1_TOOLTIP = "Bibliothek {0} entfernen. Die Bibliothek bleibt auf dem Datenträger erhalten.";
     public static final String LIBRARY_MANAGER_REMOVE_LIBRARY_N_TOOLTIP = "{0} Bibliotheken entfernen. Die Bibliotheken bleiben auf dem Datenträger erhalten.";
-    public static final String LIBRARY_MANAGER_DELETE_LIBRARY_1_TOOLTIP = "Bibliothek löschen. Die Bibliothek wird auf dem Datenträger gelöscht.";
+    public static final String LIBRARY_MANAGER_DELETE_LIBRARY_1_TOOLTIP = "Bibliothek {0} löschen. Die Bibliothek wird auf dem Datenträger gelöscht.";
     public static final String LIBRARY_MANAGER_DELETE_LIBRARY_N_TOOLTIP = "{0} Bibliotheken löschen. Die Bibliotheken werden auf dem Datenträger gelöscht.";
 
     public static final String LIBRARY_MANAGER_NEW_MATERIAL_SET_TOOLTIP = "Neue Material-Kollektion anlegen";
     public static final String LIBRARY_MANAGER_EDIT_MATERIAL_SET_1_TOOLTIP = "Material-Kollektion {0} bearbeiten";
-    public static final String LIBRARY_MANAGER_EDIT_MATERIAL_SETS_N_TOOLTIP = "Material-Kollektionen {0} bearbeiten";
+    public static final String LIBRARY_MANAGER_EDIT_MATERIAL_SETS_N_TOOLTIP = "{0} Material-Kollektionen bearbeiten";
     public static final String LIBRARY_MANAGER_DELETE_MATERIAL_SET_1_TOOLTIP = "Material-Kollektion {0} löschen";
     public static final String LIBRARY_MANAGER_DELETE_MATERIAL_SETS_N_TOOLTIP = "{0} Material-Kollektionen löschen";
+    public static final String LIBRARY_MANAGER_IMPORT_TEXTURE_FOR_MATERIAL_TITLE = "Textur importieren";
+    public static final String LIBRARY_MANAGER_EDIT_MATERIAL_SET_DELETE_MATERIAL_CONFIRMATION_TEXT = "Soll das Material {0} wirklich gelöscht werden?";
 
     public static final String LIBRARY_MANAGER_NEW_SUPPORT_OBJECT_TOOLTIP = "Neues Hilfsobjekt anlegen";
     public static final String LIBRARY_MANAGER_EDIT_SUPPORT_OBJECT_1_TOOLTIP = "Hilfsobjekt {0} bearbeiten";
-    public static final String LIBRARY_MANAGER_EDIT_SUPPORT_OBJECTS_N_TOOLTIP = "Hilfsobjekte {0} bearbeiten";
+    public static final String LIBRARY_MANAGER_EDIT_SUPPORT_OBJECTS_N_TOOLTIP = "{0} Hilfsobjekte bearbeiten";
     public static final String LIBRARY_MANAGER_DELETE_SUPPORT_OBJECT_1_TOOLTIP = "Hilfsobjekt {0} löschen";
     public static final String LIBRARY_MANAGER_DELETE_SUPPORT_OBJECTS_N_TOOLTIP = "{0} Hilfsobjekte löschen";
 
@@ -537,7 +544,7 @@ public class Strings {
     public static final String LIBRARY_MANAGER_EDIT_LIBRARY_DIALOG_TITLE = "Bibliothek bearbeiten";
     public static final String LIBRARY_MANAGER_EDIT_LIBRARY_DIALOG_HEADER = "Trage die Stammdaten der Bibliothek ein";
 
-    public static final String LIBRARY_MANAGER_EDIT_N_OBJECTS_DIALOG_TITLE = "Objekte bearbeiten";
+    public static final String LIBRARY_MANAGER_EDIT_N_OBJECTS_DIALOG_TITLE = "{0} Objekte bearbeiten";
     public static final String LIBRARY_MANAGER_EDIT_N_OBJECTS_DIALOG_HEADER = "Verändere einzelne Felder in {0} Objekten gleichzeitig";
 
     public static final String LIBRARY_MANAGER_EDIT_MATERIAL_SET_DIALOG_TITLE = "Material-Kollektion bearbeiten";

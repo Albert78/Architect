@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+
+<fx:root maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="400.0" type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
+   <center>
+      <VBox spacing="5.0" BorderPane.alignment="CENTER">
+         <children>
+             <GridPane>
+                 <columnConstraints>
+                     <ColumnConstraints hgrow="NEVER" minWidth="10.0" prefWidth="80.0" />
+                     <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" prefWidth="100.0" />
+                 </columnConstraints>
+                 <rowConstraints>
+                  <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                     <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                  <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                 </rowConstraints>
+                 <children>
+                     <Label text="Oberfläche:" GridPane.rowIndex="1" />
+                     <TextField fx:id="mSurfaceTypeTF" prefWidth="200.0" styleClass="copyable-label" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                     <Label text="Material:" GridPane.rowIndex="2" />
+                     <BorderPane GridPane.columnIndex="1" GridPane.rowIndex="2">
+                         <center>
+                             <TextField fx:id="mMaterialNameTF" prefWidth="200.0" styleClass="copyable-label" />
+                         </center>
+                         <right>
+                             <Button fx:id="mChoseMaterialButton" mnemonicParsing="false" text="..." BorderPane.alignment="CENTER">
+                                 <BorderPane.margin>
+                                     <Insets left="5.0" />
+                                 </BorderPane.margin>
+                             </Button>
+                         </right>
+                     </BorderPane>
+                  <Label text="Objekt:" />
+                  <TextField fx:id="mObjectTF" styleClass="copyable-label" GridPane.columnIndex="1" />
+                 </children>
+             </GridPane>
+            <VBox fx:id="mMaterialConfigControlsParent" spacing="5.0">
+               <children>
+                  <BorderPane>
+                     <center>
+                        <TextField fx:id="mMaterialRefTF" styleClass="copyable-label" />
+                     </center>
+                     <left>
+                        <Label text="Material Ref:" BorderPane.alignment="CENTER">
+                           <padding>
+                              <Insets right="5.0" />
+                           </padding>
+                        </Label>
+                     </left>
+                  </BorderPane>
+                  <TitledPane animated="false" collapsible="false" text="Größe der Textur">
+                       <content>
+                           <GridPane fx:id="mValuesParent" hgap="10.0" vgap="10.0">
+                               <columnConstraints>
+                                   <ColumnConstraints hgrow="NEVER" minWidth="10.0" prefWidth="90.0" />
+                                   <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" prefWidth="100.0" />
+                               </columnConstraints>
+                               <rowConstraints>
+                              <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                   <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                               </rowConstraints>
+                               <children>
+
+                                   <Label text="Kachelgröße" GridPane.rowIndex="1" />
+                                   <GridPane fx:id="mSizeControlsParent" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                       <columnConstraints>
+                                           <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+                                       </columnConstraints>
+                                       <rowConstraints>
+                                           <RowConstraints minHeight="10.0" prefHeight="50.0" vgrow="SOMETIMES" />
+                                           <RowConstraints minHeight="10.0" prefHeight="50.0" vgrow="SOMETIMES" />
+                                       </rowConstraints>
+                                       <children>
+                                           <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                               <children>
+                                                   <CheckBox fx:id="mConfigureTileSizeCheckBox" mnemonicParsing="false" prefWidth="100.0" text="Größe explizit festleren" wrapText="true" />
+                                                   <CheckBox fx:id="mMaintainAspectRatioCheckBox" mnemonicParsing="false" prefWidth="120.0" text="Seitenverhältnis beibehalten" wrapText="true" />
+                                               </children>
+                                           </HBox>
+                                           <GridPane fx:id="mTileSizeParent" hgap="10.0" GridPane.rowIndex="1">
+                                               <columnConstraints>
+                                                   <ColumnConstraints hgrow="NEVER" minWidth="10.0" />
+                                                   <ColumnConstraints hgrow="ALWAYS" prefWidth="100.0" />
+                                               </columnConstraints>
+                                               <rowConstraints>
+                                                   <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                                   <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                               </rowConstraints>
+                                               <children>
+                                                   <Label text="X / U" />
+                                                   <Label text="Y / V" GridPane.rowIndex="1" />
+                                               </children>
+                                           </GridPane>
+                                       </children>
+                                   </GridPane>
+                              <Label text="Layout-Modus" />
+                              <HBox alignment="CENTER_LEFT" spacing="20.0" GridPane.columnIndex="1">
+                                 <children>
+                                    <RadioButton fx:id="mStretchRadioButton" mnemonicParsing="false" text="Auf Objektgröße skalieren">
+                                       <toggleGroup>
+                                          <ToggleGroup fx:id="MaterialLayout" />
+                                       </toggleGroup>
+                                    </RadioButton>
+                                    <RadioButton fx:id="mTileRadioButton" mnemonicParsing="false" text="kacheln" toggleGroup="$MaterialLayout" />
+                                 </children>
+                              </HBox>
+                               </children>
+                           </GridPane>
+                       </content>
+                   </TitledPane>
+                  <TitledPane animated="false" collapsible="false" text="Ausrichtung der Textur auf der Oberfläche">
+                       <content>
+                           <GridPane fx:id="mValuesParent" hgap="10.0" vgap="10.0">
+                               <columnConstraints>
+                                   <ColumnConstraints hgrow="NEVER" minWidth="10.0" prefWidth="90.0" />
+                                   <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" prefWidth="100.0" />
+                               </columnConstraints>
+                               <rowConstraints>
+                                   <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                                   <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                               </rowConstraints>
+                               <children>
+                                   <Label text="Versatz" />
+                                   <GridPane fx:id="mOffsetParent" hgap="10.0" GridPane.columnIndex="1">
+                                       <columnConstraints>
+                                           <ColumnConstraints hgrow="NEVER" minWidth="10.0" />
+                                           <ColumnConstraints hgrow="ALWAYS" prefWidth="100.0" />
+                                       </columnConstraints>
+                                       <rowConstraints>
+                                           <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                           <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                       </rowConstraints>
+                                       <children>
+                                           <Label text="X / U" />
+                                           <Label text="Y / V" GridPane.rowIndex="1" />
+                                       </children>
+                                   </GridPane>
+                                   <Label text="Drehung" GridPane.rowIndex="1" />
+                               </children>
+                           </GridPane>
+                       </content>
+                   </TitledPane>
+               </children>
+            </VBox>
+         </children>
+      </VBox>
+   </center>
+   <padding>
+      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+   </padding>
+</fx:root>

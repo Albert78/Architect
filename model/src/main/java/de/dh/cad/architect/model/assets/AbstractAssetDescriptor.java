@@ -37,7 +37,7 @@ import de.dh.cad.architect.utils.jaxb.LocalDateTimeJavaTypeAdapter;
     SupportObjectDescriptor.class,
 
     ObjModelResource.class,
-    MtlModelResource.class,
+    MaterialsModel.class,
 })
 public class AbstractAssetDescriptor {
     protected String mId;

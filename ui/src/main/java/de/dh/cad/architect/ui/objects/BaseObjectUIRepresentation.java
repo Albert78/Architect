@@ -28,12 +28,12 @@ import org.apache.commons.collections4.OrderedMap;
 import org.apache.commons.collections4.map.LinkedMap;
 import org.apache.commons.lang3.StringUtils;
 
-import de.dh.cad.architect.model.assets.AssetRefPath;
 import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.objects.Anchor;
 import de.dh.cad.architect.model.objects.BaseAnchoredObject;
 import de.dh.cad.architect.model.objects.BaseObject;
 import de.dh.cad.architect.model.objects.BaseSolidObject;
+import de.dh.cad.architect.model.objects.MaterialMappingConfiguration;
 import de.dh.cad.architect.model.objects.SurfaceConfiguration;
 import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.controller.UiController;
@@ -80,10 +80,10 @@ public abstract class BaseObjectUIRepresentation extends AbstractObjectUIReprese
                 }
         ));
         if (bo instanceof BaseSolidObject bso) {
-            Collection<UiProperty<?>> surfaeProperties = result.computeIfAbsent(Strings.BASE_OBJECT_PROPERTIES_SURFACES_SECTION, cat -> new ArrayList<>());
+            Collection<UiProperty<?>> surfaceProperties = result.computeIfAbsent(Strings.BASE_OBJECT_PROPERTIES_SURFACES_SECTION, cat -> new ArrayList<>());
             for (SurfaceConfiguration sc : bso.getSurfaceConfigurations()) {
-                AssetRefPath materialAssignment = sc.getMaterialAssignment();
-                surfaeProperties.add(new ConstantUiProperty<>(bo, sc.getSurfaceTypeId(), sc.getSurfaceTypeId(), PropertyType.String, materialAssignment == null ? Strings.BASE_OBJECT_PROPERTIES_SURFACES_STANDARD : materialAssignment.toPathString()));
+                MaterialMappingConfiguration mmc = sc.getMaterialMappingConfiguration();
+                surfaceProperties.add(new ConstantUiProperty<>(bo, sc.getSurfaceTypeId(), sc.getSurfaceTypeId(), PropertyType.String, mmc == null ? Strings.BASE_OBJECT_PROPERTIES_SURFACES_STANDARD : mmc.getMaterialRef().toPathString()));
             }
         }
     }

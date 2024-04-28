@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.layout.HBox?>
+
+<fx:root type="javafx.scene.layout.HBox" fx:id="mXOffsetParent" alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <Slider fx:id="mSlider" prefWidth="100.0">
+         <HBox.margin>
+            <Insets left="10.0" />
+         </HBox.margin>
+      </Slider>
+   </children>
+</fx:root>

@@ -13,7 +13,8 @@ import de.dh.cad.architect.libraryeditor.SurfaceConfigurationData;
 import de.dh.cad.architect.model.assets.AssetRefPath;
 import de.dh.cad.architect.ui.assets.AssetLoader;
 import de.dh.cad.architect.ui.view.libraries.ImageLoadOptions;
-import de.dh.utils.Vector2D;
+import de.dh.utils.MaterialMapping;
+import de.dh.utils.io.fx.MaterialData;
 import de.dh.utils.io.obj.RawMaterialData;
 import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
@@ -144,10 +145,11 @@ public class SurfaceConfigurationView extends BorderPane {
                 mExhibit.setMaterial(mat);
                 return;
             }
-            RawMaterialData materialData = mAssetLoader.loadMaterialData(materialRefPath);
-            mMaterialText.setText(MessageFormat.format(Strings.MATERIAL_TEXT, materialData.getName()));
+            MaterialData materialData = mAssetLoader.loadMaterialData(materialRefPath);
+            String materialName = materialRefPath.getOMaterialName().get();
+            mMaterialText.setText(MessageFormat.format(Strings.MATERIAL_TEXT, materialName));
             mMaterialText.setFont(mDefaultFont);
-            mAssetLoader.configureMaterial_Lax(mExhibit, materialData, Optional.of(new Vector2D(mExhibit.getWidth(), mExhibit.getHeight())));
+            mExhibit.setMaterial(mAssetLoader.buildMaterial_Lax(materialData, MaterialMapping.stretch()));
         } catch (IOException e) {
             log.warn("Error loading material", e);
         }

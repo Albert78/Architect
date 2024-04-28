@@ -39,12 +39,7 @@ public class DimensioningConstructionRepresentation extends AbstractAnchoredObje
         super(dimensioning, parentView);
         setViewOrder(Constants.VIEW_ORDER_DIMENSIONING);
 
-        ChangeListener<Boolean> propertiesUpdaterListener = new ChangeListener<>() {
-            @Override
-            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                updateProperties();
-            }
-        };
+        ChangeListener<Boolean> propertiesUpdaterListener = (observable, oldValue, newValue) -> updateProperties();
         selectedProperty().addListener(propertiesUpdaterListener);
         objectSpottedProperty().addListener(propertiesUpdaterListener);
         objectFocusedProperty().addListener(propertiesUpdaterListener);

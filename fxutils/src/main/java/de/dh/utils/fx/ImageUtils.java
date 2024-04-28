@@ -82,11 +82,11 @@ public class ImageUtils {
         Scene scene = new Scene(sceneRoot, -1, -1, true);
         scene.setFill(backgroundColor);
 
-        Group subsceneRoot = new Group();
-        SubScene subScene = new SubScene(subsceneRoot, 0, 0, true, SceneAntialiasing.BALANCED);
+        Group subSceneRoot = new Group();
+        SubScene subScene = new SubScene(subSceneRoot, 0, 0, true, SceneAntialiasing.BALANCED);
         ObservableList<Node> sceneRootChildren = sceneRoot.getChildren();
         sceneRootChildren.add(subScene);
-        subsceneRoot.getChildren().add(obj);
+        subSceneRoot.getChildren().add(obj);
 
         ///////////////////////////////
         // Calculation of correct scale
@@ -97,7 +97,7 @@ public class ImageUtils {
         // applying a transformation directly on our object.
         ObservableList<Transform> transforms = obj.getTransforms();
 
-        // Scale object to make it's size match the desired image size - the result image size
+        // Scale object to make its size match the desired image size - the result image size
         // will be derived from the object's size by the snapshot procedure
         Bounds boundsInParent = obj.getBoundsInParent();
         double scaleX = imageWidth / boundsInParent.getWidth();
@@ -108,12 +108,12 @@ public class ImageUtils {
         // Let mvs be the max X/Y image size, then the far clipping pane is located at Z=mvs/2 and the near clipping pane is located at Z=-mvs/2.
         // See ParallelCamera#computeProjectionTransform(GeneralTransform3D).
         // This Z scale makes our object match into those clipping planes for ParallelCamera. Also seems to work for PerspectiveCamera.
-        double scaleZ = Math.max(imageWidth, imageHeight) / 2 / boundsInParent.getHeight();
+        double scaleZ = Math.max(imageWidth, imageHeight) / 2.0 / boundsInParent.getHeight();
         if (scaleZ > 1) {
             scaleZ = 1;
         }
         Scale objectScale = new Scale(scale, scale, scaleZ);
-        transforms.add(0, objectScale);
+        transforms.addFirst(objectScale);
 
         boundsInParent = obj.getBoundsInParent();
 
@@ -137,7 +137,7 @@ public class ImageUtils {
         }
         // Move object to start at 0/0 because the camera's view port starts at 0/0.
         Translate objectTranslate = new Translate(-boundsInParent.getMinX(), -boundsInParent.getMinY(), translateZ);
-        transforms.add(0, objectTranslate);
+        transforms.addFirst(objectTranslate);
 
         ///////////////////////////////
         // Lights
@@ -179,7 +179,7 @@ public class ImageUtils {
             throw new RuntimeException("Handling for camera type " + cameraType + " is not implemented");
         }
 
-        WritableImage result = subsceneRoot.snapshot(params, null);
+        WritableImage result = subSceneRoot.snapshot(params, null);
         // The system produces a spare pixel border at X=0 and Y=0, which seems a problem of the mapping of
         // float/double coordinates to int image coordinates. The resulting image is then one pixel too big in
         // both directions. As workaround, we cleanup the image borders.
@@ -193,8 +193,8 @@ public class ImageUtils {
         Scene scene = new Scene(sceneRoot, -1, -1, true);
         scene.setFill(Color.TRANSPARENT);
 
-        Group subsceneRoot = new Group();
-        SubScene subScene = new SubScene(subsceneRoot, 0, 0, true, SceneAntialiasing.DISABLED);
+        Group subSceneRoot = new Group();
+        SubScene subScene = new SubScene(subSceneRoot, 0, 0, true, SceneAntialiasing.BALANCED);
         ObservableList<Node> sceneRootChildren = sceneRoot.getChildren();
         sceneRootChildren.add(subScene);
         ObservableList<Transform> transforms = objView.getTransforms();
@@ -203,7 +203,7 @@ public class ImageUtils {
 
         // Move object to start at 0/0 because ParallelCamera's view port starts at 0/0.
         // In Z direction, we move the object to the center to make our scale hack work (see below).
-        transforms.add(0, new Translate(-boundsInParent.getMinX(), -boundsInParent.getMinY(), -boundsInParent.getCenterZ()));
+        transforms.addFirst(new Translate(-boundsInParent.getMinX(), -boundsInParent.getMinY(), -boundsInParent.getCenterZ()));
 
         // Scale object to make it's size match the desired image size - the result image size
         // will be derived from the object's size by the snapshot procedure
@@ -214,8 +214,8 @@ public class ImageUtils {
         // Let mvs be the max X/Y image size, then the far clipping pane is located at Z=mvs and the near clipping pane is located at Z=-mvs.
         // See ParallelCamera#computeProjectionTransform(GeneralTransform3D).
         // We choose the Z scale to make our object match into those clipping planes.
-        double scaleZ = imageSize / 2 / boundsInParent.getDepth();
-        transforms.add(0, new Scale(scale, scale, scaleZ));
+        double scaleZ = imageSize / 2.0 / boundsInParent.getDepth();
+        transforms.addFirst(new Scale(scale, scale, scaleZ));
         boundsInParent = objView.getBoundsInParent();
 
         // Reflective objects look better with an AmbientLight while matt objects look better with PointLight
@@ -237,7 +237,7 @@ public class ImageUtils {
             throw new IllegalArgumentException("Unsupported light type " + lightType);
         }
 
-        subsceneRoot.getChildren().add(objView);
+        subSceneRoot.getChildren().add(objView);
 
         SnapshotParameters params = new SnapshotParameters();
         params.setDepthBuffer(true);
@@ -249,7 +249,7 @@ public class ImageUtils {
         ParallelCamera camera = new ParallelCamera();
         params.setCamera(camera);
 
-        WritableImage result = subsceneRoot.snapshot(params, null);
+        WritableImage result = subSceneRoot.snapshot(params, null);
         // The system produces a spare pixel border at X=0 and Y=0, which seems a problem of the mapping of
         // float/double coordinates to int image coordinates. The resulting image is then one pixel too big in
         // both directions. As workaround, we cleanup the image borders.
@@ -357,7 +357,7 @@ public class ImageUtils {
         double widthBasedFontSize = (baseFont.getSize2D()*image.getWidth())/(textWidth * 3);
         double heightBasedFontSize = (baseFont.getSize2D()*image.getHeight())/(textHeight * 3);
 
-        double newFontSize = widthBasedFontSize < heightBasedFontSize ? widthBasedFontSize : heightBasedFontSize;
+        double newFontSize = Math.min(widthBasedFontSize, heightBasedFontSize);
         Font font = baseFont.deriveFont(baseFont.getStyle(), (float) newFontSize);
 
         g.setFont(font);

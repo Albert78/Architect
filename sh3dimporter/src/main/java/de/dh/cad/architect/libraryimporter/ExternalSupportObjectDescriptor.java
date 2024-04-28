@@ -37,13 +37,14 @@ import de.dh.cad.architect.model.assets.AssetType;
 import de.dh.cad.architect.model.assets.SupportObjectDescriptor;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.ui.assets.AssetLoader;
-import de.dh.cad.architect.ui.assets.AssetLoader.ThreeDResourceImportMode;
 import de.dh.cad.architect.ui.assets.AssetManager;
 import de.dh.cad.architect.ui.assets.AssetManager.LibraryData;
+import de.dh.cad.architect.ui.assets.ThreeDResourceImportMode;
 import de.dh.cad.architect.utils.vfs.IResourceLocator;
 import de.dh.utils.fx.ImageUtils;
 import de.dh.utils.fx.LightType;
 import javafx.application.Platform;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.transform.Rotate;
@@ -88,11 +89,12 @@ public class ExternalSupportObjectDescriptor {
     public SupportObjectDescriptor importSupportObject(LibraryData targetLibraryData, AssetLoader assetLoader) {
         AssetManager assetManager = assetLoader.getAssetManager();
 
-        String id = mSourcePieceOfFurniture.getId();
-        if (StringUtils.isEmpty(id)) {
+        String _id = mSourcePieceOfFurniture.getId();
+        if (StringUtils.isEmpty(_id)) {
             log.debug("Generating id for support object");
-            id = UUID.randomUUID().toString();
+            _id = UUID.randomUUID().toString();
         }
+        final String id = _id;
         log.info("Importing piece of furniture '" + id + "'");
         LibraryAssetPathAnchor libraryAnchor = new LibraryAssetPathAnchor(targetLibraryData.getLibrary().getId());
         Path relativeAssetPath = Paths.get(AssetManager.SUPPORT_OBJECTS_DIRECTORY).resolve(id);
@@ -142,7 +144,8 @@ public class ExternalSupportObjectDescriptor {
                 assetManager.deleteAsset(arp);
                 return null;
             }
-            import3DModel(importedDescriptor, modelResource, Optional.ofNullable(mSourcePieceOfFurniture.getModelRotationArchitect()), assetLoader);
+            Node objViewCache = null;
+            boolean creatingIconInUIThread = false;
 
             if (icon != null) {
                 assetLoader.importAssetIconImage(importedDescriptor, icon, Optional.empty());
@@ -150,17 +153,45 @@ public class ExternalSupportObjectDescriptor {
                 if (planIcon != null) {
                     assetLoader.importAssetIconImage(importedDescriptor, planIcon, Optional.empty());
                 } else {
-                    createSnapshotForIcon(importedDescriptor, modelResource, assetLoader);
+                    if (objViewCache == null) {
+                        objViewCache = mSourcePieceOfFurniture.createThreeDModel(assetManager.getDefaultMaterials());
+                    }
+                    createSnapshotForIcon(importedDescriptor, objViewCache, assetLoader);
+                    creatingIconInUIThread = true;
                 }
             }
 
             if (planIcon != null) {
                 assetLoader.importSupportObjectPlanViewImage(importedDescriptor, planIcon, Optional.empty());
             } else {
-                createSnapshotForPlanViewImage(importedDescriptor, modelResource, assetLoader);
+                if (objViewCache == null) {
+                    objViewCache = mSourcePieceOfFurniture.createThreeDModel(assetManager.getDefaultMaterials());
+                }
+                createSnapshotForPlanViewImage(importedDescriptor, objViewCache, assetLoader);
             }
 
-            log.debug("Successfully imported support object '" + id + "'");
+            // This must be done after the icon was imported (or created from snapshot, if not present)
+            // because the icons of the support-object-local material sets are built using the support object descriptor's icon
+            if (creatingIconInUIThread) {
+                AssetRefPath finalArp = arp;
+                Platform.runLater(() -> {
+                    try {
+                        import3DModel(importedDescriptor, modelResource, Optional.ofNullable(mSourcePieceOfFurniture.getModelRotationArchitect()), assetLoader);
+                    } catch (IOException e) {
+                        log.info("Error while importing support object '" + id + "', will delete it", e);
+                        try {
+                            assetManager.deleteAsset(finalArp);
+                        } catch (IOException ex) {
+                            log.error("Error while importing support object '" + id + "', will delete it", e);
+                        }
+                    }
+                });
+            } else {
+                import3DModel(importedDescriptor, modelResource, Optional.ofNullable(mSourcePieceOfFurniture.getModelRotationArchitect()), assetLoader);
+            }
+
+            // Some import tasks are still running - snapshot creation and model import are executed using Platform.runLater()
+            log.debug("Processed support object '" + id + "'");
             return importedDescriptor;
         } catch (Exception e) {
             log.info("Error while importing support object '" + id + "', will delete it", e);
@@ -173,17 +204,17 @@ public class ExternalSupportObjectDescriptor {
         }
     }
 
-    public void createSnapshotForIcon(SupportObjectDescriptor soDescriptor, IResourceLocator modelResource, AssetLoader assetLoader) throws IOException {
-        Node objView = assetLoader.loadSupportObject3DResource(soDescriptor, Optional.empty()).getObject();
+    public void createSnapshotForIcon(SupportObjectDescriptor soDescriptor, Node objView, AssetLoader assetLoader) throws IOException {
+        Group g = new Group(objView);
 
         Rotate rotateX = new Rotate(ICON_SNAPSHOT_ANGLE_X, Rotate.X_AXIS);
         Rotate rotateY = new Rotate(ICON_SNAPSHOT_ANGLE_Y, Rotate.Y_AXIS);
 
-        objView.getTransforms().addAll(0, Arrays.asList(rotateX, rotateY));
+        g.getTransforms().addAll(0, Arrays.asList(rotateX, rotateY));
 
         Platform.runLater(() -> {
             try {
-                Image snapshot = ImageUtils.takeSnapshot(objView, ICON_SNAPSHOT_LIGHT_TYPE, DEFAULT_ICON_SIZE);
+                Image snapshot = ImageUtils.takeSnapshot(g, ICON_SNAPSHOT_LIGHT_TYPE, DEFAULT_ICON_SIZE);
                 assetLoader.importAssetIconImage(soDescriptor, snapshot, AssetManager.ICON_IMAGE_DEFAULT_BASE_NAME);
             } catch (IOException e) {
                 throw new RuntimeException("Error importing snapshot image for plan view", e);
@@ -191,17 +222,17 @@ public class ExternalSupportObjectDescriptor {
         });
     }
 
-    public void createSnapshotForPlanViewImage(SupportObjectDescriptor soDescriptor, IResourceLocator modelResource, AssetLoader assetLoader) throws IOException {
-        Node objView = assetLoader.loadSupportObject3DResource(soDescriptor, Optional.empty()).getObject();
+    public void createSnapshotForPlanViewImage(SupportObjectDescriptor soDescriptor, Node objView, AssetLoader assetLoader) throws IOException {
+        Group g = new Group(objView);
 
         Rotate rotateX = new Rotate(PLANVIEW_SNAPSHOT_ANGLE_X, Rotate.X_AXIS);
         Rotate rotateY = new Rotate(PLANVIEW_SNAPSHOT_ANGLE_Y, Rotate.Y_AXIS);
 
-        objView.getTransforms().addAll(0, Arrays.asList(rotateX, rotateY));
+        g.getTransforms().addAll(0, Arrays.asList(rotateX, rotateY));
 
         Platform.runLater(() -> {
             try {
-                Image snapshot = ImageUtils.takeSnapshot(objView, PLAN_VIEW_IMAGE_LIGHT_TYPE, DEFAULT_PLAN_VIEW_IMAGE_SIZE);
+                Image snapshot = ImageUtils.takeSnapshot(g, PLAN_VIEW_IMAGE_LIGHT_TYPE, DEFAULT_PLAN_VIEW_IMAGE_SIZE);
                 assetLoader.importSupportObjectPlanViewImage(soDescriptor, snapshot, AssetManager.PLAN_VIEW_IMAGE_DEFAULT_BASE_NAME);
             } catch (IOException e) {
                 throw new RuntimeException("Error importing snapshot image for plan view", e);

@@ -19,7 +19,10 @@ package de.dh.utils.io;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
+import de.dh.utils.io.fx.MaterialData;
 import de.dh.utils.io.obj.RawMaterialData;
 import javafx.scene.paint.Material;
 import javafx.scene.shape.Shape3D;
@@ -37,23 +40,23 @@ import javafx.scene.shape.Shape3D;
  * (instead of using the material name from the {@link MeshData} as mapping key). This allows us to define a material for each individual
  * mesh instead of just exchanging a given material (which potentially could be mapped to multiple meshes).
  *
- * Depending on the input data, each concept has its pros and cons; while well designed objects would have assigned the same material for
+ * Depending on the input data, each concept has its pros and cons; while well-designed objects would have assigned the same material for
  * similar surfaces (where the material is defined by name), we use the more flexible concept in this class (mapping of materials via mesh names),
- * which allows to overide the material for each individual mesh, independent from the object file definition.
+ * which allows to overide the material for each individual mesh, independent of the object file definition.
  * Note that this model requires the {@link MeshData#getName() mesh names} to be stable among different readings of the same object
  * if we want to use the described overriding mechanism. So the reader has to ensure that the names are unique, attaching a unique prefix string,
  * if necessary.
  *
  * Typically, the user defined material assignment (mesh names -> material) is persisted between different sessions by the application.
- * For that usage scenario, we use the mesh names as stable connection/key between the object file mesh objects and the assigned materials.
+ * For this usage scenario, we use the mesh names as stable connection/key between the object file mesh objects and the assigned materials.
  * Thus, because the object data is loaded repeatedly from the same object file, the object file reader will/should generate stable
  * names among different file loadings.
  */
 public class ObjData {
     protected final Collection<MeshData> mMeshes; // Mesh names must be unique
-    protected final Map<String, RawMaterialData> mMeshNamesToMaterials; // Mesh names to material - not all mesh names need to have a mapping
+    protected final Map<String, MaterialData> mMeshNamesToMaterials; // Mesh names to material - not all mesh names need to have a mapping
 
-    public ObjData(Collection<MeshData> meshes, Map<String, RawMaterialData> materials) {
+    public ObjData(Collection<MeshData> meshes, Map<String, MaterialData> materials) {
         mMeshes = meshes;
         mMeshNamesToMaterials = materials;
     }
@@ -62,7 +65,7 @@ public class ObjData {
         return mMeshes;
     }
 
-    public Map<String, RawMaterialData> getMeshNamesToMaterials() {
+    public Map<String, MaterialData> getMeshNamesToMaterials() {
         return mMeshNamesToMaterials;
     }
 }

@@ -86,12 +86,22 @@ public class Namespace<T> {
         return generateName(namePattern, mNamespaceMap.keySet(), startNum);
     }
 
+    public static String generateName(String namePattern, Collection<String> availableNames) {
+        return generateName(namePattern, availableNames, 0);
+    }
+
     public static String generateName(String namePattern, Collection<String> availableNames, int startNum) {
         if (StringUtils.isEmpty(namePattern)) {
             return namePattern;
         }
-        if (!namePattern.contains("{0}"))
+        if (!namePattern.contains("{0}")) {
+            // No number suffix requested, try pure name
+            if (!availableNames.contains(namePattern)) {
+                return namePattern;
+            }
+            // Pure name is already present, we need a number suffix
             namePattern = namePattern + "_{0}";
+        }
         int num = startNum;
         String result;
         do {

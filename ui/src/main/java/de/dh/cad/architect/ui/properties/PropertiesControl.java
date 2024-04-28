@@ -50,7 +50,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.util.Callback;
 
 public class PropertiesControl extends BorderPane {
-    public class PropertyValueTableCell extends TreeTableCell<UiProperty<?>, Object> {
+    public static class PropertyValueTableCell extends TreeTableCell<UiProperty<?>, Object> {
         protected Node mCellGraphic = null; // Contains the current cell graphic or null
 
         @SuppressWarnings("unchecked")
@@ -174,7 +174,7 @@ public class PropertiesControl extends BorderPane {
             return new PropertyValueTableCell();
         });
 
-        mTreeTableView.setColumnResizePolicy(TreeTableView.CONSTRAINED_RESIZE_POLICY);
+        mTreeTableView.setColumnResizePolicy(TreeTableView.UNCONSTRAINED_RESIZE_POLICY);
     }
 
     public void setPlaceholder(String text) {
@@ -193,7 +193,7 @@ public class PropertiesControl extends BorderPane {
     }
 
     @SuppressWarnings("rawtypes")
-    protected class ConsolidatedUiProperty extends UiProperty<Object> {
+    protected static class ConsolidatedUiProperty extends UiProperty<Object> {
         protected final Collection<UiProperty> mChildren = new ArrayList<>();
 
         public ConsolidatedUiProperty(String key, String displayName, PropertyType type, boolean editable) {
@@ -264,10 +264,7 @@ public class PropertiesControl extends BorderPane {
         // via Collectors.toMap() doesn't work
         Map<String, Collection<UiProperty<?>>> categories = new LinkedMap<>();
         for (Entry<String, Map<String, ConsolidatedUiProperty>> entry : values.entrySet()) {
-            Collection<UiProperty<?>> uiProperties = new ArrayList<>();
-            for (UiProperty<?> uiProperty : entry.getValue().values()) {
-                uiProperties.add(uiProperty);
-            }
+            Collection<UiProperty<?>> uiProperties = new ArrayList<>(entry.getValue().values());
             categories.put(entry.getKey(), uiProperties);
         }
 

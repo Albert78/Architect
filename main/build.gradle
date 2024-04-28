@@ -11,7 +11,9 @@ application {
 dependencies {
     implementation libs.slf4j.api
     implementation libs.log4j.slf4j18.impl
+    implementation libs.log4j.api
     implementation libs.jakarta.xml.bind.api
+    implementation libs.jaxb.runtime
 
     implementation project(':fxutils')
     implementation project(':model')

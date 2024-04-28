@@ -46,10 +46,11 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 
 public abstract class Abstract3DView extends AbstractPlanView<Abstract3DRepresentation, Abstract3DAncillaryObject> {
+    protected static double mMinNearClip = CoordinateUtils.lengthToCoords(Length.ofCM(50), null);
+
     protected final Map<String, Abstract3DRepresentation> mRepresentationsById = new HashMap<>();
     protected final Pane mCenterPane;
 
-    protected double mMinNearClip = CoordinateUtils.lengthToCoords(Length.ofCM(50), null);
     protected Group mLightGroup = null;
     protected AmbientLight mAmbientLight;
     protected PointLight mPointLight;
@@ -108,7 +109,7 @@ public abstract class Abstract3DView extends AbstractPlanView<Abstract3DRepresen
         mLightGroup = new Group();
         mTransformedRoot = new CombinedTransformGroup();
         mRootGroup.getChildren().addAll(mTransformedRoot, mLightGroup);
-        mSubScene = new SubScene(mRootGroup, 0, 0, true, SceneAntialiasing.DISABLED);
+        mSubScene = new SubScene(mRootGroup, 0, 0, true, SceneAntialiasing.BALANCED);
 
         mSubScene.setFill(Color.SILVER);
         mSubScene.setCamera(mCamera);

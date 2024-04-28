@@ -604,7 +604,7 @@ public final class Polygon {
      * @return {@code true} if this polygon is defined counter-clockwise; {@code false} otherwise
      */
     public boolean isCCW() {
-        return PolygonUtil.isCCW(vertices
+        return PolygonUtil.isCCW_XY(vertices
             .stream()
             .map(v -> v.pos)
             .collect(Collectors.toList()));

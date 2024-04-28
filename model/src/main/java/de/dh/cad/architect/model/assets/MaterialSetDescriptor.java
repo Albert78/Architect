@@ -19,7 +19,7 @@ package de.dh.cad.architect.model.assets;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement(name = "MaterialsDescriptor")
+@XmlRootElement(name = "MaterialSetDescriptor")
 public class MaterialSetDescriptor extends AbstractAssetDescriptor {
     public MaterialSetDescriptor() {
         // For JAXB

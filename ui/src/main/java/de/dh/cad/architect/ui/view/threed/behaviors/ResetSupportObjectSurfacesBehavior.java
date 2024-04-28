@@ -25,6 +25,7 @@ import de.dh.cad.architect.model.objects.BaseObject;
 import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.objects.Abstract3DAncillaryObject;
 import de.dh.cad.architect.ui.objects.Abstract3DRepresentation;
+import de.dh.cad.architect.ui.objects.AbstractSolid3DRepresentation;
 import de.dh.cad.architect.ui.objects.SupportObject3DRepresentation;
 import de.dh.cad.architect.ui.utils.Cursors;
 import de.dh.cad.architect.ui.view.AbstractPlanView;
@@ -43,27 +44,12 @@ public class ResetSupportObjectSurfacesBehavior extends Abstract3DViewBehavior {
     protected static Cursor RESET_CURSOR = Cursors.createCursorReset();
     protected static Cursor FORBIDDEN_CURSOR = Cursors.createCursorForbidden();
 
-    protected ChangeListener<Boolean> MOUSE_OVER_SUPPORT_OBJECT_LISTENER = new ChangeListener<>() {
-        @Override
-        public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-            ThreeDView view = getView();
-            if (newValue) {
-                view.setCursor(RESET_CURSOR);
-            } else {
-                view.setCursor(Cursor.DEFAULT);
-            }
-        }
-    };
-
-    protected ChangeListener<Boolean> MOUSE_OVER_OTHER_OBJECT_LISTENER = new ChangeListener<>() {
-        @Override
-        public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-            ThreeDView view = getView();
-            if (newValue) {
-                view.setCursor(FORBIDDEN_CURSOR);
-            } else {
-                view.setCursor(Cursor.DEFAULT);
-            }
+    protected ChangeListener<Boolean> MOUSE_OVER_SUPPORT_OBJECT_LISTENER = (observable, oldValue, newValue) -> {
+        ThreeDView view = getView();
+        if (newValue) {
+            view.setCursor(RESET_CURSOR);
+        } else {
+            view.setCursor(Cursor.DEFAULT);
         }
     };
 
@@ -91,33 +77,33 @@ public class ResetSupportObjectSurfacesBehavior extends Abstract3DViewBehavior {
     protected void configureObject(Abstract3DRepresentation repr) {
         super.configureObject(repr);
         if (repr instanceof SupportObject3DRepresentation soRepr) {
-            repr.enableMouseOverSpot();
-            repr.mouseOverProperty().removeListener(MOUSE_OVER_SUPPORT_OBJECT_LISTENER);
-            repr.mouseOverProperty().addListener(MOUSE_OVER_SUPPORT_OBJECT_LISTENER);
+            soRepr.setMouseSpotMode(AbstractSolid3DRepresentation.MouseSpotMode.Object);
+            soRepr.mouseOverProperty().removeListener(MOUSE_OVER_SUPPORT_OBJECT_LISTENER);
+            soRepr.mouseOverProperty().addListener(MOUSE_OVER_SUPPORT_OBJECT_LISTENER);
 
-            repr.setOnMouseClicked(new EventHandler<>() {
-                @Override
-                public void handle(MouseEvent event) {
-                    if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 1) {
-                        soRepr.resetSupportObjectSurfaces(soRepr.getSupportObject(), getUiController());
-                    }
+            soRepr.setOnMouseClicked(event -> {
+                if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 1) {
+                    soRepr.resetSupportObjectSurfaces(soRepr.getSupportObject(), getUiController());
                 }
             });
         } else {
             // Do nothing, prevent other objects from being clickable to prevent leaving this behavior accidentally
-            repr.mouseOverProperty().removeListener(MOUSE_OVER_OTHER_OBJECT_LISTENER);
-            repr.mouseOverProperty().addListener(MOUSE_OVER_OTHER_OBJECT_LISTENER);
+            if (repr instanceof AbstractSolid3DRepresentation sRepr) {
+                sRepr.setMouseSpotMode(AbstractSolid3DRepresentation.MouseSpotMode.None);
+            }
         }
     }
 
     @Override
     protected void unconfigureObject(Abstract3DRepresentation repr, boolean objectRemoved) {
-        if (repr instanceof SupportObject3DRepresentation) {
-            repr.disableMouseOverSpot();
-            repr.mouseOverProperty().removeListener(MOUSE_OVER_SUPPORT_OBJECT_LISTENER);
-            repr.setOnMouseClicked(null);
+        if (repr instanceof SupportObject3DRepresentation soRepr) {
+            soRepr.setDefaultMouseSpotMode();
+            soRepr.mouseOverProperty().removeListener(MOUSE_OVER_SUPPORT_OBJECT_LISTENER);
+            soRepr.setOnMouseClicked(null);
         } else {
-            repr.mouseOverProperty().removeListener(MOUSE_OVER_OTHER_OBJECT_LISTENER);
+            if (repr instanceof AbstractSolid3DRepresentation sRepr) {
+                sRepr.setDefaultMouseSpotMode();
+            }
         }
         super.unconfigureObject(repr, objectRemoved);
     }
@@ -126,7 +112,6 @@ public class ResetSupportObjectSurfacesBehavior extends Abstract3DViewBehavior {
     protected void updateActionsList(List<BaseObject> selectedObjects, List<BaseObject> selectedRootObjects) {
         Collection<IContextAction> actions = new ArrayList<>();
 
-        actions.add(createCameraPositionsMenuAction());
         actions.add(createCancelBehaviorAction(Strings.CANCEL_RESET_SUPPORT_OBJECT_SURFACES_BEHAVIOR));
 
         mActionsList.setAll(actions);

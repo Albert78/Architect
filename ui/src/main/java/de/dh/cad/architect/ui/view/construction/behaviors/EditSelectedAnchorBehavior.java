@@ -212,7 +212,7 @@ public class EditSelectedAnchorBehavior extends AbstractConstructionBehavior {
     }
 
     protected void createInteractionsPane() {
-        setInteractionsControl(new InteractionsControl(mDockInfo, Strings.INTERACTIONS_TAB_SELECTED_ANCHOR_TITLE, false));
+        setInteractionsControl(new InteractionsControl(mDockInfo, Strings.GROUND_PLAN_EDIT_ANCHOR_INTERACTIONS_TAB_TITLE, false));
     }
 
     protected void updateInteractionsPane() {

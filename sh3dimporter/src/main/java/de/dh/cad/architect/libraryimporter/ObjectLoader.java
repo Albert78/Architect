@@ -24,10 +24,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.dh.cad.architect.utils.vfs.IResourceLocator;
+import de.dh.utils.MaterialMapping;
 import de.dh.utils.io.ObjData;
 import de.dh.utils.io.fx.FxMeshBuilder;
+import de.dh.utils.io.fx.MaterialData;
 import de.dh.utils.io.obj.ObjReader;
-import de.dh.utils.io.obj.RawMaterialData;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.transform.Affine;
@@ -39,14 +40,14 @@ public class ObjectLoader {
     /**
      * Loads a 3D resource from an {@code .obj} file to a JavaFX (mesh) object.
      */
-    public static Node load3DResource(IResourceLocator resource, float[][] modelRotation, Map<String, RawMaterialData> defaultMaterials) {
+    public static Node load3DResource(IResourceLocator resource, float[][] modelRotation, Map<String, MaterialData> defaultMaterials) {
         if (resource == null) {
             return null;
         }
         try {
             Group result = new Group();
             ObjData objData = ObjReader.readObj(resource, defaultMaterials);
-            result.getChildren().addAll(FxMeshBuilder.buildMeshViews(objData.getMeshes(), objData.getMeshNamesToMaterials(), false));
+            result.getChildren().addAll(FxMeshBuilder.buildMeshViews(objData.getMeshes(), objData.getMeshNamesToMaterials(), MaterialMapping.stretch(), true));
             Transform trans = createTransform(modelRotation);
             if (trans != null) {
                 result.getTransforms().add(trans);

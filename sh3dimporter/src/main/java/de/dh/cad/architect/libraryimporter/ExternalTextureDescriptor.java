@@ -40,14 +40,15 @@ import de.dh.cad.architect.model.assets.AssetRefPath;
 import de.dh.cad.architect.model.assets.AssetRefPath.LibraryAssetPathAnchor;
 import de.dh.cad.architect.model.assets.AssetType;
 import de.dh.cad.architect.model.assets.MaterialSetDescriptor;
+import de.dh.cad.architect.model.assets.RawMaterialModel;
 import de.dh.cad.architect.model.coords.Length;
+import de.dh.cad.architect.model.coords.Vector2D;
 import de.dh.cad.architect.ui.assets.AssetLoader;
 import de.dh.cad.architect.ui.assets.AssetLoader.ImportResource;
 import de.dh.cad.architect.ui.assets.AssetManager;
 import de.dh.cad.architect.ui.assets.AssetManager.AssetLocation;
 import de.dh.cad.architect.ui.assets.AssetManager.LibraryData;
 import de.dh.cad.architect.utils.vfs.IResourceLocator;
-import de.dh.utils.io.obj.RawMaterialData;
 import javafx.scene.image.Image;
 
 public class ExternalTextureDescriptor {
@@ -81,19 +82,17 @@ public class ExternalTextureDescriptor {
         }
     }
 
-    protected void createMaterialForImage(MaterialSetDescriptor importedDescriptor, IResourceLocator sourceImage, String name, Length width, Length height, AssetLoader assetLoader) throws IOException {
-        Collection<ImportResource> additionalResources = new ArrayList<>();
-        List<String> lines = new ArrayList<>();
-        Image image = loadImage(sourceImage);
-        double imageWidth = image.getWidth();
-        double imageHeight = image.getHeight();
+    protected void createMaterialForTexture(MaterialSetDescriptor importedDescriptor, IResourceLocator sourceImage,
+            Length width, Length height, AssetLoader assetLoader) throws IOException {
+        Collection<ImportResource> resources = List.of(ImportResource.fromResource(sourceImage));
         String sourceImageFileName = sourceImage.getFileName();
         String sourceImageBaseFileName = FilenameUtils.removeExtension(sourceImageFileName);
-        lines.add("map_Kd -s " + (width.inCM() / imageWidth) + " " + (height.inCM() / imageHeight) + " " + sourceImageFileName);
-        additionalResources.add(new ImportResource(sourceImage, sourceImageFileName));
-        RawMaterialData material = new RawMaterialData(sourceImageBaseFileName, lines, sourceImage.getParentDirectory());
-        Collection<RawMaterialData> materials = Arrays.asList(material);
-        assetLoader.importMaterialSetMtlResource(importedDescriptor, materials, sourceImageBaseFileName + ".mtl", additionalResources);
+        List<String> lines = new ArrayList<>();
+        lines.add("map_Kd " + sourceImageFileName);
+        RawMaterialModel material = new RawMaterialModel(sourceImageBaseFileName, Optional.of(new Vector2D(width, height)), lines);
+
+        Collection<RawMaterialModel> materials = Arrays.asList(material);
+        assetLoader.importRawMaterialSet(importedDescriptor, materials, resources);
     }
 
     public MaterialSetDescriptor importTexture(LibraryData targetLibraryData, AssetLoader assetLoader) {
@@ -106,8 +105,8 @@ public class ExternalTextureDescriptor {
         }
         log.info("Importing texture '" + id + "'");
         LibraryAssetPathAnchor libraryAnchor = new LibraryAssetPathAnchor(targetLibraryData.getLibrary().getId());
-        Path relativeAssetPath = Paths.get(AssetManager.SUPPORT_OBJECTS_DIRECTORY).resolve(id);
-        AssetRefPath arp = new AssetRefPath(AssetType.SupportObject, libraryAnchor, relativeAssetPath);
+        Path relativeAssetPath = Paths.get(AssetManager.MATERIAL_SETS_DIRECTORY).resolve(id);
+        AssetRefPath arp = new AssetRefPath(AssetType.MaterialSet, libraryAnchor, relativeAssetPath);
 
         MaterialSetDescriptor existingMS = null;
         try {
@@ -124,16 +123,17 @@ public class ExternalTextureDescriptor {
         }
 
         // SH3D textures and Architect MaterialSets have a different structure:
-        // A SH3D texture is a simple form of an Architect material and will be imported as a single material.
+        // A SH3D texture is just a file and will be imported as a diffuse map of an Architect material.
         // An Architect MaterialSet contains multiple, similar/related materials.
         // We'll import each texture to its own MaterialSet containing a single material for that texture;
         // The user will have to restructure the material sets and more materials between material sets in the
         // library manager later.
         MaterialSetDescriptor importedDescriptor;
         try {
-            importedDescriptor = assetManager.createMaterialSet_PredefinedId(new AssetLocation(targetLibraryData.getAssetCollection(), Path.of("")), id);
+            importedDescriptor = assetManager.createMaterialSet_PredefinedId(
+                    new AssetLocation(targetLibraryData.getAssetCollection(), Path.of("")).resolveLocalMaterialSetsDirectory(), id);
         } catch (IOException e) {
-            throw new RuntimeException("Error creating asset '" + arp + "' for import", e);
+            throw new RuntimeException("Error creating material set  '" + arp + "' for import", e);
         }
         importedDescriptor.setCategory(mSourceTexture.getCategory());
         String name = mSourceTexture.getName();
@@ -153,7 +153,7 @@ public class ExternalTextureDescriptor {
                 assetLoader.importAssetIconImage(importedDescriptor, image, Optional.empty());
             }
 
-            createMaterialForImage(importedDescriptor, image, name, Length.ofCM(mSourceTexture.getWidth()), Length.ofCM(mSourceTexture.getHeight()), assetLoader);
+            createMaterialForTexture(importedDescriptor, image, Length.ofCM(mSourceTexture.getWidth()), Length.ofCM(mSourceTexture.getHeight()), assetLoader);
 
             log.debug("Successfully imported texture '" + id + "'");
             return importedDescriptor;

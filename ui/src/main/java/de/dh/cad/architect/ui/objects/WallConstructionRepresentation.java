@@ -40,7 +40,6 @@ import de.dh.cad.architect.ui.view.construction.ConstructionView;
 import de.dh.cad.architect.ui.view.construction.feedback.wall.ChangeWallsVisualFeedbackManager;
 import de.dh.utils.Vector2D;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.geometry.Bounds;
 import javafx.geometry.VPos;
 import javafx.scene.paint.Color;
@@ -84,12 +83,7 @@ public class WallConstructionRepresentation extends AbstractAnchoredObjectConstr
         mWallSide1Scale = addUnscaled(mWallSide1);
         mWallSide2Scale = addUnscaled(mWallSide2);
 
-        ChangeListener<Boolean> propertiesUpdaterListener = new ChangeListener<>() {
-            @Override
-            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                updateProperties();
-            }
-        };
+        ChangeListener<Boolean> propertiesUpdaterListener = (observable, oldValue, newValue) -> updateProperties();
         selectedProperty().addListener(propertiesUpdaterListener);
         objectSpottedProperty().addListener(propertiesUpdaterListener);
         objectFocusedProperty().addListener(propertiesUpdaterListener);

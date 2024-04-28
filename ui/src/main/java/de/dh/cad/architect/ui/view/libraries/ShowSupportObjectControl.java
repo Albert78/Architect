@@ -20,7 +20,6 @@ package de.dh.cad.architect.ui.view.libraries;
 import java.io.IOException;
 import java.net.URL;
 import java.text.MessageFormat;
-import java.util.Optional;
 import java.util.ResourceBundle;
 
 import org.apache.commons.lang3.StringUtils;
@@ -139,7 +138,7 @@ public class ShowSupportObjectControl extends BorderPane implements Initializabl
 
     protected void update3DObjectView() {
         SupportObjectDescriptor soDescriptor = mAssetDescriptor;
-        ThreeDObject obj = mAssetLoader.loadSupportObject3DObject(soDescriptor, Optional.empty(), true);
+        ThreeDObject obj = mAssetLoader.loadSupportObject3DObject(soDescriptor, true);
         Group group = obj.getObject();
         mThreeDObjectView.setObjView(group);
     }

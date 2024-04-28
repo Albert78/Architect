@@ -22,7 +22,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import de.dh.cad.architect.model.assets.AssetRefPath;
@@ -41,6 +40,7 @@ import de.dh.cad.architect.ui.assets.AssetLoader;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.threed.Abstract3DView;
 import de.dh.cad.architect.ui.view.threed.ThreeDView;
+import de.dh.utils.MaterialMapping;
 import de.dh.utils.Vector2D;
 import de.dh.utils.csg.CSGSurfaceAwareAddon;
 import de.dh.utils.csg.CSGs;
@@ -50,47 +50,33 @@ import de.dh.utils.io.fx.FxMeshBuilder;
 import eu.mihosoft.jcsg.CSG;
 import eu.mihosoft.vvecmath.Vector3d;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
+import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Mesh;
 import javafx.scene.shape.MeshView;
+import javafx.scene.shape.Shape3D;
 
-public class Wall3DRepresentation extends Abstract3DRepresentation {
+public class Wall3DRepresentation extends AbstractSolid3DRepresentation {
     protected static final double EPSILON = 0.01;
-
-    protected final Map<String, SurfaceData> mSurfaces = new TreeMap<>();
 
     public Wall3DRepresentation(Wall wall, Abstract3DView parentView) {
         super(wall, parentView);
         for (SurfaceConfiguration surfaceConfig : wall.getSurfaceConfigurations()) {
             String surfaceTypeId = surfaceConfig.getSurfaceTypeId();
-            SurfaceData sd = new SurfaceData(surfaceTypeId);
-            mSurfaces.put(surfaceTypeId, sd);
+
             // 3D wall model consists of multiple MeshViews, one for each surface type. This allows us to assign
             // different materials and to match mouse clicks to a surface.
-            MeshView meshView = sd.getMeshView();
-            meshView.getTransforms().add(0, CoordinateUtils.createTransformArchitectToJavaFx());
-            add(meshView);
-            markSurfaceNode(meshView, new ObjectSurface(this, surfaceTypeId) {
-                @Override
-                public AssetRefPath getMaterialRef() {
-                    return surfaceConfig.getMaterialAssignment();
-                }
+            MeshView meshView = new MeshView();
 
-                @Override
-                public boolean assignMaterial(AssetRefPath materialRef) {
-                    setObjectSurface(wall, mSurfaceTypeId, materialRef);
-                    return true;
-                }
-            });
+            SurfaceData<MeshView> sd = new SurfaceData<>(this, surfaceTypeId, meshView);
+            meshView.getTransforms().addFirst(CoordinateUtils.createTransformArchitectToJavaFx());
+            add(meshView);
+            registerSurface(sd);
         }
 
-        ChangeListener<Boolean> updatePropertiesListener = new ChangeListener<>() {
-            @Override
-            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                updateProperties();
-            }
-        };
-        selectedProperty().addListener(updatePropertiesListener);
+        ChangeListener<Boolean> bPropertiesUpdaterListener = (observable, oldValue, newValue) -> updateProperties();
+        selectedProperty().addListener(bPropertiesUpdaterListener);
+        objectFocusedProperty().addListener(bPropertiesUpdaterListener);
+        objectEmphasizedProperty().addListener(bPropertiesUpdaterListener);
     }
 
     public Wall getWall() {
@@ -104,13 +90,11 @@ public class Wall3DRepresentation extends Abstract3DRepresentation {
     protected void updateProperties() {
         Wall wall = getWall();
         AssetLoader assetLoader = getAssetLoader();
-        for (SurfaceData surfaceData : mSurfaces.values()) {
+        for (SurfaceData<? extends Shape3D> surfaceData : mSurfacesByTypeId.values()) {
             SurfaceConfiguration surfaceConfiguration = wall.getSurfaceTypeIdsToSurfaceConfigurations().get(surfaceData.getSurfaceTypeId());
-            AssetRefPath materialRefPath = surfaceConfiguration.getMaterialAssignment();
-            assetLoader.configureMaterial(surfaceData.getMeshView(), materialRefPath, Optional.ofNullable(surfaceData.getSurfaceSize()));
-            if (isSelected()) {
-                surfaceData.getMaterial().setDiffuseColor(SELECTED_OBJECTS_COLOR);
-            }
+            de.dh.cad.architect.model.objects.MaterialMappingConfiguration mmc = surfaceConfiguration.getMaterialMappingConfiguration();
+            PhongMaterial material = assetLoader.buildMaterial(mmc, surfaceData.getSurfaceSize());
+            surfaceData.setMaterial(material);
         }
     }
 
@@ -121,7 +105,7 @@ public class Wall3DRepresentation extends Abstract3DRepresentation {
      */
     protected static boolean cleanupWallOutlineCorners(List<WallOutlineCorner> corners) {
         if (corners.size() < 3) {
-            // Polygon must have a least 3 points
+            // Polygon must have at least 3 points
             return false;
         }
         // Build points list which exactly mirrors the corners list - and will be modified the same way
@@ -140,7 +124,7 @@ public class Wall3DRepresentation extends Abstract3DRepresentation {
             if (p2.minus(p1).getLength() < EPSILON) {
                 points.remove(i2);
                 if (points.size() < 3) {
-                    // All points are colinear
+                    // All points are collinear
                     return false;
                 }
                 WallOutlineCorner first = corners.get(i1);
@@ -178,20 +162,13 @@ public class Wall3DRepresentation extends Abstract3DRepresentation {
         Position2D handleA = wall.getAnchorWallHandleA().getPosition().projectionXY();
         Position2D handleB = wall.getAnchorWallHandleB().getPosition().projectionXY();
 
-        Vector3d handleAPos = CoordinateUtils.position2DToVecMathVector3d(handleA, false);
-        Vector3d handleBPos = CoordinateUtils.position2DToVecMathVector3d(handleB, false);
+        Vector2D handleAPos = CoordinateUtils.positionToVector2D(handleA, false);
+        Vector2D handleBPos = CoordinateUtils.positionToVector2D(handleB, false);
 
         Vector3d wallDirectionAB = CoordinateUtils.vector2DToVecMathVector3d(handleB.minus(handleA));
         double wallLength = wallDirectionAB.magnitude();
-        Vector2D upperHandle;
-        Vector2D lowerHandle;
-        if (heightA > heightB) {
-            upperHandle = new Vector2D(handleAPos.getX(), handleAPos.getY());
-            lowerHandle = new Vector2D(handleBPos.getX(), handleBPos.getY());
-        } else {
-            upperHandle = new Vector2D(handleBPos.getX(), handleBPos.getY());
-            lowerHandle = new Vector2D(handleAPos.getX(), handleAPos.getY());
-        }
+        Vector2D upperHandle = heightA > heightB ? handleAPos : handleBPos;
+        Vector2D lowerHandle = heightA > heightB ? handleBPos : handleAPos;
         double diffH = Math.abs(heightA - heightB);
         double diffM = diffH / (wallLength == 0 ? 1 : wallLength); // Actually, the wall length cannot be 0, can it?
         Vector2D descendingDirection = lowerHandle.minus(upperHandle).toUnitVector();
@@ -205,7 +182,7 @@ public class Wall3DRepresentation extends Abstract3DRepresentation {
         // This is in model coordinate system
         List<Position2D> basePointsCW = outlineCornersCW
                         .stream()
-                        .map(corner -> corner.getPosition())
+                        .map(WallOutlineCorner::getPosition)
                         .collect(Collectors.toCollection(ArrayList::new));
 
         for (Position2D pos : basePointsCW) {
@@ -225,50 +202,61 @@ public class Wall3DRepresentation extends Abstract3DRepresentation {
         }
 
         // Wall fragment without clipping of the top
-        CSG result = CSGs.extrudeSurfaces(
-            new ExtrusionSurfaceDataProvider<WallSurface>() {
-                @Override
-                public List<Vector3d> getTopPolygonPointsCW() {
-                    return topPolygonPointsCW;
-                }
+        ExtrusionSurfaceDataProvider<WallSurface> wallSurfaceDataProvider = new ExtrusionSurfaceDataProvider<>() {
+            @Override
+            public List<Vector3d> getTopPolygonPointsCW() {
+                return topPolygonPointsCW;
+            }
 
-                @Override
-                public List<Vector3d> getBottomPolygonPointsCW() {
-                    return bottomPolygonPointsCW;
-                }
+            @Override
+            public List<Vector3d> getBottomPolygonPointsCW() {
+                return bottomPolygonPointsCW;
+            }
 
-                @Override
-                public Vector3d getTopPolygonTextureDirectionX() {
-                    return wallDirectionAB;
-                }
+            @Override
+            public Vector3d getTopPolygonTextureDirectionX() {
+                return wallDirectionAB;
+            }
 
-                @Override
-                public Vector3d getBottomPolygonTextureDirectionX() {
-                    return wallDirectionAB;
-                }
+            @Override
+            public Vector3d getBottomPolygonTextureDirectionX() {
+                return wallDirectionAB;
+            }
 
-                @Override
-                public WallSurface getSurfaceCW(int startPointIndex) {
-                    // Attention: Caller wants surface in CCW direction, outlineCornersCW are in CW direction, so we must return the NEXT one
-                    return outlineCornersCW.get(startPointIndex).getNext().getSurface();
-                }
+            @Override
+            public WallSurface getSurfaceCW(int startPointIndex) {
+                return outlineCornersCW.get(startPointIndex).getNext().getSurface();
+            }
 
-                @Override
-                public WallSurface getTopSurface() {
-                    return WallSurface.Top;
-                }
+            @Override
+            public WallSurface getTopSurface() {
+                return WallSurface.Top;
+            }
 
-                @Override
-                public WallSurface getBottomSurface() {
-                    return WallSurface.Bottom;
-                }
-            }, firstSurfaceChange, true);
-        return result;
+            @Override
+            public WallSurface getBottomSurface() {
+                return WallSurface.Bottom;
+            }
+        };
+        mSurfacesByTypeId.get(WallSurface.Top.getSurfaceType()).setSurfaceSize(wallSurfaceDataProvider.getTopPolygonTextureProjection().getSpannedSize());
+        mSurfacesByTypeId.get(WallSurface.Bottom.getSurfaceType()).setSurfaceSize(wallSurfaceDataProvider.getBottomPolygonTextureProjection().getSpannedSize());
+
+        double thicknessC = CoordinateUtils.lengthToCoords(wall.getThickness(), null);
+        double maxWallHeightC = Math.max(heightA, heightB);
+        double lengthSideOne_C = CoordinateUtils.lengthToCoords(wall.getAnchorWallCornerLA1().requirePosition3D().distance(wall.getAnchorWallCornerLB1().requirePosition3D()), null);
+        double lengthSideTwo_C = CoordinateUtils.lengthToCoords(wall.getAnchorWallCornerLA2().requirePosition3D().distance(wall.getAnchorWallCornerLB2().requirePosition3D()), null);
+
+        mSurfacesByTypeId.get(WallSurface.One.getSurfaceType()).setSurfaceSize(new Vector2D(lengthSideOne_C, maxWallHeightC));
+        mSurfacesByTypeId.get(WallSurface.Two.getSurfaceType()).setSurfaceSize(new Vector2D(lengthSideTwo_C, maxWallHeightC));
+        mSurfacesByTypeId.get(WallSurface.A.getSurfaceType()).setSurfaceSize(new Vector2D(thicknessC, heightA));
+        mSurfacesByTypeId.get(WallSurface.B.getSurfaceType()).setSurfaceSize(new Vector2D(thicknessC, heightB));
+
+        return CSGs.extrudeSurfaces(wallSurfaceDataProvider, firstSurfaceChange, true);
     }
 
     protected void configureForInvalidWall() {
-        for (SurfaceData sd : mSurfaces.values()) {
-            sd.getMeshView().setMesh(null);
+        for (SurfaceData<? extends Shape3D> sd : mSurfacesByTypeId.values()) {
+            ((MeshView) sd.getShape()).setMesh(null);
         }
     }
 
@@ -287,7 +275,7 @@ public class Wall3DRepresentation extends Abstract3DRepresentation {
 
 
         Optional<WallAnchorPositions> oWap = wall.extractWallAnchorPositions();
-        Optional<WallOutline> oWallOutlineCW = oWap.map(wap -> wap.calculateWallOutlineCW());
+        Optional<WallOutline> oWallOutlineCW = oWap.map(WallAnchorPositions::calculateWallOutlineCW);
         if (oWallOutlineCW.isPresent()) {
             WallOutline wallOutlineCW = oWallOutlineCW.get();
             CSG csg = createWallCSG(wall, wallOutlineCW.getCornersAsList());
@@ -363,8 +351,12 @@ public class Wall3DRepresentation extends Abstract3DRepresentation {
                 csg = csg.difference(holeCSG);
             }
 
+            // TODO: To get a correct material mapping to our window and door embrasures, we would need to have separate
+            //  entries for all embrasure sides of all holes.
+            //mSurfacesByTypeId.get(WallSurface.Embrasure.getSurfaceType()).setSurfaceSize(...);
+
             Map<WallSurface, MeshData> meshes = CSGSurfaceAwareAddon.createMeshes(csg, Optional.empty());
-            for (SurfaceData surfaceData : mSurfaces.values()) {
+            for (SurfaceData<? extends Shape3D> surfaceData : mSurfacesByTypeId.values()) {
                 // One surface of the wall, e.g. A or One
                 String surfaceTypeId = surfaceData.getSurfaceTypeId();
                 WallSurface wallSurface = WallSurface.ofWallSurfaceType(surfaceTypeId);
@@ -372,7 +364,7 @@ public class Wall3DRepresentation extends Abstract3DRepresentation {
                 if (meshData == null) { // E.g. wall contains no embrasures
                     continue;
                 }
-                MeshView meshView = surfaceData.getMeshView();
+                MeshView meshView = (MeshView) surfaceData.getShape();
                 // The CSG builder has generated the mesh in a way that the texture coordinates of the surface parts map
                 // to their corresponding part of the overall surface texture, as if the texture would be a wallpaper.
                 // E.g. if wall side 1 extends over two surface parts, the main side 1 surface and the corner bevel apex, the algorithm places the texture coords

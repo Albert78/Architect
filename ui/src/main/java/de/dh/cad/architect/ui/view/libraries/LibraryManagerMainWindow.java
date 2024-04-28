@@ -359,7 +359,7 @@ public class LibraryManagerMainWindow implements Initializable {
         mNewLibraryButton.setTooltip(new Tooltip(Strings.LIBRARY_MANAGER_NEW_LIBRARY_TOOLTIP));
         ObservableList<CheckableLibraryEntry> selectedLibraries = getSelectedLibraries();
         int numSelectedLibraries = selectedLibraries.size();
-        String libraryName = numSelectedLibraries == 1 ? selectedLibraries.get(0).getLibrary().getName() : "-";
+        String libraryName = numSelectedLibraries == 1 ? selectedLibraries.getFirst().getLibrary().getName() : "-";
         mEditLibraryButton.setDisable(numSelectedLibraries != 1);
         mRemoveLibraryButton.setDisable(numSelectedLibraries == 0);
         mDeleteLibraryButton.setDisable(numSelectedLibraries == 0);
@@ -385,7 +385,7 @@ public class LibraryManagerMainWindow implements Initializable {
         mNewMaterialSetButton.setTooltip(new Tooltip(Strings.LIBRARY_MANAGER_NEW_MATERIAL_SET_TOOLTIP));
         ObservableList<MaterialSetDescriptor> selectedMaterialSets = getSelectedMaterialSets();
         int numSelectedMaterials = selectedMaterialSets.size();
-        String materialSetName = numSelectedMaterials == 1 ? selectedMaterialSets.get(0).getName() : "-";
+        String materialSetName = numSelectedMaterials == 1 ? selectedMaterialSets.getFirst().getName() : "-";
         mEditMaterialSetButton.setDisable(numSelectedMaterials == 0);
         mDeleteMaterialSetsButton.setDisable(numSelectedMaterials == 0);
         switch (numSelectedMaterials) {
@@ -407,7 +407,7 @@ public class LibraryManagerMainWindow implements Initializable {
         mNewSupportObjectButton.setTooltip(new Tooltip(Strings.LIBRARY_MANAGER_NEW_SUPPORT_OBJECT_TOOLTIP));
         ObservableList<SupportObjectDescriptor> selectedSupportObjects = getSelectedSupportObjects();
         int numSelectedSupportObjects = selectedSupportObjects.size();
-        String supportObjectName = numSelectedSupportObjects == 1 ? selectedSupportObjects.get(0).getName() : "-";
+        String supportObjectName = numSelectedSupportObjects == 1 ? selectedSupportObjects.getFirst().getName() : "-";
         mEditSupportObjectButton.setDisable(numSelectedSupportObjects == 0);
         mDeleteSupportObjectsButton.setDisable(numSelectedSupportObjects == 0);
         switch (numSelectedSupportObjects) {
@@ -429,7 +429,7 @@ public class LibraryManagerMainWindow implements Initializable {
     protected void editSelectedMaterialSets() {
         List<MaterialSetDescriptor> selectedMaterialSets = getSelectedMaterialSets();
         if (selectedMaterialSets.size() == 1) {
-            editMaterialSet(selectedMaterialSets.get(0));
+            editMaterialSet(selectedMaterialSets.getFirst());
         } else if (selectedMaterialSets.size() > 0) {
             editAssetDescriptors(selectedMaterialSets);
         }
@@ -438,7 +438,7 @@ public class LibraryManagerMainWindow implements Initializable {
     protected void editSelectedSupportObjects() {
         List<SupportObjectDescriptor> selectedSupportObjects = getSelectedSupportObjects();
         if (selectedSupportObjects.size() == 1) {
-            editSupportObject(selectedSupportObjects.get(0));
+            editSupportObject(selectedSupportObjects.getFirst());
         } else if (selectedSupportObjects.size() > 0) {
             editAssetDescriptors(selectedSupportObjects);
         }
@@ -486,7 +486,7 @@ public class LibraryManagerMainWindow implements Initializable {
         alert.getButtonTypes().setAll(buttonTypeOk, buttonTypeCancel);
 
         Optional<ButtonType> result = alert.showAndWait();
-        if (result.get() == buttonTypeOk) {
+        if (result.orElse(null) == buttonTypeOk) {
             // User confirms to delete objects
             return true;
         } else {
@@ -510,7 +510,7 @@ public class LibraryManagerMainWindow implements Initializable {
     protected boolean queryCanDeleteMaterials(Collection<MaterialSetDescriptor> materialSets) {
         List<String> names = materialSets
                         .stream()
-                        .map(msd -> msd.getName())
+                        .map(AbstractAssetDescriptor::getName)
                         .collect(Collectors.toList());
         return queryCanDeleteObjects(
             Strings.LIBRARY_MANAGER_DIALOG_QUERY_DELETE_MATERIAL_SET_TITLE,
@@ -522,7 +522,7 @@ public class LibraryManagerMainWindow implements Initializable {
     protected boolean queryCanDeleteSupportObjects(Collection<SupportObjectDescriptor> supportObjects) {
         List<String> names = supportObjects
                         .stream()
-                        .map(sod -> sod.getName())
+                        .map(AbstractAssetDescriptor::getName)
                         .collect(Collectors.toList());
         return queryCanDeleteObjects(
             Strings.LIBRARY_MANAGER_DIALOG_QUERY_DELETE_SUPPORT_OBJECTS_TITLE,
@@ -603,7 +603,7 @@ public class LibraryManagerMainWindow implements Initializable {
                                         .loadMaterialSetDescriptors(new LibraryAssetPathAnchor(libraryId), false);
 
                     String newName = Namespace.generateName(Strings.NEW_MATERIAL_SET_NAME_PATTERN,
-                        msDescriptorsInLibrary.stream().map(msd -> msd.getName()).collect(Collectors.toList()), 1);
+                        msDescriptorsInLibrary.stream().map(AbstractAssetDescriptor::getName).collect(Collectors.toList()), 1);
                     newMaterialSetDescriptor.setName(newName);
                 } else if (materialSetLocation instanceof SupportObjectMaterialSetLocation somsl) {
                     AssetRefPath supportObjectDescriptorRef = somsl.supportObjectRefPath();
@@ -616,7 +616,7 @@ public class LibraryManagerMainWindow implements Initializable {
 
                     SupportObjectDescriptor soDescriptor = mAssetManager.loadSupportObjectDescriptor(supportObjectDescriptorRef);
                     String newName = Namespace.generateName(Strings.NEW_MATERIAL_SET_NAME_PATTERN,
-                        supportObjectMaterialSetDescriptors.stream().map(msd -> msd.getName()).collect(Collectors.toList()), 1);
+                        supportObjectMaterialSetDescriptors.stream().map(AbstractAssetDescriptor::getName).collect(Collectors.toList()), 1);
                     newName = MessageFormat.format(Strings.NEW_MATERIAL_SET_IN_SO_NAME_PATTERN, newName, soDescriptor.getName());
                     newMaterialSetDescriptor.setName(newName);
                 } else {
@@ -642,7 +642,7 @@ public class LibraryManagerMainWindow implements Initializable {
             SupportObjectDescriptor descriptor = mAssetManager.createSupportObject(oAnchor.get());
 
             String newName = Namespace.generateName(Strings.NEW_SUPPORT_OBJECT_NAME_PATTERN,
-                mAssetManager.loadAllLibrarySupportObjectDescriptors().stream().map(msd -> msd.getName()).collect(Collectors.toList()), 1);
+                mAssetManager.loadAllLibrarySupportObjectDescriptors().stream().map(AbstractAssetDescriptor::getName).collect(Collectors.toList()), 1);
             descriptor.setName(newName);
             mAssetManager.saveSupportObjectDescriptor(descriptor);
             editSupportObject(descriptor);

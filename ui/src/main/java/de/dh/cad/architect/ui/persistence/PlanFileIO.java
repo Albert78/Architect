@@ -17,6 +17,7 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.persistence;
 
+import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
@@ -40,26 +41,26 @@ public class PlanFileIO {
     public static final String PLAN_FILE_EXTENSION = "xml";
     public static final String DEFAULT_ROOT_PATH_NAME = "PlanFile" + "." + PLAN_FILE_EXTENSION;
 
-    public static final String PLAN_FILE_SCHEMA_URL = "http://www.dh-software.de/architect/v2/planfile";
+    public static final String PLAN_FILE_SCHEMA_URL = "http://www.dh-software.de/architect/v2_4/planfile";
 
     protected static final JAXBContext mJAXBContext = JAXBUtility.initializeJAXBContext(PlanFile.class);
 
-    public static void serializePlanFile(PlanFile planFile, Writer writer) {
+    public static void serializePlanFile(PlanFile planFile, Writer writer) throws IOException {
         try {
             Marshaller m = mJAXBContext.createMarshaller();
             m.setProperty(Marshaller.JAXB_SCHEMA_LOCATION, PLAN_FILE_SCHEMA_URL);
             JAXBUtility.configureMarshaller(m);
             m.marshal(planFile, writer);
         } catch (JAXBException e) {
-            throw new RuntimeException("Error serializing plan file", e);
+            throw new IOException("Error serializing plan file", e);
         }
     }
 
-    public static void serializePlanFile(PlanFile planFile, Path path) {
+    public static void serializePlanFile(PlanFile planFile, Path path) throws IOException {
         try (Writer writer = Files.newBufferedWriter(path)) {
             serializePlanFile(planFile, writer);
         } catch (Exception e) {
-            throw new RuntimeException("Error writing plan file to path '" + path + "'", e);
+            throw new IOException("Error writing plan file to path '" + path + "'", e);
         }
     }
 
@@ -81,7 +82,7 @@ public class PlanFileIO {
         }
     }
 
-    public static PlanFile deserializePlanFile(Reader reader) {
+    public static PlanFile deserializePlanFile(Reader reader) throws IOException {
         try {
             Unmarshaller u = mJAXBContext.createUnmarshaller();
             List<PendingUnmarshalCall> pendingUnmarshalCalls = new ArrayList<>();
@@ -99,15 +100,15 @@ public class PlanFileIO {
             }
             return result;
         } catch (JAXBException e) {
-            throw new RuntimeException("Error deserializing plan", e);
+            throw new IOException("Error deserializing plan", e);
         }
     }
 
-    public static PlanFile deserializePlanFile(Path path) {
+    public static PlanFile deserializePlanFile(Path path) throws IOException {
         try (Reader reader = Files.newBufferedReader(path)) {
             return deserializePlanFile(reader);
         } catch (Exception e) {
-            throw new RuntimeException("Error loading root plan from path '" + path + "'", e);
+            throw new IOException("Error loading root plan from path '" + path + "'", e);
         }
     }
 }

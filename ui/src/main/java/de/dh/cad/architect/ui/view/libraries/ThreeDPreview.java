@@ -25,51 +25,57 @@ import org.slf4j.LoggerFactory;
 
 import de.dh.cad.architect.model.assets.AssetRefPath;
 import de.dh.cad.architect.ui.assets.AssetLoader;
-import de.dh.utils.Vector2D;
-import de.dh.utils.io.obj.RawMaterialData;
+import de.dh.utils.MaterialMapping;
+import de.dh.utils.io.fx.MaterialData;
 import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.Material;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
 import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
 
 public class ThreeDPreview {
-    private static Logger log = LoggerFactory.getLogger(ThreeDPreview.class);
+    private static final Logger log = LoggerFactory.getLogger(ThreeDPreview.class);
 
-    public static Node createMaterialPreviewBox(AssetRefPath materialRef, AssetLoader assetLoader, Optional<Double> oEdgeLength, boolean fallbackToPlaceholder) {
-        double edgeLength = oEdgeLength.orElse(100.0);
+    public static Node createMaterialPreviewBox(Material material, double edgeLength) {
         Box box = new Box(edgeLength, edgeLength, edgeLength);
-        if (materialRef == null) {
-            PhongMaterial material = new PhongMaterial();
-            material.setDiffuseMap(AssetLoader.loadMaterialPlaceholderTextureImage(Optional.of(new ImageLoadOptions(edgeLength, edgeLength))));
-            box.setMaterial(material);
-        } else {
-            try {
-                RawMaterialData materialData = assetLoader.loadMaterialData(materialRef);
-                if (fallbackToPlaceholder) {
-                    assetLoader.configureMaterial_Lax(box, materialData, Optional.of(new Vector2D(edgeLength, edgeLength)));
-                } else {
-                    assetLoader.configureMaterial_Strict(box, materialData, Optional.of(new Vector2D(edgeLength, edgeLength)));
-                }
-            } catch (IOException e) {
-                String msg = "Error loading material <" + materialRef + ">";
-                if (fallbackToPlaceholder) {
-                    log.warn(msg, e);
-                    box.setMaterial(new PhongMaterial(Color.WHITE));
-                } else {
-                    throw new RuntimeException(msg, e);
-                }
-            }
-        }
+        box.setMaterial(material);
         Group group = new Group();
         group.getChildren().add(box);
         Bounds boundsInParent = group.getBoundsInParent();
         ObservableList<Transform> transforms = group.getTransforms();
         transforms.add(new Translate(-boundsInParent.getCenterX(), -boundsInParent.getCenterY(), -boundsInParent.getCenterZ()));
         return group;
+    }
+
+    public static Node createMaterialPreviewBox(AssetRefPath materialRef, AssetLoader assetLoader, Optional<Double> oEdgeLength, boolean fallbackToPlaceholder) {
+        double edgeLength = oEdgeLength.orElse(100.0);
+        PhongMaterial material;
+        if (materialRef == null) {
+            material = new PhongMaterial();
+            material.setDiffuseMap(AssetLoader.loadMaterialPlaceholderTextureImage(Optional.of(new ImageLoadOptions(edgeLength, edgeLength))));
+        } else {
+            try {
+                MaterialData materialData = assetLoader.loadMaterialData(materialRef);
+                if (fallbackToPlaceholder) {
+                    material = assetLoader.buildMaterial_Lax(materialData, MaterialMapping.stretch());
+                } else {
+                    material = assetLoader.buildMaterial_Strict(materialData, MaterialMapping.stretch());
+                }
+            } catch (IOException e) {
+                String msg = "Error loading material <" + materialRef + ">";
+                if (fallbackToPlaceholder) {
+                    log.warn(msg, e);
+                    material = new PhongMaterial(Color.WHITE);
+                } else {
+                    throw new RuntimeException(msg, e);
+                }
+            }
+        }
+        return createMaterialPreviewBox(material, edgeLength);
     }
 }

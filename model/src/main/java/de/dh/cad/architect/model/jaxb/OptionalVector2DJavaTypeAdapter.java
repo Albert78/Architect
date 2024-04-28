@@ -15,19 +15,25 @@
  *     You should have received a copy of the GNU General Public License
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>
  *******************************************************************************/
-package de.dh.cad.architect.model.assets;
+package de.dh.cad.architect.model.jaxb;
 
-import java.nio.file.Path;
+import java.util.Optional;
 
-/**
- * A material resource model in form of an {@code .mtl} file.
- */
-public class MtlModelResource extends FileModelResource {
-    public MtlModelResource() {
-        // For JAXB
+import javax.xml.bind.annotation.adapters.XmlAdapter;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+
+import de.dh.cad.architect.model.coords.IPosition;
+import de.dh.cad.architect.model.coords.Vector2D;
+import de.dh.cad.architect.model.jaxb.PositionJavaTypeAdapter.PositionProxy;
+
+public class OptionalVector2DJavaTypeAdapter extends XmlAdapter<Vector2DJavaTypeAdapter.Vector2DProxy, Optional<Vector2D>> {
+    @Override
+    public Optional<Vector2D> unmarshal(Vector2DJavaTypeAdapter.Vector2DProxy v) throws Exception {
+        return Optional.ofNullable(v.toVector2D());
     }
 
-    public MtlModelResource(Path relativeFilePath) {
-        super(relativeFilePath);
+    @Override
+    public Vector2DJavaTypeAdapter.Vector2DProxy marshal(Optional<Vector2D> v) throws Exception {
+        return v.map(Vector2DJavaTypeAdapter.Vector2DProxy::from).orElse(null);
     }
 }

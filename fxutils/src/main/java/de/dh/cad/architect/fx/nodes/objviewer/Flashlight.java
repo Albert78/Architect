@@ -23,6 +23,7 @@ import java.util.Collection;
 
 import de.dh.cad.architect.utils.vfs.ClassLoaderFileSystemResourceLocator;
 import de.dh.cad.architect.utils.vfs.IResourceLocator;
+import de.dh.utils.MaterialMapping;
 import de.dh.utils.io.ObjData;
 import de.dh.utils.io.fx.FxMeshBuilder;
 import de.dh.utils.io.obj.ObjReader;
@@ -42,6 +43,6 @@ public class Flashlight extends Group {
         IResourceLocator flashLightResourceLocator = new ClassLoaderFileSystemResourceLocator(
             Path.of(FLASHLIGHT_RESOURCE_BASE, FLASHLIGHT_OBJ_NAME), Flashlight.class);
         ObjData data = ObjReader.readObj(flashLightResourceLocator);
-        return new Flashlight(FxMeshBuilder.buildMeshViews(data.getMeshes(), data.getMeshNamesToMaterials(), true));
+        return new Flashlight(FxMeshBuilder.buildMeshViews(data.getMeshes(), data.getMeshNamesToMaterials(), MaterialMapping.stretch(), false));
     }
 }

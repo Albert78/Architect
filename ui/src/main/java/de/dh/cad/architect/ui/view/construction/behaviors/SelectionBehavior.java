@@ -216,14 +216,10 @@ public class SelectionBehavior extends AbstractConstructionBehavior {
         topLayer.setOnMouseReleased(event -> {
             finishDrag();
         });
-        installDefaultSpaceToggleObjectVisibilityKeyHandler();
-        installDefaultDeleteObjectsKeyHandler();
     }
 
     @Override
     public void uninstall() {
-        uninstallDefaultDeleteObjectsKeyHandler();
-        uninstallDefaultSpaceToggleObjectVisibilityKeyHandler();
         Pane topLayer = getView().getTopLayer();
         if (mSelectionRectangle != null) {
             topLayer.getChildren().remove(mSelectionRectangle);

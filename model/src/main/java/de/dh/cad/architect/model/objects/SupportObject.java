@@ -27,14 +27,15 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import de.dh.cad.architect.model.assets.AssetRefPath;
 import de.dh.cad.architect.model.changes.IModelChange;
-import de.dh.cad.architect.model.changes.SimpleMergeableObjectModificationChange;
 import de.dh.cad.architect.model.changes.ObjectModificationChange;
+import de.dh.cad.architect.model.changes.SimpleMergeableObjectModificationChange;
 import de.dh.cad.architect.model.coords.Dimensions2D;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.model.jaxb.AssetRefPathJavaTypeAdapter;
 import de.dh.cad.architect.model.jaxb.Dimensions2DJavaTypeAdapter;
 import de.dh.cad.architect.model.jaxb.LengthJavaTypeAdapter;
+import de.dh.cad.architect.model.jaxb.RotationDegreesJavaTypeAdapter;
 import de.dh.cad.architect.utils.IdGenerator;
 
 public class SupportObject extends BaseSolidObject {
@@ -221,12 +222,13 @@ public class SupportObject extends BaseSolidObject {
         mSize = value;
     }
 
-    @XmlElement(name = "RotationDeg")
-    public float getRotationDeg_JAXB() {
+    @XmlJavaTypeAdapter(RotationDegreesJavaTypeAdapter.class)
+    @XmlElement(name = "Rotation")
+    public Float getRotation_JAXB() {
         return mRotationDeg;
     }
 
-    public void setRotationDeg_JAXB(float value) {
+    public void setRotation_JAXB(Float value) {
         mRotationDeg = value;
     }
 

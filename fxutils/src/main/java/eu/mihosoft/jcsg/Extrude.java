@@ -279,7 +279,7 @@ public class Extrude {
      * Turns the points to counter-clockwise direction.
      */
     static Polygon toCCWPolygon(List<Vector3d> points) {
-        if (!PolygonUtil.isCCW(points)) {
+        if (!PolygonUtil.isCCW_XY(points)) {
             points = new ArrayList<>(points);
             Collections.reverse(points);
         }
@@ -291,7 +291,7 @@ public class Extrude {
      * Turns the points to clockwise direction.
      */
     static Polygon toCWPolygon(List<Vector3d> points) {
-        if (PolygonUtil.isCCW(points)) {
+        if (PolygonUtil.isCCW_XY(points)) {
             points = new ArrayList<>(points);
             Collections.reverse(points);
         }

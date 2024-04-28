@@ -17,6 +17,7 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.persistence;
 
+import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
@@ -37,44 +38,44 @@ public class LibraryIO {
     public static final String ASSET_LIBRARY_FILE_EXTENSION = "xml";
     public static final String DEFAULT_ASSET_LIBRARY_FILE_NAME = "AssetLibrary" + "." + ASSET_LIBRARY_FILE_EXTENSION;
 
-    public static final String ASSET_LIBRARY_FILE_SCHEMA_URL = "http://www.dh-software.de/architect/v2.1/assetlibrary";
+    public static final String ASSET_LIBRARY_FILE_SCHEMA_URL = "http://www.dh-software.de/architect/v2_1/assetlibrary";
 
     protected static final JAXBContext mJAXBContext = JAXBUtility.initializeJAXBContext(AssetLibrary.class);
 
-    public static void serializeAssetLibrary(AssetLibrary library, Writer writer) {
+    public static void serializeAssetLibrary(AssetLibrary library, Writer writer) throws IOException {
         try {
             Marshaller m = mJAXBContext.createMarshaller();
             m.setProperty(Marshaller.JAXB_SCHEMA_LOCATION, ASSET_LIBRARY_FILE_SCHEMA_URL);
             JAXBUtility.configureMarshaller(m);
             m.marshal(library, writer);
         } catch (JAXBException e) {
-            throw new RuntimeException("Error serializing asset library", e);
+            throw new IOException("Error serializing asset library", e);
         }
     }
 
-    public static void serializeAssetLibrary(AssetLibrary library, Path path) {
+    public static void serializeAssetLibrary(AssetLibrary library, Path path) throws IOException {
         try (Writer writer = Files.newBufferedWriter(path)) {
             serializeAssetLibrary(library, writer);
         } catch (Exception e) {
-            throw new RuntimeException("Error writing asset library to path '" + path + "'", e);
+            throw new IOException("Error writing asset library to path '" + path + "'", e);
         }
     }
 
-    public static AssetLibrary deserializeAssetLibrary(Reader reader) {
+    public static AssetLibrary deserializeAssetLibrary(Reader reader) throws IOException {
         try {
             Unmarshaller u = mJAXBContext.createUnmarshaller();
             AssetLibrary result = (AssetLibrary) u.unmarshal(reader);
             return result;
         } catch (JAXBException e) {
-            throw new RuntimeException("Error deserializing asset library", e);
+            throw new IOException("Error deserializing asset library", e);
         }
     }
 
-    public static AssetLibrary deserializeAssetLibrary(Path path) {
+    public static AssetLibrary deserializeAssetLibrary(Path path) throws IOException {
         try (Reader reader = Files.newBufferedReader(path)) {
             return deserializeAssetLibrary(reader);
         } catch (Exception e) {
-            throw new RuntimeException("Error loading asset library from path '" + path + "'", e);
+            throw new IOException("Error loading asset library from path '" + path + "'", e);
         }
     }
 }

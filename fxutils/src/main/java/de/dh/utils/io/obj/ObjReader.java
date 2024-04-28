@@ -42,6 +42,7 @@ import de.dh.cad.architect.utils.vfs.IDirectoryLocator;
 import de.dh.cad.architect.utils.vfs.IResourceLocator;
 import de.dh.utils.io.MeshData;
 import de.dh.utils.io.ObjData;
+import de.dh.utils.io.fx.MaterialData;
 
 /**
  * Obj file reader creating {@link ObjData} and {@link RawMaterialData} objects.
@@ -303,8 +304,8 @@ public class ObjReader {
      * Note that the generated {@link ObjData} will always yield the same {@link MeshData#getName() names}
      * among different calls for the same object file.
      */
-    public static ObjData readObj(IResourceLocator objFileLocator, Map<String, RawMaterialData> defaultMaterials) throws IOException {
-        Map<String, RawMaterialData> materialLibrary = new TreeMap<>(defaultMaterials);
+    public static ObjData readObj(IResourceLocator objFileLocator, Map<String, MaterialData> defaultMaterials) throws IOException {
+        Map<String, MaterialData> materialLibrary = new TreeMap<>(defaultMaterials);
 
         IDirectoryLocator basePath = objFileLocator.getParentDirectory();
 
@@ -312,18 +313,18 @@ public class ObjReader {
 
         for (String filename : objDataRaw.getUsedMaterialLibraries()) {
             try {
-                Map<String, RawMaterialData> materialSet = MtlLibraryIO.readMaterialSet(basePath.resolveResource(filename));
+                Map<String, MaterialData> materialSet = MaterialData.wrap(MtlLibraryIO.readMaterialSet(basePath.resolveResource(filename)));
                 materialLibrary.putAll(materialSet);
             } catch (IOException e) {
                 log.error("Failed to read material library '" + filename + "'", e);
             }
         }
 
-        Map<String, RawMaterialData> meshNamesToMaterials = new TreeMap<>();
+        Map<String, MaterialData> meshNamesToMaterials = new TreeMap<>();
         for (Entry<String, String> entry : objDataRaw.getMeshNamesToMaterialNames().entrySet()) {
             String meshName = entry.getKey();
             String materialName = entry.getValue();
-            RawMaterialData materialData = StringUtils.isEmpty(materialName) ? null : materialLibrary.get(materialName);
+            MaterialData materialData = StringUtils.isEmpty(materialName) ? null : materialLibrary.get(materialName);
             meshNamesToMaterials.put(meshName, materialData);
         }
 

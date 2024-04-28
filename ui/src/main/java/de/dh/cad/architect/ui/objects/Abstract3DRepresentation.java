@@ -17,26 +17,13 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.objects;
 
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
-import de.dh.cad.architect.model.assets.AssetRefPath;
-import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.objects.BaseObject;
-import de.dh.cad.architect.model.objects.BaseSolidObject;
-import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.assets.AssetLoader;
-import de.dh.cad.architect.ui.objects.AbstractObjectUIRepresentation.Cardinality;
 import de.dh.cad.architect.ui.view.threed.Abstract3DView;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
 import javafx.scene.Group;
 import javafx.scene.Node;
@@ -48,35 +35,11 @@ import javafx.scene.paint.Color;
  */
 // Will be subclassed for each model class (Wall, Floor, ...) visible in 3D view
 public abstract class Abstract3DRepresentation extends Group implements IModelBasedObject {
-    public static abstract class ObjectSurface {
-        protected final Abstract3DRepresentation mOwnerRepr;
-        protected final String mSurfaceTypeId;
-
-        public ObjectSurface(Abstract3DRepresentation ownerRepr, String surfaceTypeId) {
-            mOwnerRepr = ownerRepr;
-            mSurfaceTypeId = surfaceTypeId;
-        }
-
-        public Abstract3DRepresentation getOwnerRepr() {
-            return mOwnerRepr;
-        }
-
-        public String getSurfaceTypeId() {
-            return mSurfaceTypeId;
-        }
-
-        public abstract AssetRefPath getMaterialRef();
-        public abstract boolean assignMaterial(AssetRefPath materialRef);
-    }
-
     public static final Color SELECTED_OBJECTS_COLOR = Color.LIGHTBLUE;
 
-    protected final BooleanProperty mSelectedProperty = new SimpleBooleanProperty(this, "isSelected", false);
     protected final BooleanProperty mObjectSpottedProperty = new SimpleBooleanProperty(this, "isSpotted", false);
     protected final BooleanProperty mObjectFocusedProperty = new SimpleBooleanProperty(this, "isFocused", false);
-    protected final BooleanProperty mObjectEmphasizedProperty = new SimpleBooleanProperty(this, "isFocused", false);
-
-    protected final SimpleObjectProperty<ObjectSurface> mMouseOverSurfaceProperty = new SimpleObjectProperty<>(null);
+    protected final BooleanProperty mObjectEmphasizedProperty = new SimpleBooleanProperty(this, "isEmphasized", false);
 
     protected final BooleanProperty mMouseOverProperty = new SimpleBooleanProperty(this, "isMouseOver", false);
 
@@ -88,12 +51,7 @@ public abstract class Abstract3DRepresentation extends Group implements IModelBa
         mMouseOverProperty.set(false);
     };
 
-    protected ChangeListener<Boolean> MOUSE_OVER_SPOT_LISTENER = new ChangeListener<>() {
-        @Override
-        public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-            mObjectSpottedProperty.set(newValue);
-        }
-    };
+    protected final BooleanProperty mSelectedProperty = new SimpleBooleanProperty(this, "isSelected", false);
 
     protected final Abstract3DView mParentView;
     protected final BaseObject mModelObject;
@@ -107,7 +65,18 @@ public abstract class Abstract3DRepresentation extends Group implements IModelBa
         addEventHandler(MouseEvent.MOUSE_EXITED, MOUSE_OVER_MOUSE_EXITED_LISTENER);
     }
 
-    public Property<Boolean> selectedProperty() {
+    protected Color calculateSurfaceColor(boolean surfaceSpotted) {
+        Color result = null;
+        if (isSelected()) {
+            result = SELECTED_OBJECTS_COLOR;
+        }
+        if (surfaceSpotted) {
+            result = Color.BLUE.interpolate(Color.DEEPSKYBLUE, 0.5);
+        }
+        return result;
+    }
+
+    public BooleanProperty selectedProperty() {
         return mSelectedProperty;
     }
 
@@ -121,6 +90,9 @@ public abstract class Abstract3DRepresentation extends Group implements IModelBa
         mSelectedProperty.set(value);
     }
 
+    /**
+     * Property representing the spotted state of this object.
+     */
     public BooleanProperty objectSpottedProperty() {
         return mObjectSpottedProperty;
     }
@@ -171,14 +143,6 @@ public abstract class Abstract3DRepresentation extends Group implements IModelBa
         return mMouseOverProperty.get();
     }
 
-    public ObjectProperty<ObjectSurface> mouseOverSurfaceProperty() {
-        return mMouseOverSurfaceProperty;
-    }
-
-    public ObjectSurface getMouseOverSurface() {
-        return mMouseOverSurfaceProperty.get();
-    }
-
     /**
      * Called after this view was removed from the plan.
      * Can remove event handlers etc.
@@ -192,34 +156,8 @@ public abstract class Abstract3DRepresentation extends Group implements IModelBa
         setVisible(!mModelObject.isHidden());
     }
 
-    public void enableMouseOverSpot() {
-        BooleanProperty property = mouseOverProperty();
-        property.removeListener(MOUSE_OVER_SPOT_LISTENER); // To be sure we don't add it twice
-        property.addListener(MOUSE_OVER_SPOT_LISTENER);
-    }
-
-    public void disableMouseOverSpot() {
-        mouseOverProperty().removeListener(MOUSE_OVER_SPOT_LISTENER);
-    }
-
     /**
-     * Assigns the given surface to the given 3D node object for the {@link #mouseOverSurfaceProperty()} to work.
-     * This will attach a {@link MouseEvent#MOUSE_ENTERED} and a {@link MouseEvent#MOUSE_EXITED} event handler which is
-     * currently not revertible, i.e. the given node may be {@link #remove(Node) removed} for some reasons but
-     * must not be reused after that.
-     */
-    protected void markSurfaceNode(Node node, ObjectSurface surface) {
-        node.addEventHandler(MouseEvent.MOUSE_ENTERED, event -> {
-            mMouseOverSurfaceProperty.set(surface);
-        });
-        node.addEventHandler(MouseEvent.MOUSE_EXITED, event -> {
-            mMouseOverSurfaceProperty.set(null);
-        });
-    }
-
-    /**
-     * Adds the given 3D node as a part of this (composite) model object representation. After adding a node,
-     * the node could be {@link #markSurfaceNode(Node, ObjectSurface) marked as surface node}.
+     * Adds the given 3D node as a part of this (composite) model object representation.
      * @param node Node which is part of this model object representation. The node will be added to displayed objects,
      * all gestures like selection, dragging etc. will be available for the given node.
      */
@@ -245,14 +183,6 @@ public abstract class Abstract3DRepresentation extends Group implements IModelBa
 
     public AssetLoader getAssetLoader() {
         return mParentView.getAssetLoader();
-    }
-
-    public void setObjectSurface(BaseSolidObject bo, String surfaceTypeId, AssetRefPath materialRef) {
-        List<IModelChange> changeTrace = new ArrayList<>();
-        bo.setSurfaceMaterial(surfaceTypeId, materialRef, changeTrace);
-        mParentView.getUiController().notifyChange(changeTrace,
-            MessageFormat.format(Strings.SET_OBJECT_MATERIAL_CHANGE,
-                ObjectTypesRegistry.getUIRepresentation(bo.getClass()).getTypeName(Cardinality.Singular)));
     }
 
     @Override

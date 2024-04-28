@@ -42,7 +42,6 @@ public class Floor extends BaseLimitedPlane {
     protected int mLevel = 0; // German counting; 0 = Base floor where you enter, -1 = cellar, ...
 
     protected Length mHeight = Length.ZERO;
-    protected Length mThickness = Length.ofMM(1);
 
     public Floor() {
         // For JAXB
@@ -139,33 +138,9 @@ public class Floor extends BaseLimitedPlane {
         });
     }
 
-    /**
-     * Gets the thickness of this floor.
-     */
-    @XmlTransient
-    public Length getThickness() {
-        return mThickness;
-    }
-
-    public void setThickness(Length value, List<IModelChange> changeTrace) {
-        Length oldThickness = mThickness;
-        mThickness = value;
-        changeTrace.add(new ObjectModificationChange(this) {
-            @Override
-            public void undo(List<IModelChange> undoChangeTrace) {
-                setThickness(oldThickness, undoChangeTrace);
-            }
-        });
-    }
-
-    @Override
-    public boolean isPossibleDimensioningDockTargetAnchor(Anchor anchor) {
-        return isEdgeHandleAnchor(anchor);
-    }
-
     @Override
     protected String attrsToString() {
-        return super.attrsToString() + ", Height=" + mHeight + ", Thickness=" + mThickness + ", Level=" + mLevel;
+        return super.attrsToString() + ", Height=" + mHeight + ", Level=" + mLevel;
     }
 
     public String getAreaString() {
@@ -190,15 +165,5 @@ public class Floor extends BaseLimitedPlane {
 
     public void setHeight_JAXB(Length value) {
         mHeight = value;
-    }
-
-    @XmlElement(name = "Thickness")
-    @XmlJavaTypeAdapter(LengthJavaTypeAdapter.class)
-    public Length getThickness_JAXB() {
-        return mThickness;
-    }
-
-    public void setThickness_JAXB(Length value) {
-        mThickness = value;
     }
 }

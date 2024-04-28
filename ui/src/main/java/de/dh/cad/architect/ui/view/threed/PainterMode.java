@@ -24,7 +24,7 @@ import de.dh.cad.architect.ui.objects.Abstract3DAncillaryObject;
 import de.dh.cad.architect.ui.objects.Abstract3DRepresentation;
 import de.dh.cad.architect.ui.view.AbstractUiMode;
 import de.dh.cad.architect.ui.view.threed.behaviors.Abstract3DViewBehavior;
-import de.dh.cad.architect.ui.view.threed.behaviors.PainterBehavior;
+import de.dh.cad.architect.ui.view.threed.behaviors.DefaultPainterModeBehavior;
 
 public class PainterMode extends AbstractUiMode<Abstract3DRepresentation, Abstract3DAncillaryObject> {
     public PainterMode(UiController uiController) {
@@ -33,6 +33,6 @@ public class PainterMode extends AbstractUiMode<Abstract3DRepresentation, Abstra
 
     @Override
     public Abstract3DViewBehavior getBehaviorForSelectedReprs(Collection<Abstract3DRepresentation> selectedReprs) {
-        return new PainterBehavior(this);
+        return new DefaultPainterModeBehavior(this);
     }
 }

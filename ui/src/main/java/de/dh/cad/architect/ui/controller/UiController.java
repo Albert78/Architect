@@ -797,14 +797,11 @@ public class UiController {
     public SupportObject doCreateNewSupportObject(SupportObjectDescriptor supportObjectDescriptor, Position2D pos, List<IModelChange> changeTrace) throws IOException {
         Plan plan = getPlan();
         AssetLoader assetLoader = getAssetManager().buildAssetLoader();
-        ThreeDObject obj = assetLoader.loadSupportObject3DObject(supportObjectDescriptor, Optional.empty(), false);
-        if (obj == null) {
-            throw new IOException("Error creating support object");
-        }
+        ThreeDObject obj = assetLoader.loadSupportObject3DResource(supportObjectDescriptor);
         Set<String> meshIds = obj.getSurfaceMeshViews().stream().map(mv -> mv.getId()).collect(Collectors.toSet());
+        String name = BaseObjectUIRepresentation.generateSimpleName(getPlan().getSupportObjects().values(), supportObjectDescriptor.getName());
         SupportObject result = SupportObject.create(
-            BaseObjectUIRepresentation.generateSimpleName(getPlan().getSupportObjects().values(), supportObjectDescriptor.getName()),
-            supportObjectDescriptor.getSelfRef(), pos,
+                name, supportObjectDescriptor.getSelfRef(), pos,
             new Dimensions2D(supportObjectDescriptor.getWidth(), supportObjectDescriptor.getDepth()),
             supportObjectDescriptor.getHeight(), 0, supportObjectDescriptor.getElevation(), meshIds, plan, changeTrace);
         return result;

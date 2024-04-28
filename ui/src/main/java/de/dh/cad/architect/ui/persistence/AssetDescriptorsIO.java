@@ -17,6 +17,7 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.persistence;
 
+import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
@@ -34,46 +35,46 @@ import de.dh.cad.architect.utils.jaxb.IDeserializationHandler;
 import de.dh.cad.architect.utils.jaxb.JAXBUtility;
 
 public class AssetDescriptorsIO {
-    public static final String ASSET_FILE_SCHEMA_URL = "http://www.dh-software.de/architect/v2.1/assets";
+    public static final String ASSET_FILE_SCHEMA_URL = "http://www.dh-software.de/architect/v2_2/assets";
 
     protected static final JAXBContext mSO_JAXBContext = JAXBUtility.initializeJAXBContext(SupportObjectDescriptor.class);
     protected static final JAXBContext mMS_JAXBContext = JAXBUtility.initializeJAXBContext(MaterialSetDescriptor.class);
 
-    public static void serializeSupportObjectDescriptor(SupportObjectDescriptor descriptor, Writer writer) {
+    public static void serializeSupportObjectDescriptor(SupportObjectDescriptor descriptor, Writer writer) throws IOException {
         try {
             Marshaller m = mSO_JAXBContext.createMarshaller();
             m.setProperty(Marshaller.JAXB_SCHEMA_LOCATION, ASSET_FILE_SCHEMA_URL);
             JAXBUtility.configureMarshaller(m);
             m.marshal(descriptor, writer);
         } catch (JAXBException e) {
-            throw new RuntimeException("Error serializing support object descriptor", e);
+            throw new IOException("Error serializing support object descriptor", e);
         }
     }
 
-    public static void serializeSupportObjectDescriptor(SupportObjectDescriptor descriptor, Path path) {
+    public static void serializeSupportObjectDescriptor(SupportObjectDescriptor descriptor, Path path) throws IOException {
         try (Writer writer = Files.newBufferedWriter(path)) {
             serializeSupportObjectDescriptor(descriptor, writer);
         } catch (Exception e) {
-            throw new RuntimeException("Error writing support object descriptor to path '" + path + "'", e);
+            throw new IOException("Error writing support object descriptor to path '" + path + "'", e);
         }
     }
 
-    public static void serializeMaterialSetDescriptor(MaterialSetDescriptor descriptor, Writer writer) {
+    public static void serializeMaterialSetDescriptor(MaterialSetDescriptor descriptor, Writer writer) throws IOException {
         try {
             Marshaller m = mMS_JAXBContext.createMarshaller();
             m.setProperty(Marshaller.JAXB_SCHEMA_LOCATION, ASSET_FILE_SCHEMA_URL);
             JAXBUtility.configureMarshaller(m);
             m.marshal(descriptor, writer);
         } catch (JAXBException e) {
-            throw new RuntimeException("Error serializing material set descriptor", e);
+            throw new IOException("Error serializing material set descriptor", e);
         }
     }
 
-    public static void serializeMaterialSetDescriptor(MaterialSetDescriptor descriptor, Path path) {
+    public static void serializeMaterialSetDescriptor(MaterialSetDescriptor descriptor, Path path) throws IOException {
         try (Writer writer = Files.newBufferedWriter(path)) {
             serializeMaterialSetDescriptor(descriptor, writer);
         } catch (Exception e) {
-            throw new RuntimeException("Error writing material set descriptor to path '" + path + "'", e);
+            throw new IOException("Error writing material set descriptor to path '" + path + "'", e);
         }
     }
 
@@ -95,41 +96,41 @@ public class AssetDescriptorsIO {
         }
     }
 
-    public static SupportObjectDescriptor deserializeSupportObjectDescriptor(Reader reader, AssetRefPath descriptorRef) {
+    public static SupportObjectDescriptor deserializeSupportObjectDescriptor(Reader reader, AssetRefPath descriptorRef) throws IOException {
         try {
             Unmarshaller u = mSO_JAXBContext.createUnmarshaller();
             SupportObjectDescriptor result = (SupportObjectDescriptor) u.unmarshal(reader);
             result.setSelfRef(descriptorRef);
             return result;
         } catch (JAXBException e) {
-            throw new RuntimeException("Error deserializing support object descriptor", e);
+            throw new IOException("Error deserializing support object descriptor", e);
         }
     }
 
-    public static SupportObjectDescriptor deserializeSupportObjectDescriptor(Path path, AssetRefPath descriptorRef) {
+    public static SupportObjectDescriptor deserializeSupportObjectDescriptor(Path path, AssetRefPath descriptorRef) throws IOException {
         try (Reader reader = Files.newBufferedReader(path)) {
             return deserializeSupportObjectDescriptor(reader, descriptorRef);
         } catch (Exception e) {
-            throw new RuntimeException("Error loading support object descriptor from path '" + path + "'", e);
+            throw new IOException("Error loading support object descriptor from path '" + path + "'", e);
         }
     }
 
-    public static MaterialSetDescriptor deserializeMaterialSetDescriptor(Reader reader, AssetRefPath descriptorRef) {
+    public static MaterialSetDescriptor deserializeMaterialSetDescriptor(Reader reader, AssetRefPath descriptorRef) throws IOException {
         try {
             Unmarshaller u = mMS_JAXBContext.createUnmarshaller();
             MaterialSetDescriptor result = (MaterialSetDescriptor) u.unmarshal(reader);
             result.setSelfRef(descriptorRef);
             return result;
         } catch (JAXBException e) {
-            throw new RuntimeException("Error deserializing material set descriptor", e);
+            throw new IOException("Error deserializing material set descriptor", e);
         }
     }
 
-    public static MaterialSetDescriptor deserializeMaterialSetDescriptor(Path path, AssetRefPath descriptorRef) {
+    public static MaterialSetDescriptor deserializeMaterialSetDescriptor(Path path, AssetRefPath descriptorRef) throws IOException {
         try (Reader reader = Files.newBufferedReader(path)) {
             return deserializeMaterialSetDescriptor(reader, descriptorRef);
         } catch (Exception e) {
-            throw new RuntimeException("Error loading material set descriptor from path '" + path + "'", e);
+            throw new IOException("Error loading material set descriptor from path '" + path + "'", e);
         }
     }
 }

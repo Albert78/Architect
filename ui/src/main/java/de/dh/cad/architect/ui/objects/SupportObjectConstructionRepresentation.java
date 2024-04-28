@@ -31,7 +31,6 @@ import de.dh.cad.architect.ui.view.construction.UiPlanPosition;
 import de.dh.utils.Vector2D;
 import de.dh.utils.fx.MouseHandlerContext;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.geometry.Point2D;
 import javafx.geometry.Point3D;
 import javafx.scene.Cursor;
@@ -64,13 +63,7 @@ public class SupportObjectConstructionRepresentation extends AbstractAnchoredObj
         mImage = new ImageView(image);
         addScaled(mImage);
 
-        ChangeListener<Boolean> propertiesUpdaterListener = new ChangeListener<>() {
-            @Override
-            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                updateProperties();
-            }
-        };
-
+        ChangeListener<Boolean> propertiesUpdaterListener = (observable, oldValue, newValue) -> updateProperties();
         selectedProperty().addListener(propertiesUpdaterListener);
         objectSpottedProperty().addListener(propertiesUpdaterListener);
         objectFocusedProperty().addListener(propertiesUpdaterListener);

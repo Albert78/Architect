@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.layout.HBox?>
+
+<fx:root type="javafx.scene.layout.HBox" alignment="CENTER_LEFT" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <Spinner fx:id="mAngleSpinner" editable="true" prefWidth="80.0" />
+      <Label text="Grad">
+         <HBox.margin>
+            <Insets left="10.0" />
+         </HBox.margin>
+      </Label>
+      <Slider fx:id="mAngleSlider" prefWidth="100.0">
+         <HBox.margin>
+            <Insets left="10.0" />
+         </HBox.margin>
+      </Slider>
+   </children>
+</fx:root>

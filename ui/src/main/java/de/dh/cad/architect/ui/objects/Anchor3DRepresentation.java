@@ -54,10 +54,6 @@ public class Anchor3DRepresentation extends Abstract3DRepresentation {
         mSphere.setMaterial(new PhongMaterial(color));
     }
 
-    protected enum Surface {
-        S1
-    }
-
     protected void updateNode() {
         Anchor anchor = getAnchor();
 

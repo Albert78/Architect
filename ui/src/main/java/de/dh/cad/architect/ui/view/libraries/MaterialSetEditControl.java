@@ -52,6 +52,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 
@@ -88,7 +89,7 @@ public class MaterialSetEditControl extends AbstractAssetEditControl implements 
     protected Button mChooseIconImageButton;
 
     @FXML
-    protected HBox mMaterialChoiceParent;
+    protected BorderPane mMaterialChoiceParent;
 
     @FXML
     protected Button mEditMaterialButton;
@@ -127,7 +128,8 @@ public class MaterialSetEditControl extends AbstractAssetEditControl implements 
         });
 
         mMaterialPreviewChoiceControl = new MaterialPreviewChoiceControl(mAssetLoader);
-        mMaterialChoiceParent.getChildren().add(0, mMaterialPreviewChoiceControl);
+        mMaterialPreviewChoiceControl.setMinSize(300, 300);
+        mMaterialChoiceParent.setCenter(mMaterialPreviewChoiceControl);
 
         mEditMaterialButton.setOnAction(event -> {
             showRawMaterialSetEditDialog();
@@ -161,7 +163,7 @@ public class MaterialSetEditControl extends AbstractAssetEditControl implements 
 
             mAssetManager.saveAssetDescriptor(descriptor);
         } catch (IOException e) {
-            log.error("Error while saving material set '" + descriptor.getId() + "'", e);
+            log.error("Error while saving material set '" + descriptor.getSelfRef() + "'", e);
         }
     }
 
@@ -172,7 +174,7 @@ public class MaterialSetEditControl extends AbstractAssetEditControl implements 
         editDialog.setHeaderText(MessageFormat.format(Strings.LIBRARY_MANAGER_EDIT_RAW_MATERIAL_SET_DIALOG_HEADER, descriptor.getName()));
         editDialog.setResizable(true);
 
-        RawMaterialsFileEditControl editControl = new RawMaterialsFileEditControl(mAssetLoader);
+        RawMaterialsEditControl editControl = new RawMaterialsEditControl(mAssetLoader);
         editControl.initialize(descriptor);
 
         DialogPane dialogPane = editDialog.getDialogPane();
@@ -201,6 +203,10 @@ public class MaterialSetEditControl extends AbstractAssetEditControl implements 
         editControl.requestFocus();
 
         editDialog.showAndWait();
+        if (!invalidProperty.get()) {
+            editControl.saveValues();
+        }
+
         mMaterialPreviewChoiceControl.initialize(descriptor);
     }
 

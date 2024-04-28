@@ -21,3 +21,5 @@ include(':ui')
 include(':main')
 include(':libraryeditor')
 include(':sh3dimporter')
+
+include(':model-migration')

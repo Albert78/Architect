@@ -17,16 +17,22 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.objects;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.dh.cad.architect.model.assets.AssetRefPath;
+import de.dh.cad.architect.model.assets.SupportObjectDescriptor;
 import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.objects.SupportObject;
 import de.dh.cad.architect.model.objects.SurfaceConfiguration;
@@ -38,49 +44,31 @@ import de.dh.cad.architect.ui.controller.UiController;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.threed.Abstract3DView;
 import de.dh.cad.architect.ui.view.threed.ThreeDView;
+import de.dh.utils.MaterialMapping;
 import de.dh.utils.Vector2D;
-import javafx.beans.InvalidationListener;
+import de.dh.utils.io.fx.FxMeshBuilder;
+import de.dh.utils.io.obj.RawMaterialData;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
-import javafx.scene.paint.Color;
+import javafx.scene.Node;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.MeshView;
+import javafx.scene.shape.Shape3D;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
 
-public class SupportObject3DRepresentation extends Abstract3DRepresentation {
-    protected static class SupportObjectSurfaceData extends SurfaceData {
-        protected PhongMaterial mOriginalMaterial;
-        protected Color mOriginalDiffuseColor;
-
-        public SupportObjectSurfaceData(String surfaceId, MeshView meshViewWithPhongMaterial) {
-            super(surfaceId, meshViewWithPhongMaterial);
-            PhongMaterial originalMaterial = getMaterial();
-            mOriginalMaterial = originalMaterial;
-            mOriginalDiffuseColor = originalMaterial.getDiffuseColor();
-        }
-
-        public PhongMaterial getOriginalMaterial() {
-            return mOriginalMaterial;
-        }
-
-        public Color getOriginalDiffuseColor() {
-            return mOriginalDiffuseColor;
-        }
-
-        public void resetOriginalMaterial() {
-            mOriginalMaterial.setDiffuseColor(mOriginalDiffuseColor);
-        }
-    }
+public class SupportObject3DRepresentation extends AbstractSolid3DRepresentation {
+    private static final Logger log = LoggerFactory.getLogger(SupportObject3DRepresentation.class);
 
     protected Group mObjectViewRoot;
+    protected Map<String, PhongMaterial> mOrigModelMaterials;
     protected Bounds mRawBounds;
-    protected Collection<SupportObjectSurfaceData> mSurfaces = new ArrayList<>();
     protected Scale mScale = new Scale();
     protected Rotate mRotation = new Rotate();
     protected Translate mTranslation = new Translate();
@@ -89,11 +77,10 @@ public class SupportObject3DRepresentation extends Abstract3DRepresentation {
         super(supportObject, parentView);
         initializeNode();
 
-        InvalidationListener updatePropertiesListener = change -> {
-            updateProperties();
-        };
-        selectedProperty().addListener(updatePropertiesListener);
-        objectSpottedProperty().addListener(updatePropertiesListener);
+        ChangeListener<Boolean> bPropertiesUpdaterListener = (observable, oldValue, newValue) -> updateProperties();
+        selectedProperty().addListener(bPropertiesUpdaterListener);
+        objectFocusedProperty().addListener(bPropertiesUpdaterListener);
+        objectEmphasizedProperty().addListener(bPropertiesUpdaterListener);
     }
 
     public SupportObject getSupportObject() {
@@ -107,10 +94,24 @@ public class SupportObject3DRepresentation extends Abstract3DRepresentation {
     public void initializeNode() {
         SupportObject supportObject = getSupportObject();
         AssetLoader assetLoader = getAssetLoader();
-        Map<String, AssetRefPath> overriddenSurfaceMaterialRefs = supportObject.getSurfaceMaterialRefs();
+        AssetManager assetManager = assetLoader.getAssetManager();
+        AssetRefPath supportObjectDescriptorRef = supportObject.getSupportObjectDescriptorRef();
 
-        // Prepare object
-        ThreeDObject object = assetLoader.loadSupportObject3DObject(supportObject.getSupportObjectDescriptorRef(), Optional.of(overriddenSurfaceMaterialRefs), true);
+        ThreeDObject object;
+        try {
+            SupportObjectDescriptor descriptor = assetManager.loadSupportObjectDescriptor(supportObjectDescriptorRef);
+
+            object = assetLoader.loadSupportObject3DResource(descriptor);
+            mOrigModelMaterials = new HashMap<>();
+            for (MeshView mv : object.getSurfaceMeshViews()) {
+                PhongMaterial material = (PhongMaterial) mv.getMaterial();
+                mOrigModelMaterials.put(mv.getId(), material);
+            }
+        } catch (IOException e) {
+            log.error("Error creating 3D representation for support object <" + supportObjectDescriptorRef + ">", e);
+            object = AssetLoader.loadSupportObjectPlaceholder3DResource();
+        }
+
         Collection<MeshView> meshViews = object.getSurfaceMeshViews();
         mObjectViewRoot = new Group();
         mObjectViewRoot.getChildren().addAll(meshViews);
@@ -137,36 +138,27 @@ public class SupportObject3DRepresentation extends Abstract3DRepresentation {
             if (surfaceTypeId == null) {
                 continue;
             }
-            SupportObjectSurfaceData sd = new SupportObjectSurfaceData(surfaceTypeId, meshView);
-            mSurfaces.add(sd);
-
             SurfaceConfiguration sc = supportObject.getSurfaceTypeIdsToSurfaceConfigurations().get(surfaceTypeId);
-            markSurfaceNode(meshView, new ObjectSurface(this, surfaceTypeId) {
-                @Override
-                public AssetRefPath getMaterialRef() {
-                    return sc == null ? null : sc.getMaterialAssignment();
-                }
+            if (sc == null) {
+                // Loaded surface doesn't have a surface entry in our model, that means the 3D model is not in sync with our
+                // support object anymore.
+                // --> Entry must be updated to match the model
+                continue;
+            }
 
-                @Override
-                public boolean assignMaterial(AssetRefPath materialRef) {
-                    if (sc == null) {
-                        return false;
-                    }
-                    setObjectSurface(supportObject, mSurfaceTypeId, materialRef);
-                    return true;
-                }
-            });
+            SurfaceData<MeshView> sd = new SurfaceData<>(this, surfaceTypeId, meshView);
+            registerSurface(sd);
         }
     }
 
     public void resetSupportObjectSurfaces(SupportObject supportObject, UiController uiController) {
         AssetManager assetManager = uiController.getAssetManager();
         AssetLoader assetLoader = assetManager.buildAssetLoader();
-        ThreeDObject obj = assetLoader.loadSupportObject3DObject(supportObject.getSupportObjectDescriptorRef(), Optional.empty(), false);
+        ThreeDObject obj = assetLoader.loadSupportObject3DObject(supportObject.getSupportObjectDescriptorRef(), false);
         if (obj == null) {
             return;
         }
-        Set<String> meshIds = obj.getSurfaceMeshViews().stream().map(mv -> mv.getId()).collect(Collectors.toSet());
+        Set<String> meshIds = obj.getSurfaceMeshViews().stream().map(Node::getId).collect(Collectors.toSet());
         List<IModelChange> changeTrace = new ArrayList<>();
         supportObject.initializeSurfaces(meshIds, changeTrace);
         initializeNode();
@@ -175,27 +167,18 @@ public class SupportObject3DRepresentation extends Abstract3DRepresentation {
 
     protected void updateProperties() {
         SupportObject supportObject = getSupportObject();
-        AssetLoader assetLoader = getAssetLoader();
-        for (SupportObjectSurfaceData surfaceData : mSurfaces) {
+        for (SurfaceData<? extends Shape3D> surfaceData : mSurfacesByTypeId.values()) {
             String surfaceTypeId = surfaceData.getSurfaceTypeId();
-            MeshView meshView = surfaceData.getMeshView();
             SurfaceConfiguration surfaceConfiguration = supportObject.getSurfaceTypeIdsToSurfaceConfigurations().get(surfaceTypeId);
-            AssetRefPath materialRefPath = surfaceConfiguration == null ? null : surfaceConfiguration.getMaterialAssignment();
-            if (materialRefPath == null) {
-                surfaceData.resetOriginalMaterial();
-                meshView.setMaterial(surfaceData.getOriginalMaterial());
+            de.dh.cad.architect.model.objects.MaterialMappingConfiguration mmc = surfaceConfiguration.getMaterialMappingConfiguration();
+            if (mmc == null) {
+                surfaceData.setMaterial(mOrigModelMaterials.get(surfaceTypeId));
             } else {
-                assetLoader.configureMaterial(meshView, materialRefPath, Optional.empty());
-            }
-            Color color = null;
-            if (isSelected()) {
-                color = SELECTED_OBJECTS_COLOR;
-            }
-            if (isObjectSpotted()) {
-                color = Color.BLUE.interpolate(Color.DEEPSKYBLUE, 0.5);
-            }
-            if (color != null) {
-                surfaceData.getMaterial().setDiffuseColor(color);
+                AssetLoader assetLoader = getAssetLoader();
+                // TODO: Somehow find the surface size of the surface in texture direction....
+                Optional<Vector2D> oSurfaceSize = Optional.empty();
+                PhongMaterial material = assetLoader.buildMaterial(mmc, oSurfaceSize);
+                surfaceData.setMaterial(material);
             }
         }
     }

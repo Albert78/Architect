@@ -27,6 +27,7 @@ import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.dialogs.CameraPositionsManagerDialog;
 import de.dh.cad.architect.ui.objects.Abstract3DAncillaryObject;
 import de.dh.cad.architect.ui.objects.Abstract3DRepresentation;
+import de.dh.cad.architect.ui.objects.AbstractSolid3DRepresentation;
 import de.dh.cad.architect.ui.persistence.CameraPosition;
 import de.dh.cad.architect.ui.view.AbstractUiMode;
 import de.dh.cad.architect.ui.view.AbstractViewBehavior;
@@ -48,7 +49,6 @@ import javafx.scene.input.ScrollEvent;
 import javafx.scene.robot.Robot;
 
 public abstract class Abstract3DViewBehavior extends AbstractViewBehavior<Abstract3DRepresentation, Abstract3DAncillaryObject> {
-    protected DragMode mCurrentDragMode = DragMode.None;
     protected EventHandler<ScrollEvent> mZoomEventHandler = null;
 
     protected Abstract3DViewBehavior(AbstractUiMode<Abstract3DRepresentation, Abstract3DAncillaryObject> parentMode) {
@@ -149,9 +149,19 @@ public abstract class Abstract3DViewBehavior extends AbstractViewBehavior<Abstra
         // Override, if needed
     }
 
+    /**
+     * Returns the mouse spot mode of this behavior, e.g. whether the surface or the whole object under the
+     * mouse is highlighted on mouse over spot.
+     */
+    protected AbstractSolid3DRepresentation.MouseSpotMode getMouseSpotMode() {
+        return AbstractSolid3DRepresentation.MouseSpotMode.Object;
+    }
+
     @Override
     protected void configureDefaultObjectHandlers(Abstract3DRepresentation repr) {
-        repr.enableMouseOverSpot();
+        if (repr instanceof AbstractSolid3DRepresentation sRepr) {
+            sRepr.setMouseSpotMode(getMouseSpotMode());
+        }
         repr.objectSpottedProperty().removeListener(OBJECT_SPOTTED_LISTENER);
         repr.objectSpottedProperty().addListener(OBJECT_SPOTTED_LISTENER);
         repr.setOnMouseClicked(MOUSE_CLICK_HANDLER_SELECT_OBJECT);
@@ -159,7 +169,9 @@ public abstract class Abstract3DViewBehavior extends AbstractViewBehavior<Abstra
 
     @Override
     protected void unconfigureDefaultObjectHandlers(Abstract3DRepresentation repr) {
-        repr.disableMouseOverSpot();
+        if (repr instanceof AbstractSolid3DRepresentation sRepr) {
+            sRepr.setDefaultMouseSpotMode();
+        }
         repr.objectSpottedProperty().removeListener(OBJECT_SPOTTED_LISTENER);
         repr.setOnMouseClicked(null);
     }

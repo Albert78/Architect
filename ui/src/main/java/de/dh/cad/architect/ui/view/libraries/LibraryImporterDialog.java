@@ -95,7 +95,7 @@ public class LibraryImporterDialog extends Dialog<Collection<IDirectoryLocator>>
     protected final Set<IDirectoryLocator> mDisabledEntries = new HashSet<>();
 
     public LibraryImporterDialog() {
-        setTitle(Strings.LIBRARY_MANAGER_IMPORT_DIALOG_TITLE);
+        setTitle(Strings.LIBRARY_MANAGER_IMPORT_LIBRARIES_DIALOG_TITLE);
         setHeaderText(Strings.LIBRARY_MANAGER_IMPORT_DIALOG_HEADER);
         // TODO: Nice graphic
         DialogPane dialogPane = getDialogPane();

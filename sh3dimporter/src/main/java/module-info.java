@@ -25,6 +25,7 @@ module de.dh.cad.architect.libraryimporter.sh3dimporter {
 
     requires transitive javafx.graphics;
     requires transitive org.slf4j;
+    requires org.apache.logging.log4j; // Needed in main application to make log4j available at runtime
     requires transitive java.xml.bind;
     requires javafx.base;
     requires transitive de.dh.cad.architect.ui;

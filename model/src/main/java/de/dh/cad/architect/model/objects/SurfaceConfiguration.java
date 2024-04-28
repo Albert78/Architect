@@ -20,17 +20,14 @@ package de.dh.cad.architect.model.objects;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-
-import de.dh.cad.architect.model.assets.AssetRefPath;
-import de.dh.cad.architect.model.jaxb.AssetRefPathJavaTypeAdapter;
 
 /**
  * Holds the information about a single object surface (surface id, name) together with its material assignment.
  */
 public class SurfaceConfiguration {
     protected String mSurfaceTypeId;
-    protected AssetRefPath mMaterialAssignment;
+
+    protected MaterialMappingConfiguration mMaterialMappingConfiguration = null;
 
     public SurfaceConfiguration() {
         // For JAXB
@@ -45,14 +42,13 @@ public class SurfaceConfiguration {
         return mSurfaceTypeId;
     }
 
-    @XmlElement(name = "MaterialRef")
-    @XmlJavaTypeAdapter(AssetRefPathJavaTypeAdapter.class)
-    public AssetRefPath getMaterialAssignment() {
-        return mMaterialAssignment;
+    @XmlElement(name = "MaterialMapping")
+    public MaterialMappingConfiguration getMaterialMappingConfiguration() {
+        return mMaterialMappingConfiguration;
     }
 
-    public void setMaterialAssignment(AssetRefPath value) {
-        mMaterialAssignment = value;
+    public void setMaterialMappingConfiguration(MaterialMappingConfiguration value) {
+        mMaterialMappingConfiguration = value;
     }
 
     @XmlAttribute(name = "surfaceTypeId")

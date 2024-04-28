@@ -17,7 +17,6 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.view.libraries;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
@@ -39,12 +38,12 @@ import de.dh.cad.architect.model.coords.LengthUnit;
 import de.dh.cad.architect.ui.Constants;
 import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.assets.AssetLoader;
-import de.dh.cad.architect.ui.assets.AssetLoader.ThreeDResourceImportMode;
 import de.dh.cad.architect.ui.assets.AssetManager;
-import de.dh.cad.architect.ui.assets.AssetManagerConfiguration;
 import de.dh.cad.architect.ui.assets.ThreeDObject;
+import de.dh.cad.architect.ui.assets.ThreeDResourceImportMode;
 import de.dh.cad.architect.ui.controls.LengthControl;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
+import de.dh.cad.architect.ui.utils.DialogUtils;
 import de.dh.cad.architect.ui.view.libraries.TakeSnapshotDialog.IImageSaveEvents;
 import de.dh.cad.architect.utils.vfs.PlainFileSystemResourceLocator;
 import de.dh.utils.fx.FxUtils;
@@ -76,7 +75,6 @@ import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
-import javafx.stage.FileChooser;
 
 // Coordinate system of objects stored here is in global coordinates, i.e. before rotation to the visible
 // JavaFX representation -> Y/Z exchanged
@@ -196,7 +194,7 @@ public class SupportObjectEditControl extends AbstractAssetEditControl implement
         mResetValuesButton.setOnAction(event -> resetObjectValues());
 
         mChooseThreeDObjectButton.setOnAction(event -> {
-            Path path = openObject3DResourceDialog();
+            Path path = DialogUtils.openObject3DResourceDialog(mAssetManager.getConfiguration(), getStage());
             if (path != null) {
                 importThreeDObject(path, Optional.empty());
             }
@@ -216,8 +214,8 @@ public class SupportObjectEditControl extends AbstractAssetEditControl implement
             });
             SupportObjectDescriptor descriptor = getDescriptor();
             dialog.showFor(buildSnapshot3DObject(),
-                (int) Math.max(CoordinateUtils.lengthToCoords(descriptor.getWidth(), null), MIN_IMAGE_SIZE),
-                (int) Math.max(CoordinateUtils.lengthToCoords(descriptor.getDepth(), null), MIN_IMAGE_SIZE), getStage());
+                4 * (int) Math.max(CoordinateUtils.lengthToCoords(descriptor.getWidth(), null), MIN_IMAGE_SIZE),
+                4 * (int) Math.max(CoordinateUtils.lengthToCoords(descriptor.getDepth(), null), MIN_IMAGE_SIZE), getStage());
         });
     }
 
@@ -305,6 +303,11 @@ public class SupportObjectEditControl extends AbstractAssetEditControl implement
 
     protected void createRotationUiControls(VBox parent, boolean showAxisCheckboxInitiallySelected) {
         ObservableList<Node> parentBoxChildren = parent.getChildren();
+
+        createRotationUiGroup(parentBoxChildren, Rotate.X_AXIS, Strings.SUPPORT_OBJECT_CONTROL_ROT_X_LABEL, Strings.SUPPORT_OBJECT_CONTROL_ROT_X_UP_BUTTON, Strings.SUPPORT_OBJECT_CONTROL_ROT_X_DOWN_BUTTON);
+        createRotationUiGroup(parentBoxChildren, Rotate.Y_AXIS, Strings.SUPPORT_OBJECT_CONTROL_ROT_Y_LABEL, Strings.SUPPORT_OBJECT_CONTROL_ROT_Y_UP_BUTTON, Strings.SUPPORT_OBJECT_CONTROL_ROT_Y_DOWN_BUTTON);
+        createRotationUiGroup(parentBoxChildren, Rotate.Z_AXIS, Strings.SUPPORT_OBJECT_CONTROL_ROT_Z_LABEL, Strings.SUPPORT_OBJECT_CONTROL_ROT_Z_UP_BUTTON, Strings.SUPPORT_OBJECT_CONTROL_ROT_Z_DOWN_BUTTON);
+
         parentBoxChildren.add(new Label(Strings.SUPPORT_OBJECT_CONTROL_ROTATION_TITLE));
         final Insets margin = new Insets(5, 0, 5, 0);
         CheckBox showAxisCheckBox = new CheckBox(Strings.SUPPORT_OBJECT_CONTROL_SHOW_AXIS);
@@ -314,10 +317,6 @@ public class SupportObjectEditControl extends AbstractAssetEditControl implement
             mThreeDObjectView.setCoordinateSystemVisible(showAxisCheckBox.isSelected());
         });
         parentBoxChildren.add(showAxisCheckBox);
-
-        createRotationUiGroup(parentBoxChildren, Rotate.X_AXIS, Strings.SUPPORT_OBJECT_CONTROL_ROT_X_LABEL, Strings.SUPPORT_OBJECT_CONTROL_ROT_X_UP_BUTTON, Strings.SUPPORT_OBJECT_CONTROL_ROT_X_DOWN_BUTTON);
-        createRotationUiGroup(parentBoxChildren, Rotate.Y_AXIS, Strings.SUPPORT_OBJECT_CONTROL_ROT_Y_LABEL, Strings.SUPPORT_OBJECT_CONTROL_ROT_Y_UP_BUTTON, Strings.SUPPORT_OBJECT_CONTROL_ROT_Y_DOWN_BUTTON);
-        createRotationUiGroup(parentBoxChildren, Rotate.Z_AXIS, Strings.SUPPORT_OBJECT_CONTROL_ROT_Z_LABEL, Strings.SUPPORT_OBJECT_CONTROL_ROT_Z_UP_BUTTON, Strings.SUPPORT_OBJECT_CONTROL_ROT_Z_DOWN_BUTTON);
     }
 
     @Override
@@ -344,16 +343,7 @@ public class SupportObjectEditControl extends AbstractAssetEditControl implement
      */
     protected ThreeDObject load3DObjectView() {
         SupportObjectDescriptor descriptor = getDescriptor();
-        ThreeDObject result = null;
-        try {
-            result = mAssetLoader.loadSupportObject3DResource(descriptor, Optional.empty());
-        } catch (IOException e) {
-            log.error("3D resource of support object <" + descriptor + "> could not be loaded", e);
-        }
-        if (result == null) {
-            result = AssetLoader.loadBroken3DResource();
-        }
-        return result;
+        return mAssetLoader.loadSupportObject3DObject(descriptor, true);
     }
 
     @Override
@@ -603,22 +593,5 @@ public class SupportObjectEditControl extends AbstractAssetEditControl implement
 
     protected Path openPlanViewImageDialog() {
         return openImageDialog(Strings.SELECT_PLAN_VIEW_IMAGE_DIALOG_TITLE);
-    }
-
-    protected Path openObject3DResourceDialog() {
-        FileChooser fc = new FileChooser();
-        fc.setTitle(Strings.SELECT_OBJECT_3D_RESOURCE_DIALOG_TITLE);
-        AssetManagerConfiguration configuration = mAssetManager.getConfiguration();
-        Optional<Path> oLast3DResourcePath = configuration.getLast3DResourcePath();
-        oLast3DResourcePath.ifPresent(path -> fc.setInitialDirectory(path.toFile()));
-        fc.getExtensionFilters().addAll(getImageExtensionFilters());
-        File resource3DFile = fc.showOpenDialog(getStage());
-        if (resource3DFile == null) {
-            return null;
-        }
-        Path resource3DFilePath = resource3DFile.toPath();
-        Path resource3DDirectoryPath = resource3DFilePath.getParent();
-        configuration.setLast3DResourcePath(resource3DDirectoryPath);
-        return resource3DFilePath;
     }
 }

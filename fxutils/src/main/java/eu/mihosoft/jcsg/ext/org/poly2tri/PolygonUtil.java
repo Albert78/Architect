@@ -173,7 +173,7 @@ public class PolygonUtil {
      * Returns the information if the direction of the polygon defined by the given 2D (!!!) points is counter-clockwise.
      * Be aware that this function only takes the X and Y coordinates of the given points into account.
      */
-    public static boolean isCCW(List<Vector3d> points) {
+    public static boolean isCCW_XY(List<Vector3d> points) {
         double sum = 0;
         int numPoints = points.size();
         for (int i = 0; i < numPoints; i++) {

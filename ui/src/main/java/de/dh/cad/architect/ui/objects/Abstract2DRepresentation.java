@@ -28,8 +28,6 @@ import de.dh.cad.architect.ui.view.construction.Abstract2DView;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Shape;
 
@@ -48,13 +46,6 @@ public abstract class Abstract2DRepresentation extends Abstract2DUiObject implem
     protected final BooleanProperty mObjectFocusedProperty = new SimpleBooleanProperty(this, "isFocused", false);
     protected final BooleanProperty mObjectEmphasizedProperty = new SimpleBooleanProperty(this, "isFocused", false);
 
-    protected ChangeListener<Boolean> MOUSE_OVER_SPOT_LISTENER = new ChangeListener<>() {
-        @Override
-        public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-            mObjectSpottedProperty.set(newValue);
-        }
-    };
-
     protected final BaseObject mModelObject;
 
     // In the constructor, the sub class should create all graphical shapes for this representation
@@ -71,11 +62,12 @@ public abstract class Abstract2DRepresentation extends Abstract2DUiObject implem
     }
 
     public void enableMouseOverSpot() {
-        mouseOverProperty().addListener(MOUSE_OVER_SPOT_LISTENER);
+        mObjectSpottedProperty.bind(mouseOverProperty());
     }
 
     public void disableMouseOverSpot() {
-        mouseOverProperty().removeListener(MOUSE_OVER_SPOT_LISTENER);
+        mObjectSpottedProperty.unbind();
+        mObjectSpottedProperty.set(false);
     }
 
     @Override

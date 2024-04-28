@@ -45,7 +45,6 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -65,14 +64,11 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 
 public abstract class AbstractViewBehavior<TRepr extends IModelBasedObject, TAnc extends Node> {
-    protected final ChangeListener<Boolean> OBJECT_SPOTTED_LISTENER = new ChangeListener<>() {
-        @Override
-        public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-            ReadOnlyProperty<?> prop = (ReadOnlyProperty<?>) observable;
-            @SuppressWarnings("unchecked")
-            TRepr obj = (TRepr) prop.getBean();
-            onObjectSpotChanged(obj, newValue);
-        }
+    protected final ChangeListener<Boolean> OBJECT_SPOTTED_LISTENER = (observable, oldValue, newValue) -> {
+        ReadOnlyProperty<?> prop = (ReadOnlyProperty<?>) observable;
+        @SuppressWarnings("unchecked")
+        TRepr obj = (TRepr) prop.getBean();
+        onObjectSpotChanged(obj, newValue);
     };
 
     protected final EventHandler<? super KeyEvent> SCENE_KEY_HANDLER_ESCAPE_BEHAVIOR = event -> {
@@ -303,6 +299,16 @@ public abstract class AbstractViewBehavior<TRepr extends IModelBasedObject, TAnc
     // Override, if the subclass needs a different dispatching of behaviors.
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    /**
+     * Checks if the given new selection still matches to this behavior and switches to another
+     * behavior, if necessary.
+     * @param selectedReprs New selection situation.
+     * @return {@code true} if we could switch to another behavior.
+     * {@code false} if we don't want to switch away from this behavior. In that case, the caller will
+     * call several update methods on this behavior like
+     * {@link #updateToSelection(Collection)}, {@link #configureObjects()}, {@link #updateActionsListToSelection()} and
+     * {@link #setDefaultUserHint()}.
+     */
     // To be overridden, if another behavior calculation strategy is desired for the subclass
     protected boolean updateBehavior(Collection<TRepr> selectedReprs) {
         AbstractViewBehavior<TRepr, TAnc> targetBehavior = mParentMode.getBehaviorForSelectedReprs(selectedReprs);
@@ -505,27 +511,27 @@ public abstract class AbstractViewBehavior<TRepr extends IModelBasedObject, TAnc
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     protected void installDefaultEscapeBehaviorKeyHandler() {
-        getView().addEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_ESCAPE_BEHAVIOR);
+        getView().getScene().addEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_ESCAPE_BEHAVIOR);
     }
 
     protected void uninstallDefaultEscapeBehaviorKeyHandler() {
-        getView().removeEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_ESCAPE_BEHAVIOR);
+        getView().getScene().removeEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_ESCAPE_BEHAVIOR);
     }
 
     protected void installDefaultSpaceToggleObjectVisibilityKeyHandler() {
-        getView().addEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_SPACE_TOGGLE_OBJECT_VISIBILITY);
+        getView().getScene().addEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_SPACE_TOGGLE_OBJECT_VISIBILITY);
     }
 
     protected void uninstallDefaultSpaceToggleObjectVisibilityKeyHandler() {
-        getView().removeEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_SPACE_TOGGLE_OBJECT_VISIBILITY);
+        getView().getScene().removeEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_SPACE_TOGGLE_OBJECT_VISIBILITY);
     }
 
     protected void installDefaultDeleteObjectsKeyHandler() {
-        getView().addEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_DELETE_SELECTED_OBJECTS);
+        getView().getScene().addEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_DELETE_SELECTED_OBJECTS);
     }
 
     protected void uninstallDefaultDeleteObjectsKeyHandler() {
-        getView().removeEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_DELETE_SELECTED_OBJECTS);
+        getView().getScene().removeEventHandler(KeyEvent.KEY_PRESSED, SCENE_KEY_HANDLER_DELETE_SELECTED_OBJECTS);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -97,6 +97,10 @@ public class Vector3D {
             mX*other.mY - mY*other.mX);
     }
 
+    public Vector2D projectXY() {
+        return new Vector2D(mX, mY);
+    }
+
     @Override
     public String toString() {
         return "Vector3D [X=" + mX + ", Y=" + mY + ", Z=" + mZ + "]";

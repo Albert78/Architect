@@ -50,7 +50,7 @@
             <ComboBox fx:id="mTypeComboBox" editable="true" prefWidth="250.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
             <Label text="Beschreibung" GridPane.rowIndex="6" />
             <TextArea fx:id="mDescriptionTextArea" prefHeight="100.0" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="6" />
-            <Label text="Bilder" GridPane.rowIndex="7" />
+            <Label text="Bilder" wrapText="true" GridPane.rowIndex="7" />
             <HBox BorderPane.alignment="CENTER" GridPane.columnIndex="1" GridPane.rowIndex="7">
                <children>
                   <TitledPane animated="false" collapsible="false" text="Icon">
@@ -115,7 +115,7 @@
                </children>
             </HBox>
             <Label text="3D-Objekt" wrapText="true" GridPane.rowIndex="8" />
-            <TitledPane animated="false" collapsible="false" minHeight="320.0" text="3D-Ansicht" BorderPane.alignment="CENTER" GridPane.columnIndex="1" GridPane.rowIndex="8" GridPane.vgrow="ALWAYS">
+            <TitledPane animated="false" collapsible="false" minHeight="320.0" text="3D-Ansicht" GridPane.columnIndex="1" GridPane.rowIndex="8" GridPane.vgrow="ALWAYS">
                <content>
                   <BorderPane fx:id="mThreeDResourcePane">
                      <right>

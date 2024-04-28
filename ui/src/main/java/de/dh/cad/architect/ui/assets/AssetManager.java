@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.Function;
@@ -56,16 +57,17 @@ import de.dh.cad.architect.model.assets.FileModelResource;
 import de.dh.cad.architect.model.assets.MaterialSetDescriptor;
 import de.dh.cad.architect.model.assets.SupportObjectDescriptor;
 import de.dh.cad.architect.model.coords.Length;
-import de.dh.cad.architect.ui.assets.AssetLoader.ThreeDResourceImportMode;
 import de.dh.cad.architect.ui.persistence.AssetDescriptorsIO;
 import de.dh.cad.architect.ui.persistence.LibraryIO;
 import de.dh.cad.architect.ui.view.libraries.ImageLoadOptions;
 import de.dh.cad.architect.utils.IdGenerator;
+import de.dh.cad.architect.utils.vfs.ClassLoaderFileSystemDirectoryLocator;
 import de.dh.cad.architect.utils.vfs.ClassLoaderFileSystemResourceLocator;
 import de.dh.cad.architect.utils.vfs.IDirectoryLocator;
 import de.dh.cad.architect.utils.vfs.IResourceLocator;
 import de.dh.cad.architect.utils.vfs.PlainFileSystemDirectoryLocator;
 import de.dh.utils.fx.ImageUtils;
+import de.dh.utils.io.fx.MaterialData;
 import de.dh.utils.io.obj.DefaultMaterials;
 import de.dh.utils.io.obj.MtlLibraryIO;
 import de.dh.utils.io.obj.RawMaterialData;
@@ -359,6 +361,8 @@ public class AssetManager {
             try (Reader reader = new BufferedReader(new InputStreamReader(resourceLocator.inputStream(), StandardCharsets.UTF_8))) {
                 AssetRefPath materialDescriptorRef = new AssetRefPath(AssetType.MaterialSet, getAnchor(), mRelativePathInAssetCollection);
                 return AssetDescriptorsIO.deserializeMaterialSetDescriptor(reader, materialDescriptorRef);
+            } catch (IOException e) {
+                throw new IOException("Error loading material descriptor from path '" + resourceLocator.getAbsolutePath() + "'", e);
             }
         }
 
@@ -369,6 +373,8 @@ public class AssetManager {
             IResourceLocator resourceLocator = baseDirectory.resolveResource(SUPPORT_OBJECT_DESCRIPTOR_NAME);
             try (Writer writer = new BufferedWriter(new OutputStreamWriter(resourceLocator.outputStream()))) {
                 AssetDescriptorsIO.serializeSupportObjectDescriptor(descriptor, writer);
+            } catch (IOException e) {
+                throw new IOException("Error writing support object descriptor to path '" + resourceLocator.getAbsolutePath() + "'", e);
             }
         }
 
@@ -379,24 +385,29 @@ public class AssetManager {
             IResourceLocator resourceLocator = baseDirectory.resolveResource(MATERIAL_SET_DESCRIPTOR_NAME);
             try (Writer writer = new BufferedWriter(new OutputStreamWriter(resourceLocator.outputStream()))) {
                 AssetDescriptorsIO.serializeMaterialSetDescriptor(descriptor, writer);
+            } catch (IOException e) {
+                throw new IOException("Error writing material descriptor to path '" + resourceLocator.getAbsolutePath() + "'", e);
             }
         }
 
         // TODO: Cache in AssetCollection
         public Image loadImage(String imageFileName) throws IOException {
             IResourceLocator resourceLocator = resolveResource(imageFileName);
-            return AssetManager.loadImage(resourceLocator, Optional.empty());
+            try {
+                return AssetManager.loadImage(resourceLocator, Optional.empty());
+            } catch (IOException e) {
+                throw new IOException("Error loading image from path '" + resourceLocator.getAbsolutePath() + "'", e);
+            }
         }
 
         // TODO: Cache in AssetCollection
         public void saveImage(Image image, String imageFileName) throws IOException {
             IResourceLocator resourceLocator = resolveResource(imageFileName);
-            AssetManager.saveImage(resourceLocator, image);
-        }
-
-        public void saveMaterialsToMtl(Collection<RawMaterialData> materials, String materialLibraryFileName) throws IOException {
-            IResourceLocator resourceLocator = resolveResource(materialLibraryFileName);
-            AssetManager.saveMaterials(resourceLocator, materials);
+            try {
+                AssetManager.saveImage(resourceLocator, image);
+            } catch (IOException e) {
+                throw new IOException("Error writing image to path '" + resourceLocator.getAbsolutePath() + "'", e);
+            }
         }
 
         // Should we cache this too?
@@ -409,7 +420,11 @@ public class AssetManager {
 
         public void importResourceDirectory(IDirectoryLocator sourceDirectory) throws IOException {
             IDirectoryLocator targetDirectoryLocator = getDirectoryLocator();
-            sourceDirectory.copyContentsTo(targetDirectoryLocator);
+            try {
+                sourceDirectory.copyContentsTo(targetDirectoryLocator);
+            } catch (IOException e) {
+                throw new IOException("Error importing resource directory '" + sourceDirectory.getAbsolutePath() + "' to '" + targetDirectoryLocator.getAbsolutePath() + "'", e);
+            }
         }
 
         // TODO: Update cache entries
@@ -419,14 +434,14 @@ public class AssetManager {
             try {
                 return assetTypeDirectory.exists()
                                 ? assetTypeDirectory
-                                    .list(pl -> pl instanceof IDirectoryLocator)
+                                    .list(IDirectoryLocator.class::isInstance)
                                     .stream()
                                     .map(pl -> {
                                         String assetId = pl.getFileName();
                                         Path relativeAssetPath = mRelativePathInAssetCollection.resolve(assetId);
                                         return descriptorLoader.apply(new AssetLocation(mAssetCollection, relativeAssetPath));
                                     })
-                                    .filter(ad -> ad != null)
+                                    .filter(Objects::nonNull)
                                     .collect(Collectors.toList())
                                 : Collections.emptyList();
             } catch (IOException e) {
@@ -467,14 +482,23 @@ public class AssetManager {
          */
         public void deleteAssetDirectory() throws IOException {
             IDirectoryLocator assetDirectory = getDirectoryLocator();
-            assetDirectory.deleteRecursively();
+            try {
+                assetDirectory.deleteRecursively();
+            } catch (IOException e) {
+                throw new IOException("Error deleting asset directory '" + assetDirectory.getAbsolutePath() + "'", e);
+            }
         }
     }
 
     private static final Logger log = LoggerFactory.getLogger(AssetManager.class);
 
+    /**
+     * Package name with {@code '.'} replaced by {@code '/'} with a trailing {@code '/'}, to be used as prefix
+     * when loading resources via the classloader.
+     */
     public static final String LOCAL_RESOURCE_BASE = '/' + AssetLoader.class.getPackageName().replace('.', '/');
 
+    /************************************* Directory and file names of the asset library ****************************/
     public static final String MATERIAL_SETS_DIRECTORY = "MaterialSets";
     public static final String SUPPORT_OBJECTS_DIRECTORY = "SupportObjects";
     public static final String RESOURCES_DIRECTORY_NAME = "Resources";
@@ -484,14 +508,14 @@ public class AssetManager {
     public static final String ICON_IMAGE_DEFAULT_BASE_NAME = "OverviewIcon";
     public static final String PLAN_VIEW_IMAGE_DEFAULT_BASE_NAME = "PlanViewImage";
 
-    public static final String MTL_FILE_DEFAULT_NAME = "Materials.mtl";
     public static final String OBJ_FILE_DEFAULT_NAME = "Model.obj";
 
     public static final String STORE_IMAGE_EXTENSION = "png";
+    /****************************************************************************************************************/
 
     protected final AssetManagerConfiguration mConfiguration;
 
-    protected final Map<String, RawMaterialData> mDefaultMaterials = new TreeMap<>(); // Material names to materials
+    protected final Map<String, MaterialData> mDefaultMaterials = new TreeMap<>(); // Material names to materials
     protected final Map<String, LibraryData> mAssetLibraries = new TreeMap<>(); // Ids to asset libraries
 
     protected Optional<PlanContext> mOPlanContext = Optional.empty(); // Set if there is a plan in context, value changes if another plan is opened
@@ -503,16 +527,27 @@ public class AssetManager {
     public static AssetManager create() {
         AssetManagerConfiguration config = AssetManagerConfiguration.from(Preferences.userNodeForPackage(AssetManager.class));
         AssetManager result = new AssetManager(config);
-        Map<String, RawMaterialData> defaultMaterialData = DefaultMaterials.createDefaultMaterials();
-        result.getDefaultMaterials().putAll(defaultMaterialData);
+        Map<String, MaterialData> defaultMaterials = DefaultMaterials
+                .createDefaultMaterials()
+                .entrySet()
+                .stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> convertDefaultMaterial(e.getValue())));
+        result.getDefaultMaterials().putAll(defaultMaterials);
         return result;
+    }
+
+    protected static MaterialData convertDefaultMaterial(RawMaterialData materialData) {
+        return new MaterialData(materialData.getName(), materialData.getLines(), Optional.empty(),
+                getClassLoaderDirectoryLocator(AssetLoader.DEFAULT_MATERIALS_BASE));
     }
 
     /**
      * Gets the base directory of the current plan file, if present.
      */
     public Optional<IDirectoryLocator> getPlanBaseDirectory() {
-        return mOPlanContext.map(pc -> pc.getPlanFileDirectory());
+        return mOPlanContext.map(PlanContext::getPlanFileDirectory);
     }
 
     public Optional<String> getPlanId() {
@@ -537,7 +572,7 @@ public class AssetManager {
         return mAssetLibraries;
     }
 
-    public Map<String, RawMaterialData> getDefaultMaterials() {
+    public Map<String, MaterialData> getDefaultMaterials() {
         return mDefaultMaterials;
     }
 
@@ -870,8 +905,8 @@ public class AssetManager {
         AssetLoader assetLoader = buildAssetLoader();
         assetLoader.importAssetIconImage(result, getClassLoaderResourceLocator(AssetLoader.MATERIAL_SET_PLACEHOLDER_ICON_IMAGE),
             Optional.of(ICON_IMAGE_DEFAULT_BASE_NAME + "." + STORE_IMAGE_EXTENSION));
-        assetLoader.importMaterialSetMtlResource(result, getClassLoaderResourceLocator(AssetLoader.TEMPLATE_MATERIAL_LIBRARY),
-            Optional.of(MTL_FILE_DEFAULT_NAME));
+
+        assetLoader.importRawMaterialSet(result, Collections.emptyList(), Collections.emptyList());
 
         saveMaterialSetDescriptor(result);
         return result;
@@ -921,7 +956,12 @@ public class AssetManager {
 
     protected static IResourceLocator getClassLoaderResourceLocator(String localResourceName) {
         return new ClassLoaderFileSystemResourceLocator(Path.of(
-            LOCAL_RESOURCE_BASE + "/" + localResourceName), AssetLoader.class);
+                LOCAL_RESOURCE_BASE + "/" + localResourceName), AssetLoader.class);
+    }
+
+    protected static IDirectoryLocator getClassLoaderDirectoryLocator(String localResourceName) {
+        return new ClassLoaderFileSystemDirectoryLocator(Path.of(
+                LOCAL_RESOURCE_BASE + "/" + localResourceName), AssetLoader.class);
     }
 
     public static Image loadImage(IResourceLocator imageFileLocator, Optional<ImageLoadOptions> oLoadOptions) throws IOException {

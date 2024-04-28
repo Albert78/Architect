@@ -5,7 +5,6 @@ plugins {
 
 dependencies {
     implementation libs.slf4j.api
-    implementation libs.log4j.api
     implementation libs.jakarta.xml.bind.api
     implementation libs.jaxb.runtime
     implementation libs.commons.collections4

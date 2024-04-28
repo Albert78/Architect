@@ -19,7 +19,6 @@ package de.dh.cad.architect.model.objects;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -28,7 +27,6 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlTransient;
 
-import de.dh.cad.architect.model.assets.AssetRefPath;
 import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.changes.ObjectModificationChange;
 
@@ -122,31 +120,18 @@ public abstract class BaseSolidObject extends BaseAnchoredObject {
         return result;
     }
 
-    public void setSurfaceMaterial(String surfaceTypeId, AssetRefPath materialRefPath, List<IModelChange> changeTrace) {
+    public void setSurfaceMaterial(String surfaceTypeId, MaterialMappingConfiguration materialConfiguration, List<IModelChange> changeTrace) {
         SurfaceConfiguration surfaceConfiguration = mSurfaceTypeIdsToSurfaceConfigurations.get(surfaceTypeId);
         if (surfaceConfiguration == null) {
             throw new IllegalArgumentException("Solid object <" + this + "> already does not contain a surface of type id '" + surfaceTypeId + "'");
         }
-        AssetRefPath oldMaterialRef = surfaceConfiguration.getMaterialAssignment();
-        surfaceConfiguration.setMaterialAssignment(materialRefPath);
+        MaterialMappingConfiguration oldMaterialConfig = surfaceConfiguration.getMaterialMappingConfiguration();
+        surfaceConfiguration.setMaterialMappingConfiguration(materialConfiguration);
         changeTrace.add(new ObjectModificationChange(this) {
             @Override
             public void undo(List<IModelChange> undoChangeTrace) {
-                setSurfaceMaterial(surfaceTypeId, oldMaterialRef, undoChangeTrace);
+                setSurfaceMaterial(surfaceTypeId, oldMaterialConfig, undoChangeTrace);
             }
         });
-    }
-
-    @XmlTransient
-    public Map<String, AssetRefPath> getSurfaceMaterialRefs() {
-        Map<String, AssetRefPath> result = new HashMap<>();
-        for (SurfaceConfiguration sc : getSurfaceConfigurations()) {
-            AssetRefPath materialRefPath = sc.getMaterialAssignment();
-            if (materialRefPath == null) {
-                continue;
-            }
-            result.put(sc.getSurfaceTypeId(), materialRefPath);
-        }
-        return result;
     }
 }

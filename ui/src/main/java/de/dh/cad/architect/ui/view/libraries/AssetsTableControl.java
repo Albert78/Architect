@@ -238,12 +238,12 @@ public class AssetsTableControl<T extends AbstractAssetDescriptor> extends Borde
                 return;
             }
             event.consume();
-            fireAssetChoosen();
+            fireAssetChosen();
         });
         mAssetsTableView.setOnKeyPressed(event -> {
             String character = event.getCharacter();
             if ("\n".equals(character)) {
-                fireAssetChoosen();
+                fireAssetChosen();
             }
         });
 
@@ -260,7 +260,7 @@ public class AssetsTableControl<T extends AbstractAssetDescriptor> extends Borde
             public void onChanged(Change<? extends TableEntry> c) {
                 mSelectedItemsProperty.setAll(selectedItems
                     .stream()
-                    .map(te -> te.getAssetDescriptor())
+                    .map(TableEntry::getAssetDescriptor)
                     .collect(Collectors.toList()));
             }
         });
@@ -309,7 +309,7 @@ public class AssetsTableControl<T extends AbstractAssetDescriptor> extends Borde
         mFilteredList.setPredicate(predicate);
     }
 
-    protected void fireAssetChoosen() {
+    protected void fireAssetChosen() {
         T selectedItem = getSelectedItem();
         if (selectedItem != null && mAssetChoosenHandler != null) {
             mAssetChoosenHandler.onAssetChoosen(AssetsTableControl.this, selectedItem);
@@ -332,11 +332,11 @@ public class AssetsTableControl<T extends AbstractAssetDescriptor> extends Borde
         mAssetsTableView.getSelectionModel().setSelectionMode(mode);
     }
 
-    public IAssetChoosenHandler<T> getAssetChoosenHandler() {
+    public IAssetChoosenHandler<T> getAssetChosenHandler() {
         return mAssetChoosenHandler;
     }
 
-    public void setAssetChoosenHandler(IAssetChoosenHandler<T> value) {
+    public void setAssetChosenHandler(IAssetChoosenHandler<T> value) {
         mAssetChoosenHandler = value;
     }
 

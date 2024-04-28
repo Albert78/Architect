@@ -17,7 +17,6 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.view.libraries;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -29,12 +28,9 @@ import de.dh.cad.architect.model.assets.AbstractAssetDescriptor;
 import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.assets.AssetLoader;
 import de.dh.cad.architect.ui.assets.AssetManager;
-import de.dh.cad.architect.ui.assets.AssetManagerConfiguration;
 import de.dh.cad.architect.utils.vfs.PlainFileSystemResourceLocator;
-import de.dh.utils.fx.FxUtils;
 import de.dh.utils.fx.dialogs.DialogUtils;
 import javafx.scene.image.Image;
-import javafx.stage.FileChooser;
 import javafx.stage.Window;
 
 public abstract class AbstractAssetEditControl extends AbstractEditControl {
@@ -110,19 +106,7 @@ public abstract class AbstractAssetEditControl extends AbstractEditControl {
     }
 
     protected Path openImageDialog(String title) {
-        FileChooser fc = new FileChooser();
-        fc.setTitle(title);
-        AssetManagerConfiguration configuration = mAssetManager.getConfiguration();
-        Optional<Path> oLastImagePath = configuration.getLastImagePath();
-        oLastImagePath.ifPresent(path -> FxUtils.trySetInitialDirectory(fc, path));
-        fc.getExtensionFilters().addAll(getImageExtensionFilters());
-        File imageFile = fc.showOpenDialog(getStage());
-        if (imageFile == null) {
-            return null;
-        }
-        Path imagePath = imageFile.toPath();
-        configuration.setLastImagePath(imagePath);
-        return imagePath;
+        return de.dh.cad.architect.ui.utils.DialogUtils.openImageDialog(title, mAssetManager.getConfiguration(), getStage());
     }
 
     protected Path openIconImageDialog() {

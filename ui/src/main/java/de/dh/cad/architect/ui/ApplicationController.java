@@ -18,6 +18,7 @@
 package de.dh.cad.architect.ui;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -223,7 +224,7 @@ public class ApplicationController {
     /**
      * Loads the plan from the given file.
      */
-    public void loadPlanFile(Path planFilePath) {
+    public void loadPlanFile(Path planFilePath) throws IOException {
         log.info("Loading plan from '" + planFilePath + "'");
         PlanFile planFile = PlanFileIO.deserializePlanFile(planFilePath);
         setPlan(planFile.getPlan(), planFilePath);
@@ -240,7 +241,7 @@ public class ApplicationController {
     /**
      * Saves the plan under the given file path without user query.
      */
-    public void savePlanAs(Path planFilePath) {
+    public void savePlanAs(Path planFilePath) throws IOException {
         log.info("Saving current plan as '" + planFilePath + "'");
         PlanFileIO.serializePlanFile(new PlanFile(getPlan(), mUiController.getUiState()), planFilePath);
         changePlanFilePath(planFilePath);
@@ -275,7 +276,11 @@ public class ApplicationController {
         if (!querySavePlanBeforeClose(parentWindow)) {
             return false;
         }
-        loadPlanFile(planFilePath);
+        try {
+            loadPlanFile(planFilePath);
+        } catch (IOException e) {
+            log.error("Unable to load plan from path '" + planFilePath + "'", e);
+        }
         return true;
     }
 
@@ -320,14 +325,20 @@ public class ApplicationController {
 
     /**
      * Saves the plan if it is attached to a file path, else queries the user for path to save as.
+     * @return {@code true} if the plan was saved, else {@code false}.
      */
     public boolean saveOrQueryPath(Window parentWindow) {
         Path currentPath = getPlanFilePath();
         if (currentPath == null) {
             return querySaveAs(parentWindow);
         } else {
-            savePlanAs(currentPath);
-            return true;
+            try {
+                savePlanAs(currentPath);
+                return true;
+            } catch (IOException e) {
+                log.error("Error writing plan file to path '" + currentPath + "'", e);
+                return false;
+            }
         }
     }
 
@@ -370,7 +381,7 @@ public class ApplicationController {
 
     /**
      * Shows a save-as dialog to the user.
-     * @return {@code true} if the user saved the file, else {@code false}.
+     * @return {@code true} if the user saved the plan to file, else {@code false}.
      */
     public boolean querySaveAs(Window parentWindow) {
         PlanFileChooser fileChooser = new PlanFileChooser();
@@ -390,11 +401,16 @@ public class ApplicationController {
         }
         addFileChooserExtensionFilters(fileChooser);
         Path path = fileChooser.showSaveDialog(parentWindow);
-        if (path != null) {
-            savePlanAs(path);
-            return true;
+        if (path == null) {
+            return false;
         }
-        return false;
+        try {
+            savePlanAs(path);
+        } catch (IOException e) {
+            log.error("Error writing plan to path '" + path + "'", e);
+            return false;
+        }
+        return true;
     }
 
     /**

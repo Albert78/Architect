@@ -54,6 +54,16 @@ public class MeshConfiguration {
         mMaterialAssignment = value;
     }
 
+    // TODO: We could also support the "tile" mode for applying the material to a mesh.
+    // Currently we only support the standard "stretch" mode, which in fact means that the
+    // material and the texture coordinates in the mesh are (and must be) geared to each other.
+    // For the leaves of a plant for example, this works well and such a texture needs to
+    // be well defined.
+    // But consider the example of a wooden table, here it would make sense to define a
+    // wood plank as material which should be tiled over the whole surface.
+    // To support tile mode, we would need to provide a similar surface configuration here
+    // as we already have around class SurfaceConfiguration.
+
     @XmlAttribute(name = "meshName")
     public String getMeshName_JAXB() {
         return mMeshName;

@@ -30,7 +30,6 @@ import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.construction.Abstract2DView;
 import de.dh.cad.architect.ui.view.construction.ConstructionView;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Shape;
@@ -45,12 +44,7 @@ public class CoveringConstructionRepresentation extends AbstractAnchoredObjectCo
         setViewOrder(Constants.VIEW_ORDER_COVERING);
         addScaled(mShape);
 
-        ChangeListener<Boolean> propertiesUpdaterListener = new ChangeListener<>() {
-            @Override
-            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                updateProperties();
-            }
-        };
+        ChangeListener<Boolean> propertiesUpdaterListener = (observable, oldValue, newValue) -> updateProperties();
         selectedProperty().addListener(propertiesUpdaterListener);
         objectSpottedProperty().addListener(propertiesUpdaterListener);
         objectFocusedProperty().addListener(propertiesUpdaterListener);

@@ -7,7 +7,6 @@ group = 'de.dh.utils.fx'
 
 dependencies {
     implementation libs.jakarta.xml.bind.api
-    implementation libs.jaxb.runtime
     implementation libs.slf4j.api
     implementation libs.commons.collections4
     implementation libs.commons.lang3

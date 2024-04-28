@@ -17,10 +17,18 @@
  *******************************************************************************/
 package de.dh.cad.architect.libraryimporter.sh3d.furniture;
 
+import java.util.Map;
 import java.util.Optional;
 
+import de.dh.cad.architect.libraryimporter.ObjectLoader;
+import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.ui.assets.AssetLoader;
+import de.dh.cad.architect.ui.assets.AssetLoaderUtils;
+import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.utils.vfs.IResourceLocator;
+import de.dh.utils.io.fx.MaterialData;
+import javafx.geometry.Bounds;
+import javafx.scene.Node;
 import javafx.scene.transform.Transform;
 
 /**
@@ -277,7 +285,7 @@ public class CatalogPieceOfFurniture {
   }
 
   public static float[][] convertRotationToArchitectFormat(float[][] modelRotation) {
-      Optional<Transform> oTransform = AssetLoader.createTransform(modelRotation);
+      Optional<Transform> oTransform = AssetLoaderUtils.createTransform(modelRotation);
       Transform transform;
       Transform o2a = AssetLoader.createTransformObjToArchitect();
       if (oTransform.isPresent()) {
@@ -287,7 +295,7 @@ public class CatalogPieceOfFurniture {
           transform = o2a;
       }
 
-      return AssetLoader.createRotationMatrix(transform);
+      return AssetLoaderUtils.createRotationMatrix(transform);
   }
 
   /**
@@ -358,5 +366,22 @@ public class CatalogPieceOfFurniture {
    */
   public boolean isHorizontallyRotatable() {
     return this.horizontallyRotatable;
+  }
+
+  public Node createThreeDModel(Map<String, MaterialData> defaultMaterials) {
+    Node objView = ObjectLoader.load3DResource(getModel(), getModelRotationArchitect(), defaultMaterials);
+
+    if (objView == null) {
+      objView = AssetLoader.loadBroken3DResource().getObject();
+    } else {
+      Bounds bounds = objView.getBoundsInParent();
+      double width = CoordinateUtils.lengthToCoords(Length.ofCM(getWidth()), null);
+      double height = CoordinateUtils.lengthToCoords(Length.ofCM(getHeight()), null);
+      double depth = CoordinateUtils.lengthToCoords(Length.ofCM(getDepth()), null);
+      objView.setScaleX(width / bounds.getWidth());
+      objView.setScaleY(height / bounds.getDepth());
+      objView.setScaleZ(depth / bounds.getHeight());
+    }
+    return objView;
   }
 }

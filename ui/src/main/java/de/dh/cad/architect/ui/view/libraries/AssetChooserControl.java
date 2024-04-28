@@ -101,11 +101,11 @@ public class AssetChooserControl<T extends AbstractAssetDescriptor> extends Bord
     }
 
     public IAssetChoosenHandler<T> getAssetChoosenHandler() {
-        return mAssetsTableControl.getAssetChoosenHandler();
+        return mAssetsTableControl.getAssetChosenHandler();
     }
 
     public void setAssetChoosenHandler(IAssetChoosenHandler<T> value) {
-        mAssetsTableControl.setAssetChoosenHandler(value);
+        mAssetsTableControl.setAssetChosenHandler(value);
     }
 
     public ReadOnlyObjectProperty<T> selectedItemProperty() {

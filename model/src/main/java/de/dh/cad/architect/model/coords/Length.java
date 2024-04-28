@@ -78,7 +78,12 @@ public class Length implements Comparable<Length> {
         }
         String valueStr = parts[0];
         String unitStr = parts[1];
-        double value = Constants.TRANSPORTABLE_CANONICAL_FLOAT_FORMAT.parse(valueStr).doubleValue();
+        double value;
+        try {
+            value = Constants.TRANSPORTABLE_CANONICAL_FLOAT_FORMAT.parse(valueStr).doubleValue();
+        } catch (IllegalArgumentException e) {
+            throw new ParseException("Error parsing length value in length string '" + lengthStr + "'", 0);
+        }
         LengthUnit unit;
         try {
             unit = LengthUnit.parse(unitStr);
@@ -279,6 +284,12 @@ public class Length implements Comparable<Length> {
     }
 
     public static Length max(Length v1, Length v2) {
+        if (v1 == null) {
+            return v2;
+        }
+        if (v2 == null) {
+            return v1;
+        }
         return v1.lt(v2) ? v2 : v1;
     }
 
@@ -288,6 +299,12 @@ public class Length implements Comparable<Length> {
     }
 
     public static Length min(Length v1, Length v2) {
+        if (v1 == null) {
+            return v2;
+        }
+        if (v2 == null) {
+            return v1;
+        }
         return v1.lt(v2) ? v1 : v2;
     }
 

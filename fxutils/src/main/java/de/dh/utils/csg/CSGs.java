@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 
 import de.dh.utils.csg.CSGSurfaceAwareAddon.SurfacePart;
 import eu.mihosoft.jcsg.CSG;
@@ -138,7 +137,12 @@ public class CSGs {
     /**
      * Class which provides all data for a surface aware CSG extruded from a base polygon.
      */
-    public interface ExtrusionSurfaceDataProvider<S> {
+    public abstract static class ExtrusionSurfaceDataProvider<S> {
+        protected TextureCoordinateSystem mTopPolygonTextureCoordinateSystem = null;
+        protected TextureCoordinateSystem mBottomPolygonTextureCoordinateSystem = null;
+        protected TextureProjection mTopPolygonTextureProjection = null;
+        protected TextureProjection mBottomPolygonTextureProjection = null;
+
         /**
          * Returns a list of corner points of the bottom surface.
          * Since the extrusion is in Z direction, the bottom points must have the smaller Z coordinate values.
@@ -146,7 +150,7 @@ public class CSGs {
          * given in counter-clockwise direction. The polygon plane must not be orthogonal to the X/Y plane
          * because of the limitations of the extrusion function.
          */
-        List<Vector3d> getBottomPolygonPointsCW();
+        public abstract List<Vector3d> getBottomPolygonPointsCW();
 
         /**
          * Returns a list of polygon points for the top surface which represent the same corners as the bottom
@@ -154,40 +158,52 @@ public class CSGs {
          * i.e. each bottom point must have a corresponding point in the result of this method.
          * Since the extrusion is in Z direction, the top points must have the higher Z coordinate values.
          */
-        List<Vector3d> getTopPolygonPointsCW();
+        public abstract List<Vector3d> getTopPolygonPointsCW();
 
-        Vector3d getTopPolygonTextureDirectionX();
-        Vector3d getBottomPolygonTextureDirectionX();
+        public abstract Vector3d getTopPolygonTextureDirectionX();
+        public abstract Vector3d getBottomPolygonTextureDirectionX();
 
         // Base points are located in XY plane, so texture normal of top polygon is in positive Z direction,
         // normal for bottom polygon is in negative Z direction
-        default TextureCoordinateSystem getTopPolygonTextureCoordinateSystem() {
-            return TextureCoordinateSystem.create(
-                Vector3d.Z_ONE,
-                getTopPolygonTextureDirectionX());
+        public TextureCoordinateSystem getTopPolygonTextureCoordinateSystem() {
+            if (mTopPolygonTextureCoordinateSystem == null) {
+                mTopPolygonTextureCoordinateSystem = TextureCoordinateSystem.create(
+                        Vector3d.Z_ONE,
+                        getTopPolygonTextureDirectionX());
+            }
+            return mTopPolygonTextureCoordinateSystem;
         }
 
-        default TextureCoordinateSystem getBottomPolygonTextureCoordinateSystem() {
-            return TextureCoordinateSystem.create(
-                Vector3d.Z_ONE.negated(),
-                getBottomPolygonTextureDirectionX());
+        public TextureCoordinateSystem getBottomPolygonTextureCoordinateSystem() {
+            if (mBottomPolygonTextureCoordinateSystem == null) {
+                mBottomPolygonTextureCoordinateSystem = TextureCoordinateSystem.create(
+                        Vector3d.Z_ONE.negated(),
+                        getBottomPolygonTextureDirectionX());
+            }
+            return mBottomPolygonTextureCoordinateSystem;
         }
 
-        default TextureProjection getTopPolygonTextureProjection() {
-            return TextureProjection.fromPointsBorder(getTopPolygonTextureCoordinateSystem(), getTopPolygonPointsCW());
+        public TextureProjection getTopPolygonTextureProjection() {
+            if (mTopPolygonTextureProjection == null) {
+                mTopPolygonTextureProjection = TextureProjection.fromPointsBorder(getTopPolygonTextureCoordinateSystem(), getTopPolygonPointsCW());
+            }
+            return mTopPolygonTextureProjection;
         }
 
-        default TextureProjection getBottomPolygonTextureProjection() {
-            return TextureProjection.fromPointsBorder(getBottomPolygonTextureCoordinateSystem(), getBottomPolygonPointsCW());
+        public TextureProjection getBottomPolygonTextureProjection() {
+            if (mBottomPolygonTextureProjection == null) {
+                mBottomPolygonTextureProjection = TextureProjection.fromPointsBorder(getBottomPolygonTextureCoordinateSystem(), getBottomPolygonPointsCW());
+            }
+            return mBottomPolygonTextureProjection;
         }
 
         /**
          * Gets the (side) surface in the connection between the point of the given start index and the next point in the list of polygon points.
          */
-        S getSurfaceCW(int startPointIndex);
+        public abstract S getSurfaceCW(int startPointIndex);
 
-        S getTopSurface();
-        S getBottomSurface();
+        public abstract S getTopSurface();
+        public abstract S getBottomSurface();
     }
 
     /**
@@ -203,12 +219,13 @@ public class CSGs {
      * wall and the small bevel part.
      * The extruded polygon will consist of N surfaces, one for the top, one for the bottom and
      * an arbitrary count of surfaces for the borders, each including a consecutive list of extruded base edges.
-     * For each surface, we will create a separate mesh in method {@link #createMeshes(Optional)}, which means,
-     * each surface can be covered with a separate texture at the end. With parameter {@code continueSurfaceTextures} set to {@code true},
-     * adjacent surfaces of the same type will be combined to a bigger surface.
+     * For each surface, a separate mesh will be created, which means, each surface can be covered with a separate texture at the end.
+     * With parameter {@code continueSurfaceTextures} set to {@code true}, adjacent surfaces of the same type will be
+     * combined to a bigger surface.
      *
      * During the extrusion process, data about the relative polygon location in a surface is collected and stored in the
-     * polygon's properties for later generating the mesh objects in method {@link CSGSurfaceAwareAddon#createMeshes(CSG, CSGSurfaceAwareAddon.ISurfaceDataProvider)}.
+     * polygon's properties for later generating the mesh objects in method
+     * {@link CSGSurfaceAwareAddon#createMeshes(CSG, CSGSurfaceAwareAddon.ISurfaceDataProvider)}.
      *
      * @param extrusionSurfaceDataProvider Provider for the data needed during the creation of the resulting CSG.
      * @param startPoint Index of a path point of the top- and bottom polygons provided by the surface data provider,

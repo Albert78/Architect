@@ -39,7 +39,6 @@ import de.dh.cad.architect.ui.view.threed.Abstract3DView;
 public class FloorUIRepresentation extends BaseObjectUIRepresentation {
     public static final String KEY_PROPERTY_LEVEL = "level";
     public static final String KEY_PROPERTY_HEIGHT = "height";
-    public static final String KEY_PROPERTY_THICKNESS = "thickness";
     public static final String KEY_PROPERTY_AREA = "area";
 
     public FloorUIRepresentation() {
@@ -82,22 +81,6 @@ public class FloorUIRepresentation extends BaseObjectUIRepresentation {
                         List<IModelChange> changeTrace = new ArrayList<>();
                         floor.setHeight((Length) value, changeTrace);
                         ObjectReconcileOperation omo = new ObjectReconcileOperation(Strings.FLOOR_PROPERTIES_SET_HEIGHT_OPERATION_NAME);
-                        omo.tryAddObjectToProcess(floor);
-                        uiController.doReconcileObjects(omo, changeTrace);
-                        uiController.notifyChange(changeTrace, Strings.FLOOR_SET_PROPERTY_CHANGE);
-                    }
-                },
-                new UiProperty<Length>(floor, KEY_PROPERTY_THICKNESS, Strings.FLOOR_PROPERTIES_THICKNESS, PropertyType.Length, true) {
-                    @Override
-                    public Length getValue() {
-                        return floor.getThickness();
-                    }
-
-                    @Override
-                    public void setValue(Object value) {
-                        List<IModelChange> changeTrace = new ArrayList<>();
-                        floor.setThickness((Length) value, changeTrace);
-                        ObjectReconcileOperation omo = new ObjectReconcileOperation(Strings.FLOOR_PROPERTIES_SET_THICKNESS_OPERATION_NAME);
                         omo.tryAddObjectToProcess(floor);
                         uiController.doReconcileObjects(omo, changeTrace);
                         uiController.notifyChange(changeTrace, Strings.FLOOR_SET_PROPERTY_CHANGE);

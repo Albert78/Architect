@@ -17,7 +17,6 @@
  *******************************************************************************/
 package de.dh.cad.architect.ui.assets;
 
-import java.awt.image.BufferedImage;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,8 +37,6 @@ import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import javax.imageio.ImageIO;
-
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -49,21 +46,25 @@ import de.dh.cad.architect.model.assets.AbstractAssetDescriptor;
 import de.dh.cad.architect.model.assets.AbstractModelResource;
 import de.dh.cad.architect.model.assets.AssetRefPath;
 import de.dh.cad.architect.model.assets.MaterialSetDescriptor;
+import de.dh.cad.architect.model.assets.MaterialsModel;
 import de.dh.cad.architect.model.assets.MeshConfiguration;
-import de.dh.cad.architect.model.assets.MtlModelResource;
 import de.dh.cad.architect.model.assets.ObjModelResource;
+import de.dh.cad.architect.model.assets.RawMaterialModel;
 import de.dh.cad.architect.model.assets.SupportObjectDescriptor;
 import de.dh.cad.architect.model.assets.ThreeDModelResource;
 import de.dh.cad.architect.model.coords.Length;
+import de.dh.cad.architect.model.objects.MaterialMappingConfiguration;
 import de.dh.cad.architect.ui.assets.AssetManager.AssetLocation;
+import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.libraries.ImageLoadOptions;
 import de.dh.cad.architect.utils.vfs.IDirectoryLocator;
 import de.dh.cad.architect.utils.vfs.IPathLocator;
 import de.dh.cad.architect.utils.vfs.IResourceLocator;
+import de.dh.utils.MaterialMapping;
 import de.dh.utils.Vector2D;
 import de.dh.utils.fx.BoxMesh;
-import de.dh.utils.fx.ImageUtils;
 import de.dh.utils.io.fx.FxMeshBuilder;
+import de.dh.utils.io.fx.MaterialData;
 import de.dh.utils.io.obj.MtlLibraryIO;
 import de.dh.utils.io.obj.ObjReader;
 import de.dh.utils.io.obj.ObjReader.ObjDataRaw;
@@ -72,8 +73,6 @@ import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.MeshView;
-import javafx.scene.shape.Shape3D;
-import javafx.scene.transform.Affine;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Transform;
 
@@ -85,6 +84,10 @@ public class AssetLoader {
         public ImportResource(IResourceLocator resourceLocator, String targetFileName) {
             mResourceLocator = resourceLocator;
             mTargetFileName = targetFileName;
+        }
+
+        public static ImportResource fromResource(IResourceLocator resource) {
+            return new ImportResource(resource, resource.getFileName());
         }
 
         public IResourceLocator getResourceLocator() {
@@ -104,9 +107,9 @@ public class AssetLoader {
     public static final String SUPPORT_OBJECT_PLACEHOLDER_ICON_IMAGE = "support-object-placeholder-icon.png";
     public static final String MATERIAL_SET_PLACEHOLDER_ICON_IMAGE = "materialset-placeholder-icon.png";
     public static final String MATERIAL_PLACEHOLDER_TEXTURE = "material-placeholder-texture.png";
+    public static final String DEFAULT_MATERIALS_BASE = "defaultmaterials"; // Potential base directory for resources of the default materials
 
     public static final String TEMPLATE_MATERIAL_SET_ICON_IMAGE = MATERIAL_SET_PLACEHOLDER_ICON_IMAGE;
-    public static final String TEMPLATE_MATERIAL_LIBRARY = "template-material-library.mtl";
 
     public static final String TEMPLATE_SUPPORT_OBJECT_ICON_IMAGE = SUPPORT_OBJECT_PLACEHOLDER_ICON_IMAGE;
     public static final String TEMPLATE_SUPPORT_OBJECT_PLAN_VIEW_IMAGE = SUPPORT_OBJECT_PLACEHOLDER_PLAN_VIEW_IMAGE;
@@ -212,7 +215,12 @@ public class AssetLoader {
         return loadAssetResourceImage(assetRefPath, resourceName);
     }
 
-    public ThreeDObject loadSupportObject3DResource(SupportObjectDescriptor soDescriptor, Optional<Map<String, AssetRefPath>> oOverriddenSurfaceMaterialRefs) throws IOException {
+    /**
+     * Loads the 3D object of the given support object descriptor without loading of materials.
+     * @param soDescriptor Descriptor of the support object to load.
+     * @return Loaded 3D object.
+     */
+    public IncompleteThreeDObject loadSupportObject3DResourcePure(SupportObjectDescriptor soDescriptor) throws IOException {
         AssetRefPath assetRefPath = soDescriptor.getSelfRef();
         AssetLocation assetLocation = mAssetManager.resolveAssetLocation(assetRefPath);
         AbstractModelResource model = soDescriptor.getModel();
@@ -221,61 +229,20 @@ public class AssetLoader {
         }
         try {
             if (model instanceof ObjModelResource omr) {
-                Map<String, MeshConfiguration> meshNamesToMeshConfigurations = soDescriptor.getMeshNamesToMeshConfigurations();
 
                 ObjDataRaw objData = loadObjModelData(assetLocation, omr);
-                Map<String, String> defaultMeshNamesToMaterialNames = objData.getMeshNamesToMaterialNames();
 
-                // Lookup material ref paths from SO descriptor by the mesh names given in obj file
-                Map<String, AssetRefPath> defaultMeshNamesToMaterialRefs = defaultMeshNamesToMaterialNames
-                    .entrySet()
-                    .stream()
-                    // Because of a bug in JDK, the following code fails because of a potential null value;
-                    // Collectors.toMap needs both the map's key and value to be non-null:: https://bugs.openjdk.org/browse/JDK-8148463
-//                    .collect(Collectors.toMap(entry -> entry.getKey(), entry -> {
-//                        String meshName = entry.getKey();
-//                        MeshConfiguration mc = meshNamesToMeshConfigurations.get(meshName);
-//                        if (mc == null) {
-//                            return null;
-//                        }
-//                        return mc.getMaterialAssignment();
-//                    }));
-                    // Work around
-                    .collect(HashMap::new, (m, entry) -> {
-                        String meshName = entry.getKey();
-                        MeshConfiguration mc = meshNamesToMeshConfigurations.get(meshName); // From SO descriptor
-                        AssetRefPath materialAssignment = mc == null
-                                        ? null
-                                        : mc.getMaterialAssignment();
-                        m.put(meshName, materialAssignment);
-                    }, HashMap::putAll);
-
-                Map<String, AssetRefPath> meshNamesToMaterialRefs = oOverriddenSurfaceMaterialRefs
-                                .map(om -> mergeMaterials(defaultMeshNamesToMaterialRefs, om))
-                                .orElse(defaultMeshNamesToMaterialRefs);
-
-                Map<String, RawMaterialData> meshNamesToMaterials;
-                try {
-                    meshNamesToMaterials = loadMaterialData(meshNamesToMaterialRefs);
-                } catch (IOException e) {
-                    log.error("Error loading overridden materials", e);
-                    meshNamesToMaterials = Collections.emptyMap();
-                }
-                // If we neither have a material assignment in the SO descriptor, nor an overridden material, we fall back to the default
-                // materials defined in asset manager.
-                // Default materials don't have an asset ref path, so we have to use defaultMeshNamesToMaterialNames for the lookup.
-                for (Entry<String, RawMaterialData> entry : new ArrayList<>(meshNamesToMaterials.entrySet())) {
-                    RawMaterialData material = entry.getValue();
-                    if (material == null) {
-                        String meshName = entry.getKey();
-                        String materialName = defaultMeshNamesToMaterialNames.get(meshName);
-                        meshNamesToMaterials.put(meshName, mAssetManager.getDefaultMaterials().get(materialName));
-                    }
-                }
-
-                Collection<MeshView> meshes = FxMeshBuilder.buildMeshViews(objData.getMeshes(), meshNamesToMaterials, false);
-                Optional<Transform> oTrans = createTransform(omr.getModelRotationMatrix());
-                return new ThreeDObject(meshes, oTrans, soDescriptor.getWidth(), soDescriptor.getHeight(), soDescriptor.getDepth());
+                Collection<MeshView> meshes = objData.getMeshes()
+                        .stream()
+                        .map(md -> {
+                            try {
+                                return FxMeshBuilder.buildMeshView(md);
+                            } catch (IOException e) {
+                                throw new RuntimeException("Unable to build mesh view from " + md);
+                            }
+                        }).toList();
+                Optional<Transform> oTrans = AssetLoaderUtils.createTransform(omr.getModelRotationMatrix());
+                return new IncompleteThreeDObject(meshes, objData.getMeshNamesToMaterialNames(), oTrans, soDescriptor.getWidth(), soDescriptor.getHeight(), soDescriptor.getDepth());
             } else {
                 throw new NotImplementedException("Unable to load object 3D model of class <" + model.getClass() + "> in descriptor <" + assetRefPath + ">");
             }
@@ -283,6 +250,39 @@ public class AssetLoader {
             String msg = "Unable to load 3D model for support object descriptor <" + soDescriptor + ">";
             throw new IOException(msg, e);
         }
+    }
+
+    public ThreeDObject loadSupportObject3DResource(SupportObjectDescriptor soDescriptor) throws IOException {
+        IncompleteThreeDObject incompleteThreeDObject = loadSupportObject3DResourcePure(soDescriptor);
+        Map<String, String> meshNamesToOrigMaterialNames = incompleteThreeDObject.getMeshNamesToMaterialNames();
+
+/*      // The following code produces a NullPointerException if MeshConfiguration::getMaterialAssignment returns null.
+        // See https://stackoverflow.com/questions/24630963/nullpointerexception-in-collectors-tomap-with-null-entry-values
+        Map<String, AssetRefPath> meshNamesToSODMaterialRefs = soDescriptor.getMeshNamesToMeshConfigurations().values()
+                .stream()
+                .collect(Collectors.toMap(MeshConfiguration::getMeshName, MeshConfiguration::getMaterialAssignment));
+        // --> We replace it by this:
+*/
+        Map<String, AssetRefPath> meshNamesToSODMaterialRefs = soDescriptor.getMeshNamesToMeshConfigurations().values()
+                .stream()
+                .collect(HashMap::new, (m, v) -> m.put(v.getMeshName(), v.getMaterialAssignment()), HashMap::putAll);
+
+        ThreeDObject result = incompleteThreeDObject.getThreeDObjectWithoutMaterials();
+
+        for (MeshView meshView : result.getSurfaceMeshViews()) {
+            String meshName = meshView.getId();
+            AssetRefPath materialRef = meshNamesToSODMaterialRefs.get(meshName);
+            MaterialData material;
+            if (materialRef == null) {
+                String materialName = meshNamesToOrigMaterialNames.get(meshName);
+                material = materialName == null ? null : mAssetManager.getDefaultMaterials().get(materialName);
+            } else {
+                material = loadMaterialData(materialRef);
+            }
+            meshView.setMaterial(buildMaterial_Lax(material, MaterialMapping.stretch()));
+        }
+
+        return result;
     }
 
     protected String importAssetResourceImage(AssetRefPath assetRefPath, Image image, String imageName) throws IOException {
@@ -301,21 +301,15 @@ public class AssetLoader {
         return imageName;
     }
 
-    public static enum ThreeDResourceImportMode {
-        /**
-         * Only the given {@code .obj} file will be imported, nothing else.
-         * This mode makes sense if the 3D model only consists of a single file.
-         */
-        ObjFile,
+    public void updateSupportObject3DViewObjRotation(SupportObjectDescriptor descriptor, Transform rotation) {
+        AssetRefPath assetRefPath = descriptor.getSelfRef();
 
-        /**
-         * The whole directory of the given {@code .obj} file will be imported.
-         * This mode makes sense if the 3D model includes more files like {@code .mtl} files,
-         * images, a license file etc.
-         * In this case, all those files must be located in a single directory and that directory should only
-         * contain the files for that 3D model.
-         */
-        Directory
+        AbstractModelResource model = descriptor.getModel();
+        if (!(model instanceof ThreeDModelResource tdmr)) {
+            throw new NullPointerException("3D model is not assigned in descriptor <" + assetRefPath + ">");
+        }
+        float[][] rotationMatrix = AssetLoaderUtils.createRotationMatrix(rotation);
+        tdmr.setModelRotationMatrix(rotationMatrix);
     }
 
     // We assume that the whole structure is located in the same directory
@@ -337,9 +331,19 @@ public class AssetLoader {
         return new ObjModelResource(modelPath);
     }
 
-    protected void clearModelFolder(AssetRefPath assetRefPath) throws IOException {
-        IDirectoryLocator directory = getModelDirectory(assetRefPath);
+    protected void clearResourcesFolder(AssetRefPath assetRefPath) throws IOException {
+        IDirectoryLocator directory = getResourcesDirectory(assetRefPath);
         directory.clean();
+    }
+
+    /**
+     * Gets the resources directory of the given asset.
+     * @param assetRefPath Asset ref path to a material set or support object.
+     * @return {@link AssetManager#RESOURCES_DIRECTORY_NAME Resources directory name} of the given asset.
+     */
+    public IDirectoryLocator getResourcesDirectory(AssetRefPath assetRefPath) throws IOException {
+        AssetLocation assetLocation = mAssetManager.resolveAssetLocation(assetRefPath);
+        return assetLocation.resolveResourcesDirectory().getDirectoryLocator();
     }
 
     /**
@@ -354,6 +358,17 @@ public class AssetLoader {
         AssetLocation assetLocation = mAssetManager.resolveAssetLocation(assetRefPath);
         IResourceLocator resourceLocator = assetLocation.resolveResource(fileNameOrPath);
         resourceLocator.delete();
+    }
+
+    public void importAssetResources(Collection<ImportResource> resources, AssetRefPath materialSetRefPath) throws IOException {
+        AssetLocation resourceLocation = mAssetManager.resolveAssetLocation(materialSetRefPath).resolveResourcesDirectory();
+        IDirectoryLocator resourceDirectory = resourceLocation.getDirectoryLocator();
+        if (resourceDirectory.exists()) {
+            resourceDirectory.clean();
+        }
+        for (ImportResource resource : resources) {
+            resourceLocation.importResource(resource.getResourceLocator(), resource.getTargetFileName());
+        }
     }
 
     public void importAssetIconImage(AbstractAssetDescriptor descriptor, Image image, String imageName) throws IOException {
@@ -391,7 +406,7 @@ public class AssetLoader {
     public void importSupportObject3DViewObjResource(SupportObjectDescriptor descriptor, IResourceLocator sourceObjResourceLocator,
         Optional<float[][]> oModelRotation, ThreeDResourceImportMode importMode, Optional<String> oOverriddenName) throws IOException {
         AssetRefPath assetRefPath = descriptor.getSelfRef();
-        clearModelFolder(assetRefPath);
+        clearResourcesFolder(assetRefPath);
         ThreeDModelResource modelResource = importAssetResourceObj(assetRefPath, sourceObjResourceLocator, importMode, oOverriddenName);
         if (oModelRotation.isPresent()) {
             modelResource.setModelRotationMatrix(oModelRotation.get());
@@ -401,43 +416,40 @@ public class AssetLoader {
         descriptor.setModel(modelResource);
 
         if (importMode == ThreeDResourceImportMode.Directory) {
-            // Convert material library file(s) to their own local material set
-            importLocalMaterialSets(descriptor);
+            AbstractModelResource soModel = descriptor.getModel();
+            if (soModel instanceof ObjModelResource omr) {
+                AssetLocation soAssetLocation = mAssetManager.resolveAssetLocation(assetRefPath);
+                // We have imported a whole directory consisting of license files, .obj files, .mtl files and additional resources.
+                // Now we'll disassemble the materials and compile the data to local support object materials in asset library format.
+                convertSOLocalMtlsToMaterialSets(descriptor, soAssetLocation, omr);
+            } else {
+                System.out.println("Skipping non-object model of descriptor " + assetRefPath);
+            }
         }
 
         mAssetManager.saveSupportObjectDescriptor(descriptor);
     }
 
-    public void updateSupportObject3DViewObjRotation(SupportObjectDescriptor descriptor, Transform rotation) {
-        AssetRefPath assetRefPath = descriptor.getSelfRef();
-
-        AbstractModelResource model = descriptor.getModel();
-        if (!(model instanceof ThreeDModelResource)) {
-            throw new NullPointerException("3D model is not assigned in descriptor <" + assetRefPath + ">");
-        }
-        ThreeDModelResource tdmr = (ThreeDModelResource) model;
-        float[][] rotationMatrix = AssetLoader.createRotationMatrix(rotation);
-        tdmr.setModelRotationMatrix(rotationMatrix);
-    }
-
-    public boolean importLocalMaterialSets(SupportObjectDescriptor soDescriptor) throws IOException {
-        AssetRefPath soRefPath = soDescriptor.getSelfRef();
-        AssetLocation soAssetLocation = mAssetManager.resolveAssetLocation(soRefPath);
-        AbstractModelResource soModel = soDescriptor.getModel();
-        if (!(soModel instanceof ObjModelResource)) {
-            System.out.println("Skipping non-object model of descriptor " + soRefPath);
-            return false;
-        }
-
+    /**
+     * Given a support object with already imported .obj file part, this method converts the referenced materials
+     * from .mtl files which were already copied to the support object's {@link AssetManager#RESOURCES_DIRECTORY_NAME Resources} directory
+     * to local material sets of the support object in asset library format.
+     *
+     * @param soDescriptor Descriptor of the half-imported support object.
+     * @param soAssetLocation Asset location of the support object. This parameter is redundant to and could be calculated from {@code soDescriptor}
+     * but is already present in caller and thus given here for performance reasons.
+     * @param omr Object model of the support object. This parameter is also redundant but passed for performance reasons.
+     */
+    public void convertSOLocalMtlsToMaterialSets(SupportObjectDescriptor soDescriptor, AssetLocation soAssetLocation, ObjModelResource omr) throws IOException {
         try {
-            ObjDataRaw objDataRaw = loadObjModelData(soAssetLocation, (ObjModelResource) soModel);
+            ObjDataRaw objDataRaw = loadObjModelData(soAssetLocation, omr);
 
             Map<String, String> meshNamesToMaterialNames = objDataRaw.getMeshNamesToMaterialNames();
 
             Map<String, AssetRefPath> materialNamesToMaterialSetRefPaths = new HashMap<>();
 
             for (IPathLocator mtlFileLocator : soAssetLocation.resolveResourcesDirectory().getDirectoryLocator().list(pl -> { return pl.getFileName().endsWith(".mtl"); })) {
-                materialNamesToMaterialSetRefPaths.putAll(importLocalMaterialSetFromMtlResource((IResourceLocator) mtlFileLocator, soDescriptor));
+                materialNamesToMaterialSetRefPaths.putAll(convertSOLocalMtlToMaterialSet(soDescriptor, soAssetLocation, (IResourceLocator) mtlFileLocator));
             }
 
             Map<String, MeshConfiguration> meshNamesToMeshConfigurations = soDescriptor.getMeshNamesToMeshConfigurations();
@@ -447,21 +459,19 @@ public class AssetLoader {
                 MeshConfiguration mc = new MeshConfiguration(meshName);
                 AssetRefPath materialSetRefPath = materialNamesToMaterialSetRefPaths.get(materialName);
                 if (materialSetRefPath != null) {
-                    mc.setMaterialAssignment(materialSetRefPath);
+                    mc.setMaterialAssignment(materialSetRefPath.withMaterialName(materialName));
                 } // Else, we'll leave the material assignment empty -> Fallback to default material
                 meshNamesToMeshConfigurations.put(meshName, mc);
             }
 
             mAssetManager.saveAssetDescriptor(soDescriptor);
-            return true;
         } catch (Exception e) {
             throw new RuntimeException("Unable to import local material sets", e);
         }
     }
 
-    protected Map<String, AssetRefPath> importLocalMaterialSetFromMtlResource(IResourceLocator mtlFileLocator, SupportObjectDescriptor soDescriptor) throws IOException {
-        AssetLocation targetSOAssetLocation = mAssetManager.resolveAssetLocation(soDescriptor.getSelfRef());
-        IDirectoryLocator targetSOAssetDirectoryLocator = targetSOAssetLocation.getDirectoryLocator();
+    protected Map<String, AssetRefPath> convertSOLocalMtlToMaterialSet(SupportObjectDescriptor soDescriptor,
+            AssetLocation soAssetLocation, IResourceLocator mtlFileLocator) throws IOException {
 
         Collection<IResourceLocator> mtlResourcesToDelete = new ArrayList<>(); // Those files are moved ore replaced by another file during migration
 
@@ -469,7 +479,7 @@ public class AssetLoader {
         mtlResourcesToDelete.addAll(allFilesOfMtlResource);
 
         /////// Create new material set
-        MaterialSetDescriptor msDescriptor = mAssetManager.createMaterialSet(targetSOAssetLocation.resolveLocalMaterialSetsDirectory());
+        MaterialSetDescriptor msDescriptor = mAssetManager.createMaterialSet(soAssetLocation.resolveLocalMaterialSetsDirectory());
         AssetRefPath msRefPath = msDescriptor.getSelfRef();
 
         // Metadata
@@ -478,7 +488,7 @@ public class AssetLoader {
         msDescriptor.setOrigin(soDescriptor.getOrigin());
         msDescriptor.setLastModified(LocalDateTime.now());
 
-        // MateriaSet directories
+        // MaterialSet directories
         AssetLocation msAssetLocation = mAssetManager.resolveAssetLocation(msRefPath);
         IDirectoryLocator msDirectory = msAssetLocation.getDirectoryLocator();
         IDirectoryLocator msResourceDirectory = msDirectory.resolveDirectory(AssetManager.RESOURCES_DIRECTORY_NAME);
@@ -489,91 +499,50 @@ public class AssetLoader {
         // Move all relevant files for material set
         for (IResourceLocator someMtlFile : allFilesOfMtlResource) {
             try {
+                if (someMtlFile.getFileName().endsWith(".mtl")) {
+                    continue;
+                }
                 someMtlFile.copyTo(msResourceDirectory);
             } catch (NoSuchFileException e) {
-                System.out.println("Unable to copy missing file of MTL library: " + someMtlFile.getAbsolutePath());
+                System.err.println("Unable to copy missing file of MTL library: " + someMtlFile.getAbsolutePath());
             }
         }
-        // Register new MTL model in descriptor, cleanup
-        MtlModelResource modelResource = new MtlModelResource(Paths.get(mtlFileLocator.getFileName()));
-        String oldResourceName = ((MtlModelResource) msDescriptor.getModel()).getRelativePath().getFileName().toString();
-        mtlResourcesToDelete.add(msResourceDirectory.resolveResource(oldResourceName));
-        msDescriptor.setModel(modelResource);
 
-        Path soIconImagePath = Paths.get(targetSOAssetDirectoryLocator.getAbsolutePath()).resolve(soDescriptor.getIconImageResourceName());
+        Collection<RawMaterialModel> rawMaterialModels = new ArrayList<>();
+        // Register new material models in descriptor
+        for (RawMaterialData rawMaterialData : materialSet.values()) {
+            rawMaterialModels.add(new RawMaterialModel(rawMaterialData.getName(), Optional.empty(), rawMaterialData.getLines()));
+        }
+        msDescriptor.setModel(new MaterialsModel(rawMaterialModels));
+        Path soIconImagePath = Paths.get(soAssetLocation.resolveResource(soDescriptor.getIconImageResourceName()).getAbsolutePath());
 
         // As icon image, we'll use the SupportObject's icon image with an overlay "M" at the lower right part
-        createIconWithOverlay(soIconImagePath, Paths.get(msDirectory.getAbsolutePath()), "M");
+        Path targetPath = Paths.get(msDirectory.getAbsolutePath()).resolve(AssetManager.ICON_IMAGE_DEFAULT_BASE_NAME + ".png");
+        AssetLoaderUtils.createIconWithOverlay(soIconImagePath, targetPath, "M");
 
         mAssetManager.saveAssetDescriptor(msDescriptor);
+
+        // Cleanup of old files
         for (IResourceLocator mtlResourceLocator : mtlResourcesToDelete) {
             String filePath = mtlResourceLocator.getAbsolutePath();
-            System.out.println("Trying to delete obsolete file " + filePath);
+            System.out.println("Trying to delete obsolete material/resource file " + filePath);
             try {
                 Files.delete(Paths.get(filePath));
             } catch (NoSuchFileException e) {
-                System.out.println("Cannot delete associated file of MTL library, file is missing: " + filePath);
+                System.err.println("Cannot delete associated file of MTL library, file is missing: " + filePath);
             }
         }
+
         return materialSet
                         .keySet()
                         .stream()
-                        .collect(Collectors.toMap(Function.identity(), materialName -> msRefPath.withMaterialName(materialName)));
+                        .collect(Collectors.toMap(Function.identity(), msRefPath::withMaterialName));
     }
 
-    protected static void createIconWithOverlay(Path sourceImage, Path targetImage, String overlayText) throws IOException {
-        BufferedImage image = ImageIO.read(sourceImage.toFile());
-        ImageUtils.addImageOverlay(image, overlayText);
-        ImageIO.write(image, "png", targetImage.resolve(AssetManager.ICON_IMAGE_DEFAULT_BASE_NAME + ".png").toFile());
-    }
-
-    public MtlModelResource importAssetResourceMtl(AssetRefPath materialSetRefPath, IResourceLocator mtlResourceLocator, Optional<String> oOverriddenName) throws IOException {
-        clearModelFolder(materialSetRefPath);
-        AssetLocation resourceDirectory = mAssetManager.resolveAssetLocation(materialSetRefPath).resolveResourcesDirectory();
-        String fileName = oOverriddenName.orElse(mtlResourceLocator.getFileName());
-        resourceDirectory.importResource(mtlResourceLocator, fileName);
-        Path modelPath = Paths.get(fileName);
-        return new MtlModelResource(modelPath);
-    }
-
-    public MtlModelResource importAssetResourceMtl(AssetRefPath materialSetRefPath, Collection<RawMaterialData> materials, String mtlFileName, Collection<ImportResource> additionalResources) throws IOException {
-        clearModelFolder(materialSetRefPath);
-        AssetLocation resourceDirectory = mAssetManager.resolveAssetLocation(materialSetRefPath).resolveResourcesDirectory();
-        resourceDirectory.saveMaterialsToMtl(materials, mtlFileName);
-        for (ImportResource resource : additionalResources) {
-            resourceDirectory.importResource(resource.getResourceLocator(), resource.getTargetFileName());
-        }
-        Path modelPath = Paths.get(mtlFileName);
-        return new MtlModelResource(modelPath);
-    }
-
-    public IDirectoryLocator getModelDirectory(AssetRefPath assetRefPath) throws IOException {
-        AssetLocation assetLocation = mAssetManager.resolveAssetLocation(assetRefPath);
-        return assetLocation.resolveResourcesDirectory().getDirectoryLocator();
-    }
-
-    public IResourceLocator getMtlResource(AssetRefPath materialSetRefPath) throws IOException {
-        MaterialSetDescriptor materialSetDescriptor = mAssetManager.loadMaterialSetDescriptor(materialSetRefPath);
-        AssetLocation assetLocation = mAssetManager.resolveAssetLocation(materialSetRefPath);
-        AbstractModelResource model = materialSetDescriptor.getModel();
-        if (model instanceof MtlModelResource mmr) {
-            return AssetManager.resolveResourcesModel(assetLocation, mmr);
-        } else {
-            throw new IllegalArgumentException("Unable to resolve mtl file path for material set ref <" + materialSetRefPath + ">");
-        }
-    }
-
-    public void importMaterialSetMtlResource(MaterialSetDescriptor descriptor, IResourceLocator mtlResourceLocator, Optional<String> oOverriddenName) throws IOException {
+    public void importRawMaterialSet(MaterialSetDescriptor descriptor, Collection<RawMaterialModel> materials, Collection<ImportResource> resources) throws IOException {
         AssetRefPath materialSetRefPath = descriptor.getSelfRef();
-        MtlModelResource modelResource = importAssetResourceMtl(materialSetRefPath, mtlResourceLocator, oOverriddenName);
-        descriptor.setModel(modelResource);
-        mAssetManager.saveMaterialSetDescriptor(descriptor);
-    }
-
-    public void importMaterialSetMtlResource(MaterialSetDescriptor descriptor, Collection<RawMaterialData> materials, String mtlFileName, Collection<ImportResource> additionalResources) throws IOException {
-        AssetRefPath materialSetRefPath = descriptor.getSelfRef();
-        MtlModelResource modelResource = importAssetResourceMtl(materialSetRefPath, materials, mtlFileName, additionalResources);
-        descriptor.setModel(modelResource);
+        importAssetResources(resources, materialSetRefPath);
+        descriptor.setModel(new MaterialsModel(materials));
         mAssetManager.saveMaterialSetDescriptor(descriptor);
     }
 
@@ -586,109 +555,76 @@ public class AssetLoader {
         return ObjReader.readObjRaw(resourceLocator);
     }
 
-    public Map<String, RawMaterialData> loadMaterialData(Map<String, AssetRefPath> materialRefs) throws IOException {
-        Map<String, RawMaterialData> result = new HashMap<>();
-        for (Entry<String, AssetRefPath> entry : materialRefs.entrySet()) {
-            String key = entry.getKey();
-            AssetRefPath materialRefPath = entry.getValue();
-            RawMaterialData materialData = materialRefPath == null ? null : loadMaterialData(materialRefPath);
-            result.put(key, materialData);
-        }
-        return result;
+    /**
+     * Converts a {@link RawMaterialModel} to a {@link MaterialData}.
+     */
+    public static MaterialData mapMaterial(RawMaterialModel material, IDirectoryLocator baseDirectory) {
+        return new MaterialData(material.getName(),material.getCommands(), material.getTileSize().map(CoordinateUtils::modelVector2DToUiVector2D), baseDirectory);
     }
 
-    public Map<String, RawMaterialData> loadMaterials(AssetRefPath materialSetRefPath) throws IOException {
-        Optional<String> oMaterialName = materialSetRefPath.getOMaterialName();
-        if (oMaterialName.isPresent()) {
-            throw new IllegalArgumentException("Asset ref path '" + materialSetRefPath + "' contains a material name; material set descriptor expected");
-        }
-        MaterialSetDescriptor materialSetDescriptor = mAssetManager.loadMaterialSetDescriptor(materialSetRefPath);
-        AssetLocation assetLocation = mAssetManager.resolveAssetLocation(materialSetRefPath);
+    /**
+     * Converts a collection of {@link RawMaterialModel} materials which all share the same resource base directory to a map of {@link MaterialData}.
+     */
+    public static Map<String, MaterialData> mapSiblingMaterials(Collection<RawMaterialModel> materials, IDirectoryLocator baseDirectory) {
+        return materials
+                .stream()
+                .collect(Collectors.toMap(RawMaterialModel::getName, material -> mapMaterial(material, baseDirectory)));
+    }
 
+    public MaterialData loadMaterialData(MaterialSetDescriptor materialSetDescriptor, String materialName) throws IOException {
+        AssetRefPath materialSetRefPath = materialSetDescriptor.getSelfRef();
+        AbstractModelResource model = materialSetDescriptor.getModel();
+        if (model instanceof MaterialsModel mm) {
+            RawMaterialModel rawMaterialModel = mm.getMaterials().get(materialName);
+            if (rawMaterialModel == null) {
+                throw new IllegalArgumentException("Material " + materialName + " is not present in material set <" + materialSetRefPath + ">");
+            }
+            IDirectoryLocator resourcesDirectory = getResourcesDirectory(materialSetRefPath);
+            return mapMaterial(rawMaterialModel, resourcesDirectory);
+        } else {
+            throw new NotImplementedException("Unable to load material from ref path <" + materialSetRefPath + ">: Unknown materials model type");
+        }
+    }
+
+    public MaterialData loadMaterialData(AssetRefPath materialRefPath) throws IOException {
+        String materialName = materialRefPath.getOMaterialName().orElseThrow(
+                () -> new IllegalArgumentException("Material descriptor expected but asset ref path '" + materialRefPath + "' doesn't contain a material name"));
+        AssetRefPath materialSetRefPath = materialRefPath.withoutMaterialName();
+        MaterialSetDescriptor materialSetDescriptor = mAssetManager.loadMaterialSetDescriptor(materialSetRefPath);
+        return loadMaterialData(materialSetDescriptor, materialName);
+    }
+
+    public Map<String, MaterialData> loadMaterials(MaterialSetDescriptor materialSetDescriptor) throws IOException {
+        AssetRefPath materialSetRefPath = materialSetDescriptor.getSelfRef();
         AbstractModelResource model = materialSetDescriptor.getModel();
         if (model == null) {
             return Collections.emptyMap();
-        } else if (model instanceof MtlModelResource mmr) {
-            try {
-                IResourceLocator mtlResource = AssetManager.resolveResourcesModel(assetLocation, mmr);
-                return MtlLibraryIO.readMaterialSet(mtlResource);
-            } catch (IOException e) {
-                String msg = "Unable to load mtl file for material ref path <" + materialSetRefPath + ">";
-                if (e instanceof FileNotFoundException) {
-                    throw new FileNotFoundException(msg + ": " + e.getMessage());
-                }
-                throw new IOException(msg, e);
-            }
+        } else if (model instanceof MaterialsModel mm) {
+            IDirectoryLocator resourcesDirectory = getResourcesDirectory(materialSetRefPath);
+            return mapSiblingMaterials(mm.getMaterials().values(), resourcesDirectory);
         } else {
-            throw new NotImplementedException("Unable to resolve material data <" + model + "> for ref path <" + materialSetRefPath + ">");
+            throw new NotImplementedException("Unable to load material from ref path <" + materialSetRefPath + ">: Unknown materials model type <" + model + ">");
         }
     }
 
-    public RawMaterialData loadMaterialData(AssetRefPath materialRefPath) throws IOException {
-        Optional<String> oMaterialName = materialRefPath.getOMaterialName();
-        String materialName = oMaterialName.orElseThrow(() -> new IllegalArgumentException("Asset ref path '" + materialRefPath + "' doesn't contain a material name"));
-        AssetRefPath materialSetRefPath = materialRefPath.withoutMaterialName();
-        Map<String, RawMaterialData> materials = loadMaterials(materialSetRefPath);
-        RawMaterialData result = materials.get(materialName);
-        if (result == null) {
-            throw new IOException("Material with name '" + materialName + "' could not be found in material set '" + materialRefPath + "'");
+    public Map<String, MaterialData> loadMaterials(AssetRefPath materialSetRefPath) throws IOException {
+        if (materialSetRefPath.getOMaterialName().isPresent()) {
+            throw new IllegalArgumentException("Material set descriptor expected but asset ref path '" + materialSetRefPath + "' contains a material name");
         }
-        return result;
+        MaterialSetDescriptor materialSetDescriptor = mAssetManager.loadMaterialSetDescriptor(materialSetRefPath);
+        return loadMaterials(materialSetDescriptor);
     }
 
-    public static Map<String, AssetRefPath> mergeMaterials(Map<String, AssetRefPath> defaultMeshIdsToMaterialNamess, Map<String, AssetRefPath> overriddenMeshIdsToMaterialNames) {
-        Map<String, AssetRefPath> result = new HashMap<>();
-        for (Entry<String, AssetRefPath> mapping : defaultMeshIdsToMaterialNamess.entrySet()) {
-            String meshName = mapping.getKey();
-            AssetRefPath overriddenMaterialName = overriddenMeshIdsToMaterialNames.get(meshName);
-            result.put(meshName, overriddenMaterialName == null ? mapping.getValue() : overriddenMaterialName);
+    public Map<String, MaterialData> loadMaterialsData(Map<String, AssetRefPath> materialRefs) throws IOException {
+        Map<String, MaterialData> result = new HashMap<>();
+        for (Entry<String, AssetRefPath> entry : materialRefs.entrySet()) {
+            String key = entry.getKey();
+            AssetRefPath materialRefPath = entry.getValue();
+            MaterialData material = materialRefPath == null ? null : loadMaterialData(materialRefPath);
+            result.put(key, material);
         }
         return result;
     }
-
-    /**
-     * Converts a raw model rotation matrix, given in a support object descriptor, to a JavaFX {@link Transform}.
-     */
-    public static Optional<Transform> createTransform(float[][] rotationMatrix) {
-        if (rotationMatrix == null) {
-            return Optional.empty();
-        }
-        return Optional.of(Affine.affine(
-            rotationMatrix[0][0], rotationMatrix[0][1], rotationMatrix[0][2], 0,
-            rotationMatrix[1][0], rotationMatrix[1][1], rotationMatrix[1][2], 0,
-            rotationMatrix[2][0], rotationMatrix[2][1], rotationMatrix[2][2], 0));
-    }
-
-    /**
-     * Converts a JavaFX {@link Transform} to a raw model rotation matrix to be stored in a support object descriptor.
-     */
-    public static float[][] createRotationMatrix(Transform transform) {
-        float[][] result = new float[3][];
-        float[] xRow = new float[3];
-        result[0] = xRow;
-
-        xRow[0] = (float) transform.getMxx();
-        xRow[1] = (float) transform.getMxy();
-        xRow[2] = (float) transform.getMxz();
-
-        float[] yRow = new float[3];
-        result[1] = yRow;
-
-        yRow[0] = (float) transform.getMyx();
-        yRow[1] = (float) transform.getMyy();
-        yRow[2] = (float) transform.getMyz();
-
-        float[] zRow = new float[3];
-        result[2] = zRow;
-
-        zRow[0] = (float) transform.getMzx();
-        zRow[1] = (float) transform.getMzy();
-        zRow[2] = (float) transform.getMzz();
-
-        return result;
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public Image loadSupportObjectIconImage(SupportObjectDescriptor descriptor, boolean fallbackToPlaceholder) {
         try {
@@ -726,6 +662,19 @@ public class AssetLoader {
         }
     }
 
+    public Image loadSupportObjectPlanViewImage(SupportObjectDescriptor descriptor, boolean fallbackToPlaceholder) {
+        try {
+            return loadSupportObjectPlanViewImage(descriptor);
+        } catch (Exception e) {
+            if (fallbackToPlaceholder) {
+                logMissingPlanViewImage(descriptor.getSelfRef(), e);
+                return loadSupportObjectPlaceholderPlanViewImage(Optional.empty());
+            } else {
+                return null;
+            }
+        }
+    }
+
     public Image loadSupportObjectPlanViewImage(AssetRefPath supportObjectDescriptorRef, boolean fallbackToPlaceholder) {
         SupportObjectDescriptor descriptor;
         try {
@@ -741,20 +690,20 @@ public class AssetLoader {
         return loadSupportObjectPlanViewImage(descriptor, fallbackToPlaceholder);
     }
 
-    public Image loadSupportObjectPlanViewImage(SupportObjectDescriptor descriptor, boolean fallbackToPlaceholder) {
+    public ThreeDObject loadSupportObject3DObject(SupportObjectDescriptor descriptor, boolean fallbackToPlaceholder) {
         try {
-            return loadSupportObjectPlanViewImage(descriptor);
-        } catch (Exception e) {
+            return loadSupportObject3DResource(descriptor);
+        } catch (IOException e) {
             if (fallbackToPlaceholder) {
-                logMissingPlanViewImage(descriptor.getSelfRef(), e);
-                return loadSupportObjectPlaceholderPlanViewImage(Optional.empty());
+                logMissingSupportObjectObjectView(descriptor, descriptor.getModel(), e);
+                return loadBroken3DResource();
             } else {
                 return null;
             }
         }
     }
 
-    public ThreeDObject loadSupportObject3DObject(AssetRefPath supportObjectDescriptorRef, Optional<Map<String, AssetRefPath>> overriddenSurfaceMaterialRefs, boolean fallbackToPlaceholder) {
+    public ThreeDObject loadSupportObject3DObject(AssetRefPath supportObjectDescriptorRef, boolean fallbackToPlaceholder) {
         SupportObjectDescriptor descriptor;
         try {
             descriptor = mAssetManager.loadSupportObjectDescriptor(supportObjectDescriptorRef);
@@ -766,44 +715,37 @@ public class AssetLoader {
                 return null;
             }
         }
-        return loadSupportObject3DObject(descriptor, overriddenSurfaceMaterialRefs, fallbackToPlaceholder);
+        return loadSupportObject3DObject(descriptor, fallbackToPlaceholder);
     }
 
-    public ThreeDObject loadSupportObject3DObject(SupportObjectDescriptor descriptor, Optional<Map<String, AssetRefPath>> overriddenSurfaceMaterialRefs, boolean fallbackToPlaceholder) {
-        try {
-            return loadSupportObject3DResource(descriptor, overriddenSurfaceMaterialRefs);
-        } catch (IOException e) {
-            if (fallbackToPlaceholder) {
-                logMissingSupportObjectObjectView(descriptor, descriptor.getModel(), e);
-                return loadBroken3DResource();
-            } else {
-                return null;
-            }
-        }
-    }
-
-    public void configureMaterial(Shape3D shape, AssetRefPath materialRefPath, Optional<Vector2D> oSurfaceSize) {
+    public PhongMaterial buildMaterial(AssetRefPath materialRefPath, MaterialMapping mappingConfig) {
         if (materialRefPath == null) {
-            shape.setMaterial(new PhongMaterial(Color.WHITE));
-            return;
+            return new PhongMaterial(Color.WHITE);
         }
         try {
-            RawMaterialData materialData = loadMaterialData(materialRefPath);
-            configureMaterial_Lax(shape, materialData, oSurfaceSize);
+            MaterialData material = loadMaterialData(materialRefPath);
+            return buildMaterial_Lax(material, mappingConfig);
         } catch (IOException e) {
+            log.warn("Error building material <" + materialRefPath + ">", e);
             Image placeholder = loadMaterialPlaceholderTextureImage(Optional.empty());
             PhongMaterial material = new PhongMaterial(Color.WHITE);
             material.setDiffuseMap(placeholder);
-            shape.setMaterial(material);
+            return material;
         }
     }
 
-    public void configureMaterial_Strict(Shape3D shape, RawMaterialData materialData, Optional<Vector2D> oSurfaceSize) throws IOException {
-        FxMeshBuilder.configureMaterial_Strict(shape, materialData, oSurfaceSize);
+    public PhongMaterial buildMaterial(MaterialMappingConfiguration mappingConfig, Optional<Vector2D> surfaceSize) {
+        return buildMaterial(
+                mappingConfig == null ? null : mappingConfig.getMaterialRef(),
+                createMaterialMapping(mappingConfig, surfaceSize));
     }
 
-    public void configureMaterial_Lax(Shape3D shape, RawMaterialData materialData, Optional<Vector2D> oSurfaceSize) {
-        FxMeshBuilder.configureMaterial_Lax(shape, materialData, oSurfaceSize);
+    public PhongMaterial buildMaterial_Strict(MaterialData material, MaterialMapping mappingConfig) throws IOException {
+        return FxMeshBuilder.buildMaterial_Strict(material, mappingConfig);
+    }
+
+    public PhongMaterial buildMaterial_Lax(MaterialData material, MaterialMapping mappingConfig) {
+        return FxMeshBuilder.buildMaterial_Lax(material, mappingConfig);
     }
 
     protected void logMissingDescriptor(AssetRefPath descriptorRef, Throwable e) {
@@ -851,4 +793,23 @@ public class AssetLoader {
     }
 
     // Transformation Architect -> JavaFx is in CoordinateUtils
+
+    public static MaterialMapping.LayoutMode translateLayoutMode(MaterialMappingConfiguration.LayoutMode layoutMode) {
+        return switch (layoutMode) {
+            case Stretch -> MaterialMapping.LayoutMode.Stretch;
+            case Tile -> MaterialMapping.LayoutMode.Tile;
+        };
+    }
+
+    public static MaterialMapping createMaterialMapping(MaterialMappingConfiguration mmc, Optional<Vector2D> surfaceSize) {
+        if (mmc == null) {
+            return MaterialMapping.stretch();
+        }
+        return new MaterialMapping(
+                Optional.ofNullable(mmc.getOffset()).map(CoordinateUtils::modelVector2DToUiVector2D),
+                Optional.ofNullable(mmc.getTileSize()).map(CoordinateUtils::dimensions2DToUiVector2D),
+                Optional.ofNullable(mmc.getMaterialRotationDeg()),
+                AssetLoader.translateLayoutMode(mmc.getLayoutMode()),
+                surfaceSize);
+    }
 }

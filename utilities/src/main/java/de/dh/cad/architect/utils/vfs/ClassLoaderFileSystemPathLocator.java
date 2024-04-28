@@ -22,7 +22,7 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Optional;
 
-public class ClassLoaderFileSystemPathLocator extends PathBasedFileSystemPathLocator {
+public abstract class ClassLoaderFileSystemPathLocator extends PathBasedFileSystemPathLocator {
     protected final Class<?> mBase;
 
     /**
@@ -31,7 +31,7 @@ public class ClassLoaderFileSystemPathLocator extends PathBasedFileSystemPathLoc
      * or <code>/de/foo/bar/</code>.
      * @param base Class whose module contains the resource, e.g. <code>classNearResource.getModule()</code>.
      */
-    public ClassLoaderFileSystemPathLocator(Path path, Class<?> base) {
+    protected ClassLoaderFileSystemPathLocator(Path path, Class<?> base) {
         super(path);
         mBase = base;
     }

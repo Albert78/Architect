@@ -28,6 +28,8 @@ public interface IPathLocator extends Comparable<IPathLocator> {
     String getFileName();
     String getAbsolutePath(); // Used for generic compare operations on IPathLocator
     boolean exists();
+    boolean isDirectory();
+    boolean isFile();
 
     default IResourceLocator resolveResource(String resourceName) {
         return resolveResource(Paths.get(resourceName));

@@ -37,10 +37,8 @@ import de.dh.cad.architect.fx.nodes.objviewer.ThreeDObjectViewControl;
 import de.dh.cad.architect.model.assets.AssetRefPath;
 import de.dh.cad.architect.model.assets.MaterialSetDescriptor;
 import de.dh.cad.architect.ui.assets.AssetLoader;
-import de.dh.utils.io.obj.RawMaterialData;
+import de.dh.utils.io.fx.MaterialData;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -53,14 +51,14 @@ import javafx.scene.layout.BorderPane;
 import javafx.util.StringConverter;
 
 public class MaterialPreviewChoiceControl extends BorderPane implements Initializable {
-    private Logger log = LoggerFactory.getLogger(MaterialPreviewChoiceControl.class);
+    private static final Logger log = LoggerFactory.getLogger(MaterialPreviewChoiceControl.class);
 
     public static final String FXML = "MaterialPreviewChoiceControl.fxml";
 
     protected final AssetLoader mAssetLoader;
 
     @FXML
-    protected ChoiceBox<RawMaterialData> mMaterialChoiceBox;
+    protected ChoiceBox<MaterialData> mMaterialChoiceBox;
 
     @FXML
     protected TextField mMaterialDescriptorRefTextField;
@@ -92,16 +90,16 @@ public class MaterialPreviewChoiceControl extends BorderPane implements Initiali
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        SingleSelectionModel<RawMaterialData> mcbSelectionModel = mMaterialChoiceBox.getSelectionModel();
-        mMaterialChoiceBox.setConverter(new StringConverter<RawMaterialData>() {
+        SingleSelectionModel<MaterialData> mcbSelectionModel = mMaterialChoiceBox.getSelectionModel();
+        mMaterialChoiceBox.setConverter(new StringConverter<>() {
             @Override
-            public String toString(RawMaterialData md) {
+            public String toString(MaterialData md) {
                 return md == null ? "-" : md.getName();
             }
 
             @Override
-            public RawMaterialData fromString(String str) {
-                for (RawMaterialData md : mMaterialChoiceBox.getItems()) {
+            public MaterialData fromString(String str) {
+                for (MaterialData md : mMaterialChoiceBox.getItems()) {
                     if (Objects.equals(md.getName(), str)) {
                         return md;
                     }
@@ -109,12 +107,9 @@ public class MaterialPreviewChoiceControl extends BorderPane implements Initiali
                 return null;
             }
         });
-        mcbSelectionModel.selectedItemProperty().addListener(new ChangeListener<>() {
-            @Override
-            public void changed(ObservableValue<? extends RawMaterialData> observable, RawMaterialData oldValue, RawMaterialData newValue) {
-                updateSelectdedMaterial();
-                update3DObjectView();
-            }
+        mcbSelectionModel.selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            updateSelectdedMaterial();
+            update3DObjectView();
         });
 
         mThreeDObjectView = new ThreeDObjectViewControl(CoordinateSystemConfiguration.architect());
@@ -152,11 +147,10 @@ public class MaterialPreviewChoiceControl extends BorderPane implements Initiali
     public void initialize(MaterialSetDescriptor descriptor) {
         mMaterialSetDescriptor = descriptor;
 
-        AssetRefPath materialSetRef = mMaterialSetDescriptor.getSelfRef();
-        SingleSelectionModel<RawMaterialData> mcbSelectionModel = mMaterialChoiceBox.getSelectionModel();
+        SingleSelectionModel<MaterialData> mcbSelectionModel = mMaterialChoiceBox.getSelectionModel();
         try {
-            List<RawMaterialData> materials = new ArrayList<>(mAssetLoader.loadMaterials(materialSetRef).values());
-            Collections.sort(materials, Comparator.comparing(RawMaterialData::getName));
+            List<MaterialData> materials = new ArrayList<>(mAssetLoader.loadMaterials(mMaterialSetDescriptor).values());
+            Collections.sort(materials, Comparator.comparing(MaterialData::getName));
 
             mMaterialChoiceBox.setItems(FXCollections.observableArrayList(materials));
             if (materials.isEmpty()) {
@@ -165,7 +159,7 @@ public class MaterialPreviewChoiceControl extends BorderPane implements Initiali
                 mcbSelectionModel.select(0);
             }
         } catch (IOException e) {
-            log.error("Error loading materials from <" + materialSetRef + ">", e);
+            log.error("Error loading materials from <" + mMaterialSetDescriptor.getSelfRef() + ">", e);
         }
     }
 
@@ -179,12 +173,12 @@ public class MaterialPreviewChoiceControl extends BorderPane implements Initiali
         return mSelectedMaterialProperty;
     }
 
-    public RawMaterialData getSelectedMaterial() {
+    public MaterialData getSelectedMaterial() {
         return mMaterialChoiceBox.getSelectionModel().getSelectedItem();
     }
 
     public String getSelectedMaterialName() {
-        RawMaterialData material = getSelectedMaterial();
+        MaterialData material = getSelectedMaterial();
         return material == null ? null : material.getName();
     }
 
@@ -194,13 +188,13 @@ public class MaterialPreviewChoiceControl extends BorderPane implements Initiali
     }
 
     public void selectMaterial(String materialName) {
-        SingleSelectionModel<RawMaterialData> selectionModel = mMaterialChoiceBox.getSelectionModel();
+        SingleSelectionModel<MaterialData> selectionModel = mMaterialChoiceBox.getSelectionModel();
         if (materialName == null) {
             selectionModel.clearSelection();
             return;
         }
-        List<RawMaterialData> items = mMaterialChoiceBox.getItems();
-        for (RawMaterialData material : items) {
+        List<MaterialData> items = mMaterialChoiceBox.getItems();
+        for (MaterialData material : items) {
             if (materialName.equals(material.getName())) {
                 selectionModel.select(material);
             }

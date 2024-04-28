@@ -80,15 +80,19 @@ public class ThreeDView extends Abstract3DView {
         }
     }
 
-    protected void initializeViewState() {
-        CameraPosition currentCameraPosition = new CameraPosition();
+    public static CameraPosition createDefaultCameraPosition() {
+        CameraPosition result = new CameraPosition();
 
-        currentCameraPosition.setAngleX(-60);
-        currentCameraPosition.setCameraTranslateZ(-1500);
-        currentCameraPosition.setFieldOfView(60);
-        currentCameraPosition.setCameraNearClip(mMinNearClip);
+        result.setAngleX(-60);
+        result.setCameraTranslateZ(-1500);
+        result.setFieldOfView(60);
+        result.setCameraNearClip(mMinNearClip);
+        return result;
+    }
+
+    protected void initializeViewState() {
         mSavedViewState = new ThreeDViewState();
-        mSavedViewState.setCurrentCameraPosition(currentCameraPosition);
+        mSavedViewState.setCurrentCameraPosition(createDefaultCameraPosition());
     }
 
     @Override

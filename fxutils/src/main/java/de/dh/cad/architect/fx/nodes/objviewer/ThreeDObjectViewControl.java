@@ -75,14 +75,11 @@ public class ThreeDObjectViewControl extends StackPane {
     private static final int NORMALIZED_OBJECT_SIZE = 250;
     private static final int NORMALIZED_LIGHT_DRAG_INDICATOR_SIZE = 100;
 
-    private static Logger log = LoggerFactory.getLogger(ThreeDObjectViewControl.class);
+    private static final Logger log = LoggerFactory.getLogger(ThreeDObjectViewControl.class);
 
-    protected EventHandler<ScrollEvent> mZoomEventHandler = new EventHandler<>() {
-        @Override
-        public void handle(ScrollEvent event) {
-            ZoomDirection val = event.getDeltaY() < 0 ? ZoomDirection.IN : ZoomDirection.OUT;
-            zoom(val);
-        }
+    protected EventHandler<ScrollEvent> mZoomEventHandler = event -> {
+        ZoomDirection dir = event.getDeltaY() < 0 ? ZoomDirection.IN : ZoomDirection.OUT;
+        zoom(dir);
     };
     protected Group mRootGroup;
     protected PointLight mPointLight;
@@ -114,7 +111,6 @@ public class ThreeDObjectViewControl extends StackPane {
 
     protected final CoordinateSystemConfiguration mCoordinateSystemConfiguration;
 
-    protected boolean mShowCoordinateSystem = false;
     protected CoordinateSystemNode mCoordinateSystem = null;
 
     protected Node mObjView;
@@ -131,7 +127,7 @@ public class ThreeDObjectViewControl extends StackPane {
         mAmbientLight = new AmbientLight(Color.grayRgb(70));
 
         class LightIntensityToLightColorMapper implements ChangeListener<Number> {
-            LightBase mLight;
+            protected final LightBase mLight;
 
             LightIntensityToLightColorMapper(LightBase light) {
                 mLight = light;
@@ -231,7 +227,7 @@ public class ThreeDObjectViewControl extends StackPane {
         Translate lightDragIndicatorTranslate = new Translate();
         lightDragIndicatorTranslate.yProperty().bind(mLightDistance.negate());
         ObservableList<Transform> lightDragIndicatorTransforms = mLightDragIndicator.getTransforms();
-        lightDragIndicatorTransforms.add(0, lightDragIndicatorTranslate);
+        lightDragIndicatorTransforms.addFirst(lightDragIndicatorTranslate);
         mPointLightGroup.getTransforms().addAll(lightXRotate, lightZRotate, mScale);
 
         mXRotate.angleProperty().bind(mRotationAngleX.add(90)); // Without that additional 90 degrees, Y points to the top. With it, Z points to the top.
@@ -288,7 +284,7 @@ public class ThreeDObjectViewControl extends StackPane {
             lightDragIndicator = Flashlight.create();
             FxUtils.normalizeAndCenter(lightDragIndicator, NORMALIZED_LIGHT_DRAG_INDICATOR_SIZE, true);
             Rotate rotate = new Rotate(-90, Rotate.X_AXIS);
-            lightDragIndicator.getTransforms().add(0, rotate);
+            lightDragIndicator.getTransforms().addFirst(rotate);
         } catch (IOException e) {
             log.warn("Error loading light drag indicator", e);
             lightDragIndicator = new Group();
@@ -520,7 +516,6 @@ public class ThreeDObjectViewControl extends StackPane {
     /**
      * Sets the object for this view.
      * @param value The 3D object to be shown.
-     * @return Bounds of the normalized object, in the coordinate system of the {@link #getScaledRoot() scaled root group}.
      */
     public void setObjView(Node value) {
         ObservableList<Node> children = mScaledRoot.getChildren();
@@ -534,7 +529,7 @@ public class ThreeDObjectViewControl extends StackPane {
             children.add(mObjGroup);
             FxUtils.normalizeAndCenter(mObjGroup, NORMALIZED_OBJECT_SIZE, true);
             ObservableList<Transform> transforms = mObjGroup.getTransforms();
-            transforms.add(0, mCoordinateSystemConfiguration.getCoordinateTransform());
+            transforms.addFirst(mCoordinateSystemConfiguration.getCoordinateTransform());
         }
     }
 

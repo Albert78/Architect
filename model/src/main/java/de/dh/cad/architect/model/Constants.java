@@ -19,16 +19,39 @@ package de.dh.cad.architect.model;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.text.ParseException;
 import java.util.Locale;
 
 public class Constants {
+    public static class DoubleFormat {
+        protected final DecimalFormat mDecimalFormat;
+
+        public DoubleFormat(String format) {
+            mDecimalFormat = new DecimalFormat();
+        }
+
+        public DoubleFormat(String format, DecimalFormatSymbols symbols) {
+            mDecimalFormat = new DecimalFormat(format, symbols);
+        }
+
+        public synchronized Number parse(String str) throws ParseException {
+            return mDecimalFormat.parse(str);
+        }
+
+        public synchronized String format(double number) {
+            return mDecimalFormat.format(number);
+        }
+    }
+
     /**
      * Float decimal format localized for the default locale in this system.
+     * The returned instance is safe to be used by multiple threads.
      */
-    public static final DecimalFormat DEFAULT_LOCALIZED_CANONICAL_FLOAT_FORMAT = new DecimalFormat("#.##");
+    public static final DoubleFormat DEFAULT_LOCALIZED_CANONICAL_FLOAT_FORMAT = new DoubleFormat("#.##");
 
     /**
      * Float decimal format localized for the english language.
+     * The returned instance is safe to be used by multiple threads.
      */
-    public static final DecimalFormat TRANSPORTABLE_CANONICAL_FLOAT_FORMAT = new DecimalFormat("#.##", DecimalFormatSymbols.getInstance(Locale.ENGLISH));
+    public static final DoubleFormat TRANSPORTABLE_CANONICAL_FLOAT_FORMAT = new DoubleFormat("#.##", DecimalFormatSymbols.getInstance(Locale.ENGLISH));
 }

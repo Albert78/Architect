@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import de.dh.cad.architect.model.assets.AssetRefPath;
+import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.objects.Anchor;
 import de.dh.cad.architect.model.objects.Floor;
 import de.dh.cad.architect.model.objects.SurfaceConfiguration;
@@ -35,47 +35,37 @@ import de.dh.utils.Vector3D;
 import de.dh.utils.csg.CSGSurfaceAwareAddon;
 import de.dh.utils.csg.CSGs;
 import de.dh.utils.csg.CSGs.ExtrusionSurfaceDataProvider;
-import de.dh.utils.csg.TextureCoordinateSystem;
-import de.dh.utils.csg.TextureProjection;
 import de.dh.utils.io.MeshData;
 import de.dh.utils.io.fx.FxMeshBuilder;
 import eu.mihosoft.jcsg.CSG;
 import eu.mihosoft.jcsg.ext.org.poly2tri.PolygonUtil;
 import eu.mihosoft.vvecmath.Vector3d;
+import javafx.beans.value.ChangeListener;
 import javafx.geometry.Point3D;
+import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Mesh;
 import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Rotate;
 
-public class Floor3DRepresentation extends Abstract3DRepresentation {
-    protected final SurfaceData mSurfaceData;
+public class Floor3DRepresentation extends AbstractSolid3DRepresentation {
+    protected final SurfaceData<MeshView> mSurfaceData;
     protected final Rotate mRotation = new Rotate();
 
     public Floor3DRepresentation(Floor floor, Abstract3DView parentView) {
         super(floor, parentView);
         SurfaceConfiguration surfaceConfiguration = floor.getSurfaceConfigurations().iterator().next();
         String surfaceTypeId = surfaceConfiguration.getSurfaceTypeId();
-        mSurfaceData = new SurfaceData(surfaceTypeId);
-        MeshView meshView = mSurfaceData.getMeshView();
+        MeshView meshView = new MeshView();
+        mSurfaceData = new SurfaceData<>(this, surfaceTypeId, meshView);
         meshView.getTransforms().add(mRotation);
-        meshView.getTransforms().add(0, CoordinateUtils.createTransformArchitectToJavaFx());
+        meshView.getTransforms().addFirst(CoordinateUtils.createTransformArchitectToJavaFx());
         add(meshView);
-        markSurfaceNode(meshView, new ObjectSurface(this, surfaceTypeId) {
-            @Override
-            public AssetRefPath getMaterialRef() {
-                return surfaceConfiguration.getMaterialAssignment();
-            }
+        registerSurface(mSurfaceData);
 
-            @Override
-            public boolean assignMaterial(AssetRefPath materialRef) {
-                setObjectSurface(floor, mSurfaceTypeId, materialRef);
-                return true;
-            }
-        });
-
-        selectedProperty().addListener(change -> {
-            updateProperties();
-        });
+        ChangeListener<Boolean> bPropertiesUpdaterListener = (observable, oldValue, newValue) -> updateProperties();
+        selectedProperty().addListener(bPropertiesUpdaterListener);
+        objectFocusedProperty().addListener(bPropertiesUpdaterListener);
+        objectEmphasizedProperty().addListener(bPropertiesUpdaterListener);
     }
 
     public Floor getFloor() {
@@ -89,16 +79,14 @@ public class Floor3DRepresentation extends Abstract3DRepresentation {
     protected void updateProperties() {
         Floor floor = getFloor();
         SurfaceConfiguration surfaceConfiguration = floor.getSurfaceTypeIdsToSurfaceConfigurations().get(mSurfaceData.getSurfaceTypeId());
-        AssetRefPath materialRefPath = surfaceConfiguration.getMaterialAssignment();
+        de.dh.cad.architect.model.objects.MaterialMappingConfiguration mmc = surfaceConfiguration.getMaterialMappingConfiguration();
         AssetLoader assetLoader = getAssetLoader();
-        assetLoader.configureMaterial(mSurfaceData.getMeshView(), materialRefPath, Optional.ofNullable(mSurfaceData.getSurfaceSize()));
-        if (isSelected()) {
-            mSurfaceData.getMaterial().setDiffuseColor(SELECTED_OBJECTS_COLOR);
-        }
+        PhongMaterial material = assetLoader.buildMaterial(mmc, mSurfaceData.getSurfaceSize());
+        mSurfaceData.setMaterial(material);
     }
 
     protected enum Surface {
-        S1
+        Top
     }
 
     protected void updateNode() {
@@ -106,7 +94,7 @@ public class Floor3DRepresentation extends Abstract3DRepresentation {
         List<Anchor> anchors = floor.getEdgePositionAnchors();
 
         if (anchors.size() < 3) {
-            mSurfaceData.getMeshView().setMesh(null);
+            mSurfaceData.getShape().setMesh(null);
             return;
         }
 
@@ -114,7 +102,7 @@ public class Floor3DRepresentation extends Abstract3DRepresentation {
         Vector3d b = CoordinateUtils.position3DToVecMathVector3d(anchors.get(1).requirePosition3D(), false);
         Vector3d ab = b.minus(a);
 
-        double thicknessC = CoordinateUtils.lengthToCoords(floor.getThickness(), null);
+        double THICKNESS = CoordinateUtils.lengthToCoords(Length.ofMM(1), null);
 
         List<Vector3d> topPointsCW = new ArrayList<>();
         List<Vector3d> bottomPointsCW = new ArrayList<>();
@@ -123,17 +111,17 @@ public class Floor3DRepresentation extends Abstract3DRepresentation {
             Vector3d posNormalZ = Vector3d.xyz(pos.getX(), pos.getY(), pos.getZ());
 
             bottomPointsCW.add(posNormalZ);
-            topPointsCW.add(Vector3d.xyz(posNormalZ.getX(), posNormalZ.getY(), posNormalZ.getZ() + thicknessC));
+            topPointsCW.add(Vector3d.xyz(posNormalZ.getX(), posNormalZ.getY(), posNormalZ.getZ() + THICKNESS));
         }
 
-        if (PolygonUtil.isCCW(bottomPointsCW)) {
+        if (PolygonUtil.isCCW_XY(bottomPointsCW)) {
             Collections.reverse(bottomPointsCW);
             Collections.reverse(topPointsCW);
         }
 
         Vector3d textureDirectionX = ab;
 
-        CSG csg = CSGs.extrudeSurfaces(new ExtrusionSurfaceDataProvider<Surface>() {
+        ExtrusionSurfaceDataProvider<Surface> floorSurfaceDataProvider = new ExtrusionSurfaceDataProvider<>() {
             @Override
             public List<Vector3d> getBottomPolygonPointsCW() {
                 return bottomPointsCW;
@@ -156,31 +144,29 @@ public class Floor3DRepresentation extends Abstract3DRepresentation {
 
             @Override
             public Surface getSurfaceCW(int startPointIndex) {
-                return Surface.S1;
+                return null;
             }
 
             @Override
             public Surface getTopSurface() {
-                return Surface.S1;
+                return Surface.Top;
             }
 
             @Override
             public Surface getBottomSurface() {
-                return Surface.S1;
+                return null;
             }
-        }, 0, false);
+        };
+        mSurfaceData.setSurfaceSize(floorSurfaceDataProvider.getTopPolygonTextureProjection().getSpannedSize());
+        CSG csg = CSGs.extrudeSurfaces(floorSurfaceDataProvider, 0, false);
         Map<Surface, MeshData> meshes = CSGSurfaceAwareAddon.createMeshes(csg, Optional.empty());
-        MeshData meshData = meshes.get(Surface.S1);
+        MeshData meshData = meshes.get(Surface.Top);
         Mesh mesh = FxMeshBuilder.buildMesh(meshData);
-        MeshView meshView = mSurfaceData.getMeshView();
+        MeshView meshView = mSurfaceData.getShape();
         meshView.setMesh(mesh);
         Point3D axisP3D = new Point3D(0, 0, 1);
         mRotation.setAngle(0);
         mRotation.setAxis(axisP3D);
-
-        TextureCoordinateSystem tcs = TextureCoordinateSystem.create(Vector3d.Z_ONE, textureDirectionX);
-        TextureProjection tp = TextureProjection.fromPointsBorder(tcs, bottomPointsCW);
-        mSurfaceData.setSurfaceSize(tp.getSpannedSize());
     }
 
     @Override

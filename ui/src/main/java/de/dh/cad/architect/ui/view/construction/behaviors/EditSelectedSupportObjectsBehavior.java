@@ -205,7 +205,7 @@ public class EditSelectedSupportObjectsBehavior extends AbstractConstructionBeha
 
     protected void createInteractionsPane() {
         // TODO: Populate interactions control for support objects
-//        setInteractionsControl(new InteractionsControl(mSOInfo, Strings.INTERACTIONS_TAB_SELECTED_SUPPORT_OBJECT_TITLE, false));
+//        setInteractionsControl(new InteractionsControl(mSOInfo, Strings.SUPPORT_OBJECTS_EDIT_BEHAVIOR_INTERACTIONS_TAB_TITLE, false));
     }
 
     protected void updateInteractionsPane() {

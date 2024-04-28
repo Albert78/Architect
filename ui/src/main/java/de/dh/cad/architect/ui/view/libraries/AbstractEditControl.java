@@ -27,14 +27,6 @@ import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 
 public abstract class AbstractEditControl extends BorderPane {
-    protected Collection<ExtensionFilter> getImageExtensionFilters() {
-        return Arrays.asList(
-            new FileChooser.ExtensionFilter(Strings.ALL_FILES_EXTENSION_FILTER_NAME, "*.*"),
-            new FileChooser.ExtensionFilter("JPG", "*.jpg"),
-            new FileChooser.ExtensionFilter("PNG", "*.png")
-            );
-    }
-
     public static Length lengthOrDefault(Length length, Length defaultLength) {
         return length == null ? defaultLength : length;
     }

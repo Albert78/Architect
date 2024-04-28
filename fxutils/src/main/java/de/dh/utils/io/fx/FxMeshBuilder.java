@@ -32,7 +32,9 @@ import org.slf4j.LoggerFactory;
 import de.dh.cad.architect.utils.vfs.IDirectoryLocator;
 import de.dh.cad.architect.utils.vfs.IResourceLocator;
 import de.dh.utils.ArrayUtils;
+import de.dh.utils.MaterialMapping;
 import de.dh.utils.Vector2D;
+import de.dh.utils.Vector3D;
 import de.dh.utils.io.MeshData;
 import de.dh.utils.io.MeshData.FaceNormalsData;
 import de.dh.utils.io.ObjData;
@@ -40,8 +42,9 @@ import de.dh.utils.io.SmoothingGroups;
 import de.dh.utils.io.obj.ParserUtils;
 import de.dh.utils.io.obj.ParserUtils.TokenIterator;
 import de.dh.utils.io.obj.RawMaterialData;
-import javafx.geometry.Dimension2D;
 import javafx.scene.SnapshotParameters;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.ImagePattern;
@@ -50,9 +53,9 @@ import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.Mesh;
 import javafx.scene.shape.MeshView;
-import javafx.scene.shape.Rectangle;
-import javafx.scene.shape.Shape3D;
 import javafx.scene.shape.TriangleMesh;
+import javafx.scene.transform.Affine;
+import javafx.scene.transform.Rotate;
 
 /**
  * Class for building JavaFX {@link MeshView} objects from {@code .obj} and {@code .mtl} file data which
@@ -61,7 +64,7 @@ import javafx.scene.shape.TriangleMesh;
  * Common JavaFX {@code .obj} file importers in the internet build JavaFX {@link Material} instances directly from the
  * entries in the material library ({@code .mtl}) file and {@link Mesh} objects directly from the object
  * entries in the object ({@code .obj}) file.
- * But this typical approach has three main drawbacks:
+ * But this typical approach has some drawbacks:
  * <ul>
  * <li>
  * When transporting the object properties directly via JavaFX {@link Material} / {@link MeshView} instances,
@@ -73,15 +76,6 @@ import javafx.scene.shape.TriangleMesh;
  * <li>
  * The typical object reader/writer code you can find in internet is JavaFX specific and could not be reused
  * for other 3D frontend libraries.
- * </li>
- * <li>
- * There are properties in the material library specification (.mtl file) which would need to be translated
- * into properties of the final {@link MeshView} object in JavaFX, e.g. the {@code d} command in the material file,
- * which needs to be translated to the {@link MeshView#getOpacity() opacity} of the mesh view.
- * Due to a current limitation of JavaFX (as of version 16), the {@link MeshView#getOpacity() opacity property} is not
- * supported for 3D objects, instead, we are forced to "hack" the opacity using the alpha value of the diffuse color and
- * specular color. So this third argument doesn't actually apply in the current implementation but could maybe become
- * relevant in the future for other properties which need to be set on the mesh instead on the material itself.
  * </li>
  * </ul>
  *
@@ -119,160 +113,253 @@ public class FxMeshBuilder {
         }
     }
 
-    public static void configureMaterial_Strict(Shape3D shape, RawMaterialData materialData, Optional<Vector2D> oSurfaceSize) throws IOException {
-        PhongMaterial material = new PhongMaterial(Color.WHITE);
+    protected static class TextureMapData {
+        protected final Image mTextureImage;
+
+        protected final Optional<Vector3D> mOffset;
+        protected final Optional<Vector3D> mScale;
+
+        protected TextureMapData(Image textureImage, Optional<Vector3D> offset, Optional<Vector3D> scale) {
+            mTextureImage = textureImage;
+            mOffset = offset;
+            mScale = scale;
+        }
+
+        public Image getTextureImage() {
+            return mTextureImage;
+        }
+
+        /**
+         * Gets the position offset of the texture image on the target surface.
+         */
+        public Optional<Vector3D> getOffset() {
+            return mOffset;
+        }
+
+        /**
+         * Gets the optional scaling factor to be applied to the texture. The texture tile size
+         * is the size of the texture image times this scale factor.
+         */
+        public Optional<Vector3D> getScale() {
+            return mScale;
+        }
+    }
+
+    /**
+     * Checks if the given line is the given map command and tries to parse that material texture map command.
+     * @param line A line of a .mtl material file, like {@code map_Kd -o 0.200 0.000 0.000 texture.png}.
+     * @param mapCommand The command to check, one of the map commands ({@code map_Kd, map_Ks, map_Ka}).
+     * @param baseDirectory Directory to search the referenced image or texture files.
+     * @return The extracted data or {@code null} if the given line does not specify the given command.
+     */
+    protected static TextureMapData tryParseTextureMapCommand(String line, String mapCommand,
+            IDirectoryLocator baseDirectory) throws IOException {
+        if (!line.startsWith(mapCommand + " ")) {
+            return null;
+        }
+
+        String rest = line.substring(7).trim();
+        String fileName = ParserUtils.getLastPart(rest);
+
+        // Texture offsets
+        float oU = 0;
+        float oV = 0;
+        @SuppressWarnings("unused")
+        float oW = 0;
+        // Texture scale
+        float sU = 1;
+        float sV = 1;
+        @SuppressWarnings("unused")
+        float sW = 1;
+
+        if (rest.length() > fileName.length()) {
+            String optionsStr = rest.substring(0, rest.length() - fileName.length());
+            if (!StringUtils.isEmpty(optionsStr)) {
+                TokenIterator ti = TokenIterator.tokenize(optionsStr);
+optionsLoop:
+                while (ti.moveNext()) {
+                    String t = ti.getCurrentToken();
+                    if ("-s".equals(t)) {
+                        if (!ti.moveNext()) {
+                            log.warn("Invalid arguments for option -s in options string '" + optionsStr + "' for command " + mapCommand);
+                            break;
+                        }
+                        sU = Float.parseFloat(ti.getCurrentToken());
+                        if (ti.moveNext()) {
+                            t = ti.getCurrentToken();
+                            if (t.startsWith("-")) {
+                                ti.moveBack();
+                            } else {
+                                String vStr = ti.getCurrentToken();
+                                sV = Float.parseFloat(vStr);
+
+                                t = ti.getCurrentToken();
+                                if (t.startsWith("-")) {
+                                    ti.moveBack();
+                                } else {
+                                    String wStr = ti.getCurrentToken();
+                                    sW = Float.parseFloat(wStr);
+                                }
+                            }
+                        }
+                        continue;
+                    }
+                    if ("-o".equals(t)) {
+                        if (!ti.moveNext()) {
+                            log.warn("Invalid arguments for option -o in options string '" + optionsStr + "' for command " + mapCommand);
+                            break;
+                        }
+                        oU = Float.parseFloat(ti.getCurrentToken());
+                        if (ti.moveNext()) {
+                            t = ti.getCurrentToken();
+                            if (t.startsWith("-")) {
+                                ti.moveBack();
+                            } else {
+                                String vStr = ti.getCurrentToken();
+                                oV = Float.parseFloat(vStr);
+
+                                t = ti.getCurrentToken();
+                                if (t.startsWith("-")) {
+                                    ti.moveBack();
+                                } else {
+                                    String wStr = ti.getCurrentToken();
+                                    oW = Float.parseFloat(wStr);
+                                }
+                            }
+                        }
+                        continue;
+                    }
+                    // Skip until next option
+                    StringBuilder ignored = new StringBuilder(t);
+                    while (ti.moveNext()) {
+                        t = ti.getCurrentToken();
+                        if (t.startsWith("-")) {
+                            ti.moveBack();
+                            continue optionsLoop;
+                        }
+                        ignored.append(" ").append(t);
+                    }
+                    log.warn("Ignoring option '" + ignored + "' for command " + mapCommand);
+                }
+            }
+        }
+
+        try {
+            Image textureImage = loadImage(fileName, baseDirectory);
+            return new TextureMapData(textureImage,
+                    oU != 0 || oV != 0 || oW != 0 ? Optional.of(new Vector3D(oU, oV, oW)) : Optional.empty(),
+                    sU != 1 || sV != 1 || sW != 1 ? Optional.of(new Vector3D(sU, sV, sW)) : Optional.empty());
+        } catch (IOException e) {
+            throw new IOException("Unable to load image for command " + mapCommand, e);
+        }
+    }
+
+    protected static Image tryCreateTextureMap(String line, String mapCommand, Optional<Vector2D> oNativeMaterialTileSize, IDirectoryLocator baseDirectory,
+            MaterialMapping mappingConfig) throws IOException {
+        TextureMapData tmd = tryParseTextureMapCommand(line, mapCommand, baseDirectory);
+        if (tmd == null) {
+            return null;
+        }
+        Optional<Vector3D> offsetFromCommand = tmd.getOffset();
+        Optional<Vector3D> scaleFromCommand = tmd.getScale();
+
+        Image textureImage = tmd.getTextureImage();
+        double imageWidth = textureImage.getWidth();
+        double imageHeight = textureImage.getHeight();
+        Vector2D imageSize = new Vector2D(imageWidth, imageHeight);
+
+        Optional<Vector2D> oOffset = mappingConfig
+                .getMaterialOffset()
+                .or(() -> offsetFromCommand
+                        .map(Vector3D::projectXY)); // We don't support the "w" parts yet (neither in offset nor scale)
+
+        // Attention: The mapping config stores the tile size while the command only stores the scale, which must be multiplied with the image size
+        Optional<Vector2D> oTileSize = mappingConfig
+                .getMaterialTileSize()
+                .or(() -> oNativeMaterialTileSize)
+                .or(() -> scaleFromCommand
+                        .map(s -> new Vector2D(s.getX() + imageWidth, s.getY() * imageHeight)));
+
+        Optional<Double> oMaterialRotationDeg = mappingConfig.getMaterialRotationDeg();
+
+        MaterialMapping.LayoutMode layoutMode = mappingConfig.getLayoutMode();
+
+        if (layoutMode == MaterialMapping.LayoutMode.Stretch && oOffset.isEmpty() && oMaterialRotationDeg.isEmpty()) {
+            // In this case, we don't need to go the complex path; the given texture can be used as it is
+            return textureImage;
+        }
+
+        Vector2D targetSurfaceSize = mappingConfig
+                .getTargetSurfaceSize()
+                .orElse(imageSize);
+
+        Vector2D offset = oOffset
+                .orElse(Vector2D.EMPTY);
+        Vector2D tileSize = layoutMode == MaterialMapping.LayoutMode.Stretch
+                ? targetSurfaceSize
+                : oTileSize
+                .orElse(imageSize);
+
+        double textureResolutionPerLengthUnit = mappingConfig.getTextureResolutionPerLengthUnit();
+
+        ImagePattern pattern = new ImagePattern(textureImage,
+                offset.getX() * textureResolutionPerLengthUnit, offset.getY() * textureResolutionPerLengthUnit, // Offset of the material tile on the surface
+                tileSize.getX() * textureResolutionPerLengthUnit, tileSize.getY() * textureResolutionPerLengthUnit, // Size of the material tile on the surface
+                false);
+
+        // That surface image texture will enclose / contain the actual texture image tiled over its surface.
+        double textureWidth = targetSurfaceSize.getX() * textureResolutionPerLengthUnit;
+        double textureHeight = targetSurfaceSize.getY() * textureResolutionPerLengthUnit;
+        Canvas canvas = new Canvas(textureWidth, textureHeight);
+        final GraphicsContext gc = canvas.getGraphicsContext2D();
+        gc.setFill(pattern);
+
+        if (oMaterialRotationDeg.isPresent()) {
+            double materialRotationDeg = oMaterialRotationDeg.get();
+            double materialRotationRad = materialRotationDeg * Math.PI / 180;
+            double sin = Math.abs(Math.sin(materialRotationRad));
+            double cos = Math.abs(Math.cos(materialRotationRad));
+            double textureWidthRot = textureWidth * cos + textureHeight * sin;
+            double textureHeightRot = textureWidth * sin + textureHeight * cos;
+
+            double dx = -(textureWidthRot - textureWidth) / 2;
+            double dy = -(textureHeightRot - textureHeight) / 2;
+            gc.setTransform(new Affine(new Rotate(materialRotationDeg, textureWidth / 2, textureHeight / 2)));
+            gc.fillRect(dx, dy, textureWidthRot, textureHeightRot);
+        } else {
+            gc.fillRect(0, 0, textureWidth, textureHeight);
+        }
+        return canvas.snapshot(new SnapshotParameters(), null);
+    }
+
+    public static PhongMaterial buildMaterial_Strict(MaterialData materialData, MaterialMapping mappingConfig) throws IOException {
+        PhongMaterial result = new PhongMaterial(Color.WHITE);
         if (materialData != null) {
             int lineNo = 0;
             for (String line : materialData.getLines()) {
                 lineNo++;
+                line = line.trim();
                 try {
+                    Image textureImage;
+
+                    // TODO: There are many unsupported commands and options, e.g.
+                    //  the source texture modifications options like -mm or -texres
                     if (line.isEmpty() || line.startsWith("#")) {
                         // Ignore comments and empty lines
                     } else if (line.startsWith("newmtl ")) {
                         // Ignore name
                     } else if (line.startsWith("Kd ")) {
-                        material.setDiffuseColor(readMtlColor(line.substring(3).trim()));
+                        result.setDiffuseColor(readMtlColor(line.substring(3).trim()));
                     } else if (line.startsWith("Ks ")) {
-                        material.setSpecularColor(readMtlColor(line.substring(3).trim()));
+                        result.setSpecularColor(readMtlColor(line.substring(3).trim()));
                     } else if (line.startsWith("Ns ")) {
-                        material.setSpecularPower(Double.parseDouble(line.substring(3).trim()));
-                    } else if (line.startsWith("map_Kd ")) {
-                        material.setDiffuseColor(Color.WHITE);
-                        try {
-                            String rest = line.substring(7).trim();
-                            String fileName = ParserUtils.getLastPart(rest);
-                            // Texture offsets
-                            float oU = 0;
-                            float oV = 0;
-                            @SuppressWarnings("unused")
-                            float oW = 0;
-                            // Texture scale
-                            float sU = 1;
-                            float sV = 1;
-                            @SuppressWarnings("unused")
-                            float sW = 1;
-                            if (rest.length() > fileName.length()) {
-                                String optionsStr = rest.substring(0, rest.length() - fileName.length());
-                                if (!StringUtils.isEmpty(optionsStr)) {
-                                    TokenIterator ti = TokenIterator.tokenize(optionsStr);
-                                    while (ti.moveNext()) {
-                                        String t = ti.getCurrentToken();
-                                        if ("-s".equals(t)) {
-                                            if (!ti.moveNext()) {
-                                                log.warn("Invalid arguments for option -s in options string '" + optionsStr + "' for command map_Kd");
-                                                break;
-                                            }
-                                            sU = Float.parseFloat(ti.getCurrentToken());
-                                            if (ti.moveNext()) {
-                                                t = ti.getCurrentToken();
-                                                if (t.startsWith("-")) {
-                                                    ti.moveBack();
-                                                } else {
-                                                    String vStr = ti.getCurrentToken();
-                                                    sV = Float.parseFloat(vStr);
-
-                                                    t = ti.getCurrentToken();
-                                                    if (t.startsWith("-")) {
-                                                        ti.moveBack();
-                                                    } else {
-                                                        String wStr = ti.getCurrentToken();
-                                                        sW = Float.parseFloat(wStr);
-                                                    }
-                                                }
-                                            }
-                                            continue;
-                                        }
-                                        if ("-o".equals(t)) {
-                                            if (!ti.moveNext()) {
-                                                log.warn("Invalid arguments for option -o in options string '" + optionsStr + "' for command map_Kd");
-                                                break;
-                                            }
-                                            oU = Float.parseFloat(ti.getCurrentToken());
-                                            if (ti.moveNext()) {
-                                                t = ti.getCurrentToken();
-                                                if (t.startsWith("-")) {
-                                                    ti.moveBack();
-                                                } else {
-                                                    String vStr = ti.getCurrentToken();
-                                                    oV = Float.parseFloat(vStr);
-
-                                                    t = ti.getCurrentToken();
-                                                    if (t.startsWith("-")) {
-                                                        ti.moveBack();
-                                                    } else {
-                                                        String wStr = ti.getCurrentToken();
-                                                        oW = Float.parseFloat(wStr);
-                                                    }
-                                                }
-                                            }
-                                            continue;
-                                        }
-                                        // Skip until next option
-                                        String ignored = t;
-                                        while (ti.moveNext()) {
-                                            t = ti.getCurrentToken();
-                                            if (t.startsWith("-")) {
-                                                ti.moveBack();
-                                                continue;
-                                            }
-                                            ignored += " " + t;
-                                        }
-                                        log.warn("Ignoring option '" + ignored + "' for command map_Kd");
-                                    }
-                                }
-                            }
-
-                            Image textureImage = loadImage(fileName, materialData.getBaseDirectory());
-                            double imageWidth = textureImage.getWidth();
-                            double imageHeight = textureImage.getHeight();
-                            Dimension2D surfaceImageSize = null;
-
-                            if (oSurfaceSize.isPresent()) {
-                                // In case we know the final surface size, we'll generate a surface image texture of the final size to fit best without the
-                                // need of scaling.
-                                Vector2D surfaceSize = oSurfaceSize.get();
-                                surfaceImageSize = new Dimension2D(surfaceSize.getX(), surfaceSize.getY());
-                            } else if (sU != 1 || sV != 1 || oU != 0 || oV != 0) {
-                                // In case we don't know the surface size, we just generate a surface image with the original texture
-                                // size - scaled and moved according to -s and -o settings
-                                surfaceImageSize = new Dimension2D(imageWidth, imageHeight);
-                            }
-
-                            if (surfaceImageSize != null) {
-                                Rectangle rectangle = new Rectangle(surfaceImageSize.getWidth(), surfaceImageSize.getHeight()); // Size of the surface in real coordinates (for example: 6x3 m)
-                                // That surface image texture will contain the actual texture image tiled over its surface.
-                                ImagePattern pattern = new ImagePattern(textureImage, oU, oV, imageWidth * sU, imageHeight * sV, false); // Size of the texture on the surface in real coordinates (for example: 1x1 m)
-                                rectangle.setFill(pattern);
-                                rectangle.setStrokeWidth(0);
-                                material.setDiffuseMap(rectangle.snapshot(new SnapshotParameters(), null));
-                            } else {
-                                material.setDiffuseMap(textureImage);
-                            }
-                        } catch (IOException e) {
-                            throw new IOException("Unable to load image for diffuse map", e);
-                        }
-                        // TODO: Other map_ commands
-//                        material.setSelfIlluminationMap(loadImage(line.substring("map_Kd ".length())));
-//                        material.setSpecularColor(Color.WHITE);
-//                    } else if (line.startsWith("illum ")) {
-//                        int illumNo = Integer.parseInt(line.substring("illum ".length()));
-/*
-                        0    Color on and Ambient off
-                        1    Color on and Ambient on
-                        2    Highlight on
-                        3    Reflection on and Ray trace on
-                        4    Transparency: Glass on
-                             Reflection: Ray trace on
-                        5    Reflection: Fresnel on and Ray trace on
-                        6    Transparency: Refraction on
-                             Reflection: Fresnel off and Ray trace on
-                        7    Transparency: Refraction on
-                             Reflection: Fresnel on and Ray trace on
-                        8    Reflection on and Ray trace off
-                        9    Transparency: Glass on
-                             Reflection: Ray trace off
-                        10   Casts shadows onto invisible surfaces
-*/
+                        result.setSpecularPower(Double.parseDouble(line.substring(3).trim()));
+                    } else if ((textureImage = tryCreateTextureMap(line, "map_Kd", materialData.getTileSize(), materialData.getBaseDirectory(), mappingConfig)) != null) {
+                        result.setDiffuseMap(textureImage);
+                    } else if ((textureImage = tryCreateTextureMap(line, "map_Ks", materialData.getTileSize(), materialData.getBaseDirectory(), mappingConfig)) != null) {
+                        result.setSpecularMap(textureImage);
+                    } else if ((textureImage = tryCreateTextureMap(line, "bump", materialData.getTileSize(), materialData.getBaseDirectory(), mappingConfig)) != null) {
+                        result.setBumpMap(textureImage);
                     } else if (line.startsWith("d ")) {
                         // d factor
                         // d -halo factor
@@ -283,9 +370,9 @@ public class FxMeshBuilder {
                         } else {
                             factor = Float.parseFloat(split[1]);
                         }
-                        Color color = material.getDiffuseColor();
+                        Color color = result.getDiffuseColor();
                         if (color != null) {
-                            material.setDiffuseColor(color.deriveColor(0, 1, 1, factor));
+                            result.setDiffuseColor(color.deriveColor(0, 1, 1, factor));
                         }
                         // Specular color doesn't seem to look different if alpha value is added, as of JavaFX 16
                     } else {
@@ -297,15 +384,16 @@ public class FxMeshBuilder {
             }
         }
 
-        shape.setMaterial(material);
+        return result;
     }
 
-    public static void configureMaterial_Lax(Shape3D shape, RawMaterialData materialData, Optional<Vector2D> oSurfaceSize) {
+    public static PhongMaterial buildMaterial_Lax(MaterialData materialData, MaterialMapping mappingConfig) {
         try {
-            configureMaterial_Strict(shape, materialData, oSurfaceSize);
+            return buildMaterial_Strict(materialData, mappingConfig);
         } catch (IOException e) {
             log.error("Error while configuring material", e);
         }
+        return new PhongMaterial();
     }
 
 
@@ -358,15 +446,17 @@ public class FxMeshBuilder {
         return meshView;
     }
 
-    public static Collection<MeshView> buildMeshViews(Collection<MeshData> meshes, Map<String, RawMaterialData> meshNamesToMaterials, boolean failOnError) throws IOException {
+    public static Collection<MeshView> buildMeshViews(Collection<MeshData> meshes,
+            Map<String, MaterialData> meshNamesToMaterials, MaterialMapping mappingConfig,
+            boolean failOnError) throws IOException {
         Collection<MeshView> result = new ArrayList<>();
         for (MeshData meshData : meshes) {
             MeshView meshView = FxMeshBuilder.buildMeshView(meshData);
-            RawMaterialData materialData = meshNamesToMaterials.get(meshData.getName());
+            MaterialData materialData = meshNamesToMaterials.get(meshData.getName());
             if (failOnError) {
-                configureMaterial_Strict(meshView, materialData, Optional.empty());
+                meshView.setMaterial(buildMaterial_Strict(materialData, mappingConfig));
             } else {
-                configureMaterial_Lax(meshView, materialData, Optional.empty());
+                meshView.setMaterial(buildMaterial_Lax(materialData, mappingConfig));
             }
             result.add(meshView);
         }

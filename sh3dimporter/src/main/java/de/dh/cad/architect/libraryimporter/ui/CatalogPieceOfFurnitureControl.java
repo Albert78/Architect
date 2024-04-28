@@ -38,7 +38,7 @@ import de.dh.cad.architect.ui.assets.AssetLoader;
 import de.dh.cad.architect.ui.assets.AssetManager;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.utils.vfs.IResourceLocator;
-import de.dh.utils.io.obj.RawMaterialData;
+import de.dh.utils.io.fx.MaterialData;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
@@ -96,7 +96,7 @@ public class CatalogPieceOfFurnitureControl extends BorderPane implements Initia
 
     protected ThreeDObjectViewControl mThreeDObjectView;
 
-    protected Map<String, RawMaterialData> mDefaultMaterials = new TreeMap<>();
+    protected Map<String, MaterialData> mDefaultMaterials = new TreeMap<>();
 
     public CatalogPieceOfFurnitureControl(CatalogPieceOfFurniture pieceOfFurnitureData, AssetManager assetManager, Stage window) {
         mOwnerStage = window;
@@ -202,19 +202,7 @@ public class CatalogPieceOfFurnitureControl extends BorderPane implements Initia
     }
 
     protected void update3DObjectView() {
-        Node objView = ObjectLoader.load3DResource(mPieceOfFurniture.getModel(), mPieceOfFurniture.getModelRotationArchitect(), mDefaultMaterials);
-
-        if (objView == null) {
-            objView = AssetLoader.loadBroken3DResource().getObject();
-        } else {
-            Bounds bounds = objView.getBoundsInParent();
-            double width = CoordinateUtils.lengthToCoords(Length.ofCM(mPieceOfFurniture.getWidth()), null);
-            double height = CoordinateUtils.lengthToCoords(Length.ofCM(mPieceOfFurniture.getHeight()), null);
-            double depth = CoordinateUtils.lengthToCoords(Length.ofCM(mPieceOfFurniture.getDepth()), null);
-            objView.setScaleX(width / bounds.getWidth());
-            objView.setScaleY(height / bounds.getDepth());
-            objView.setScaleZ(depth / bounds.getHeight());
-        }
+        Node objView = mPieceOfFurniture.createThreeDModel(mDefaultMaterials);
         mThreeDObjectView.setObjView(objView);
     }
 }

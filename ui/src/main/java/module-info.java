@@ -19,6 +19,7 @@ module de.dh.cad.architect.ui {
     exports de.dh.cad.architect.ui;
     exports de.dh.cad.architect.ui.view; // For ObjectReconcileOperation - could be moved to the core?
     exports de.dh.cad.architect.ui.utils;
+    exports de.dh.cad.architect.ui.controls;
     exports de.dh.cad.architect.ui.assets;
     exports de.dh.cad.architect.ui.persistence;
     exports de.dh.cad.architect.ui.logoutput;
@@ -48,7 +49,6 @@ module de.dh.cad.architect.ui {
     requires transitive javafx.fxml;
     requires transitive javafx.controls;
     requires org.slf4j;
-    requires org.apache.logging.log4j;
     requires java.desktop;
     requires org.apache.commons.collections4;
     requires org.apache.commons.lang3;
