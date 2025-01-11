@@ -42,7 +42,6 @@ import eu.mihosoft.jcsg.CSG;
 import eu.mihosoft.jcsg.ext.org.poly2tri.PolygonUtil;
 import eu.mihosoft.vvecmath.Transform;
 import eu.mihosoft.vvecmath.Vector3d;
-import javafx.beans.value.ChangeListener;
 import javafx.geometry.Point3D;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Mesh;
@@ -62,11 +61,6 @@ public class Ceiling3DRepresentation extends AbstractSolid3DRepresentation {
         meshView.getTransforms().addFirst(CoordinateUtils.createTransformArchitectToJavaFx());
         add(meshView);
         registerSurface(mSurfaceData);
-
-        ChangeListener<Boolean> bPropertiesUpdaterListener = (observable, oldValue, newValue) -> updateProperties();
-        selectedProperty().addListener(bPropertiesUpdaterListener);
-        objectFocusedProperty().addListener(bPropertiesUpdaterListener);
-        objectEmphasizedProperty().addListener(bPropertiesUpdaterListener);
     }
 
     public Ceiling getCeiling() {

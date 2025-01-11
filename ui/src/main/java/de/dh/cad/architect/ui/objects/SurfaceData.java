@@ -89,6 +89,9 @@ public class SurfaceData<T extends Shape3D> {
     }
 
     public void setMaterial(PhongMaterial material) {
+        if (material == mOriginalMaterial) {
+            return;
+        }
         if (material == null) {
             material = new PhongMaterial();
         }

@@ -34,6 +34,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import de.dh.cad.architect.model.Plan;
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.model.objects.Anchor;
+import de.dh.cad.architect.model.objects.Wall;
 import de.dh.cad.architect.model.wallmodel.AdaptedModelAnchor;
 import de.dh.cad.architect.model.wallmodel.AdaptedModelWall;
 import de.dh.cad.architect.model.wallmodel.IWall;
@@ -72,23 +73,17 @@ public class ChangeWallsVisualFeedbackManager {
     }
 
     public void initialize(Map<String, ? extends IWall> virtualWalls,
-        Collection<? extends IWall> wallsForDimensioningsFeedback, Collection<? extends IWall> wallsForAlignmentsFeedback, Optional<? extends IWallAnchor> oWallAnchorOfMovingHandle) {
+            Collection<? extends IWall> wallsForDimensioningsFeedback, Collection<? extends IWall> wallsForAlignmentsFeedback,
+            Collection<? extends IWallAnchor> wallAnchorsOfMovingHandles, Optional<? extends IWallAnchor> oWallAnchorForSnap) {
         mVirtualWalls = virtualWalls;
         mWallsForDimensioningsFeedback = wallsForDimensioningsFeedback;
         mWallsForAlignmentsFeedback = wallsForAlignmentsFeedback;
-        mWallAnchorOfMovingHandle = oWallAnchorOfMovingHandle;
 
         removeVisualObjects();
         Plan plan = mView.getPlan();
-        Collection<? extends IWallAnchor> wallAnchorsOfMovingHandles;
-        if (oWallAnchorOfMovingHandle.isPresent()) {
-            wallAnchorsOfMovingHandles = Collections.singleton(oWallAnchorOfMovingHandle.get());
-        } else {
-            wallAnchorsOfMovingHandles = Collections.emptySet();
-        }
         Collection<IWall> modelWalls = AdaptedModelWall.wrapWalls(plan.getWalls().values());
         Collection<IWall> modelAndVirtualWalls = CollectionUtils.union(modelWalls, virtualWalls.values());
-        mSnappingModel = WallsSnappingModel.create(oWallAnchorOfMovingHandle, modelAndVirtualWalls, plan.getGuideLines().values());
+        mSnappingModel = WallsSnappingModel.create(oWallAnchorForSnap, modelAndVirtualWalls, plan.getGuideLines().values());
         Collection<VirtualLinesCenter> wallSnapData = mSnappingModel.getWallSnapData();
         mAlignmentModel = WallsAlignmentModel.create(mWallsForAlignmentsFeedback, modelWalls, wallSnapData);
         // Create related positions model even if we don't have anchors of interest - in that case, the model is empty
@@ -103,9 +98,11 @@ public class ChangeWallsVisualFeedbackManager {
     }
 
     public void initializeForAddWall(PrincipalWallAncillaryWallsModel ancillaryWallsModel) {
+        Optional<AncillaryWallAnchor> wallAnchorForMovingHandleFeedback = ancillaryWallsModel.getWallAnchorForMovingHandleFeedback();
         initialize(ancillaryWallsModel.getWallsById(),
             ancillaryWallsModel.getWallsForDimensioningsFeedback(), ancillaryWallsModel.getWallsForAlignentsFeedback(),
-            ancillaryWallsModel.getWallAnchorForMovingHandleFeedback());
+                wallAnchorForMovingHandleFeedback.map(Collections::singleton).orElse(Collections.emptySet()),
+                wallAnchorForMovingHandleFeedback);
     }
 
     public void initializeForDragWallHandle(Anchor wallHandleAnchor) {
@@ -113,9 +110,15 @@ public class ChangeWallsVisualFeedbackManager {
         List<IWall> dockedWalls = wrappedHandleAnchor
             .getAllDockedAnchors()
             .stream()
-            .map(a -> a.getOwner())
+            .map(IWallAnchor::getOwner)
             .toList();
-        initialize(Collections.emptyMap(), dockedWalls, dockedWalls, Optional.of(wrappedHandleAnchor));
+        initialize(Collections.emptyMap(), dockedWalls, dockedWalls,
+                Collections.singleton(wrappedHandleAnchor), Optional.of(wrappedHandleAnchor));
+    }
+
+    public void initializeForDragWall(Wall wall) {
+        initialize(Collections.emptyMap(), Collections.emptyList(), Collections.emptyList(),
+                AdaptedModelAnchor.wrapWallAnchors(wall.getHandleAnchors()),Optional.empty());
     }
 
     public void uninstall() {

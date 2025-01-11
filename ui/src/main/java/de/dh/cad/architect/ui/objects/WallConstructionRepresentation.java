@@ -20,10 +20,14 @@ package de.dh.cad.architect.ui.objects;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
 
+import de.dh.cad.architect.model.coords.AnchorTarget;
 import de.dh.cad.architect.model.coords.Position2D;
 import de.dh.cad.architect.model.objects.Anchor;
 import de.dh.cad.architect.model.objects.BaseAnchoredObject;
@@ -31,6 +35,7 @@ import de.dh.cad.architect.model.objects.Wall;
 import de.dh.cad.architect.model.wallmodel.WallAnchorPositions;
 import de.dh.cad.architect.model.wallmodel.WallOutline;
 import de.dh.cad.architect.ui.Constants;
+import de.dh.cad.architect.ui.Strings;
 import de.dh.cad.architect.ui.controller.UiController;
 import de.dh.cad.architect.ui.objects.IntermediatePoint.IntermediatePointCallback;
 import de.dh.cad.architect.ui.objects.WallReconciler.DividedWallParts;
@@ -54,6 +59,8 @@ import javafx.scene.transform.Scale;
  * Ground plan representation of a wall (fragment).
  */
 public class WallConstructionRepresentation extends AbstractAnchoredObjectConstructionRepresentation implements IModificationFeatureProvider {
+    public static final Color DEFAULT_STROKE_COLOR = Color.BLACK.deriveColor(1, 1, 1, 0.5);
+
     protected final Polygon mBorder;
     protected final Text mWallEndA;
     protected final Scale mWallEndAScale;
@@ -88,6 +95,8 @@ public class WallConstructionRepresentation extends AbstractAnchoredObjectConstr
         objectSpottedProperty().addListener(propertiesUpdaterListener);
         objectFocusedProperty().addListener(propertiesUpdaterListener);
         objectEmphasizedProperty().addListener(propertiesUpdaterListener);
+
+        installDragHandlers();
     }
 
     @Override
@@ -112,7 +121,7 @@ public class WallConstructionRepresentation extends AbstractAnchoredObjectConstr
         if (selected) {
             mBorder.setStroke(SELECTED_OBJECTS_COLOR);
         } else {
-            mBorder.setStroke(Color.BLACK.deriveColor(1, 1, 1, 0.5));
+            mBorder.setStroke(DEFAULT_STROKE_COLOR);
         }
         if (isObjectFocused()) {
             setViewOrder(Constants.VIEW_ORDER_WALL + Constants.VIEW_ORDER_OFFSET_FOCUSED);
@@ -305,7 +314,7 @@ public class WallConstructionRepresentation extends AbstractAnchoredObjectConstr
     }
 
     @Override
-    public void startAnchorDrag(Anchor anchor, Position2D startDragPos) {
+    public Object startAnchorDrag(Anchor anchor, Position2D startDragPos) {
         super.startAnchorDrag(anchor, startDragPos);
         if (mFeedbackManager != null) {
             mFeedbackManager.uninstall();
@@ -314,11 +323,12 @@ public class WallConstructionRepresentation extends AbstractAnchoredObjectConstr
         mFeedbackManager = new ChangeWallsVisualFeedbackManager(getParentView());
         mFeedbackManager.initializeForDragWallHandle(anchor);
         mFeedbackManager.updateVisualObjects();
+        return null;
     }
 
     @Override
-    public void endAnchorDrag(Anchor anchor) {
-        super.endAnchorDrag(anchor);
+    public void endAnchorDrag(Anchor anchor, Object context) {
+        super.endAnchorDrag(anchor, context);
         if (mFeedbackManager == null) {
             return;
         }
@@ -329,8 +339,8 @@ public class WallConstructionRepresentation extends AbstractAnchoredObjectConstr
 
     @Override
     public void dragAnchor(Anchor anchor, Position2D startDragPos, Position2D currentDragPos, boolean firstMoveEvent, boolean shiftDown,
-        boolean altDown, boolean controlDown) {
-        super.dragAnchor(anchor, startDragPos, currentDragPos, firstMoveEvent, shiftDown, altDown, controlDown);
+        boolean altDown, boolean controlDown, Object context) {
+        super.dragAnchor(anchor, startDragPos, currentDragPos, firstMoveEvent, shiftDown, altDown, controlDown, context);
         if (mFeedbackManager == null) {
             return;
         }
@@ -339,7 +349,7 @@ public class WallConstructionRepresentation extends AbstractAnchoredObjectConstr
 
     @Override
     public void dragAnchorDock(Anchor anchor, Position2D targetPosition, boolean firstMoveEvent,
-        boolean shiftDown, boolean altDown, boolean controlDown) {
+        boolean shiftDown, boolean altDown, boolean controlDown, Object context) {
         Optional<Position2D> oPreferredSnapPos;
         if (controlDown) {
             oPreferredSnapPos = Optional.empty();
@@ -348,7 +358,64 @@ public class WallConstructionRepresentation extends AbstractAnchoredObjectConstr
         } else {
             oPreferredSnapPos = Optional.empty();
         }
-        super.dragAnchorDock(anchor, oPreferredSnapPos.orElse(targetPosition), firstMoveEvent, shiftDown, altDown, controlDown);
+        super.dragAnchorDock(anchor, oPreferredSnapPos.orElse(targetPosition), firstMoveEvent, shiftDown, altDown, controlDown, context);
+    }
+
+    @Override
+    protected boolean isDragSupported() {
+        // Support dragging walls if they are not docked to another dock owner -
+        // we could weaken the check to allow docking also if either none of our handles is docked or every handle
+        // is at least docked to a dock whose root dock owner is a handle - so that we could move the complete dock
+        if (getWall().getAnchors()
+                .stream()
+                .anyMatch(anchor -> anchor.getDockMaster().isPresent())) {
+            return false;
+        };
+        return true;
+    }
+
+    static class DragContext {
+        Map<Anchor, de.dh.cad.architect.model.coords.Vector2D> startHandlePositionsRelToStartPos;
+    }
+
+    @Override
+    protected Object dragStart(Position2D pos) {
+        super.dragStart(pos);
+        if (mFeedbackManager != null) {
+            mFeedbackManager.uninstall();
+        }
+        mFeedbackManager = new ChangeWallsVisualFeedbackManager(getParentView());
+        mFeedbackManager.initializeForDragWall(getWall());
+        mFeedbackManager.updateVisualObjects();
+        DragContext context = new DragContext();
+        context.startHandlePositionsRelToStartPos = getWall().getHandleAnchors()
+                .stream()
+                .collect(Collectors.toMap(Function.identity(), handle -> handle.projectionXY().minus(pos)));
+        return context;
+    }
+
+    @Override
+    protected void drag(Position2D dragStartPos, Position2D currentPos, boolean firstMoveEvent, boolean shiftDown, boolean altDown, boolean controlDown, Object context) {
+        DragContext dc = (DragContext) context;
+        List<AnchorTarget> anchorTargets = dc.startHandlePositionsRelToStartPos.entrySet()
+                .stream()
+                .map(entry -> new AnchorTarget(entry.getKey(), currentPos.plus(entry.getValue())))
+                .toList();
+        getUiController().setDockPositions(anchorTargets, Strings.WALL_MOVE_CHANGE);
+        if (mFeedbackManager == null) {
+            return;
+        }
+        mFeedbackManager.updateVisualObjects();
+    }
+
+    @Override
+    protected void dragEnd(Object context) {
+        super.dragEnd(null);
+        if (mFeedbackManager == null) {
+            return;
+        }
+        mFeedbackManager.uninstall();
+        mFeedbackManager = null;
     }
 
     @Override

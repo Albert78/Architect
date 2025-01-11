@@ -23,8 +23,9 @@ public interface IPosition {
     Position2D projectionXY();
     Length getX();
     Length getY();
-    Position3D withZ(Length height);
     IPosition withX(Length x);
     IPosition withY(Length Y);
+    Position3D withZ(Length height);
     IPosition withXY(Position2D xy);
+    IPosition movedXY(Vector2D delta);
 }

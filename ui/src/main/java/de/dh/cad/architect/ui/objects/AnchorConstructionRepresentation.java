@@ -161,90 +161,33 @@ public class AnchorConstructionRepresentation extends Abstract2DRepresentation {
         mTrackedOwner = null;
     }
 
-    // Could be moved to Abstract2DUiObject, if needed
-    protected void installDragHandlers() {
-        var dragControl = new DragControl2D() {
-            boolean FirstMoveEvent = true;
-        };
-
-        setOnMousePressed(mouseEvent -> {
-            if (mouseEvent.getButton() != MouseButton.PRIMARY) {
-                return;
-            }
-            if (!isDragSupported()) {
-                return;
-            }
-            UiPlanPosition pos = mParentView.getPlanPositionFromScene(mouseEvent.getSceneX(), mouseEvent.getSceneY());
-            dragControl.setPosition(pos);
-            dragControl.FirstMoveEvent = true;
-            getScene().setCursor(Cursor.MOVE);
-            dragStart(pos.getModelPosition());
-        });
-        setOnMouseReleased(mouseEvent -> {
-            if (mouseEvent.getButton() != MouseButton.PRIMARY) {
-                return;
-            }
-            getScene().setCursor(Cursor.DEFAULT); // FIXME: We cannot know if we are still over the node or not
-            dragEnd();
-        });
-        setOnMouseDragged(mouseEvent -> {
-            if (!mouseEvent.isPrimaryButtonDown()) {
-                return;
-            }
-            if (!isDragSupported()) {
-                return;
-            }
-            UiPlanPosition pos = mParentView.getPlanPositionFromScene(mouseEvent.getSceneX(), mouseEvent.getSceneY());
-            drag(dragControl.getPosition().getModelPosition(), pos.getModelPosition(), dragControl.FirstMoveEvent, mouseEvent.isShiftDown(), mouseEvent.isAltDown(), mouseEvent.isControlDown());
-            dragControl.FirstMoveEvent = false;
-        });
-        setOnMouseEntered(mouseEvent -> {
-            if (!isDragSupported()) {
-                return;
-            }
-            if (!mouseEvent.isPrimaryButtonDown()) {
-                getScene().setCursor(Cursor.HAND);
-            }
-        });
-        setOnMouseExited(mouseEvent -> {
-            if (!mouseEvent.isPrimaryButtonDown()) {
-                getScene().setCursor(Cursor.DEFAULT);
-            }
-        });
-    }
-
-    // Could be moved ot Abstract2DUiObject, if needed
-    protected void uninstallDragHandlers() {
-        setOnMousePressed(null);
-        setOnMouseReleased(null);
-        setOnMouseDragged(null);
-        setOnMouseEntered(null);
-        setOnMouseExited(null);
-    }
-
+    @Override
     protected boolean isDragSupported() {
         Abstract2DRepresentation anchorOwnerRepresentation = getAnchorDockOwnerRepresentation();
         return anchorOwnerRepresentation != null && anchorOwnerRepresentation.isAnchorDragSupported(getAnchor());
     }
 
-    protected void dragStart(Position2D pos) {
+    @Override
+    protected Object dragStart(Position2D pos) {
         Abstract2DRepresentation repr = getAnchorDockOwnerRepresentation();
         if (repr != null) {
-            repr.startAnchorDrag(getAnchor(), pos);
+            return repr.startAnchorDrag(getAnchor(), pos);
+        }
+        return null;
+    }
+
+    @Override
+    protected void dragEnd(Object context) {
+        Abstract2DRepresentation repr = getAnchorDockOwnerRepresentation();
+        if (repr != null) {
+            repr.endAnchorDrag(getAnchor(), context);
         }
     }
 
-    protected void dragEnd() {
+    protected void drag(Position2D dragStartPos, Position2D currentPos, boolean firstMoveEvent, boolean shiftDown, boolean altDown, boolean controlDown, Object context) {
         Abstract2DRepresentation repr = getAnchorDockOwnerRepresentation();
         if (repr != null) {
-            repr.endAnchorDrag(getAnchor());
-        }
-    }
-
-    protected void drag(Position2D dragStartPos, Position2D currentPos, boolean firstMoveEvent, boolean shiftDown, boolean altDown, boolean controlDown) {
-        Abstract2DRepresentation repr = getAnchorDockOwnerRepresentation();
-        if (repr != null) {
-            repr.dragAnchor(getAnchor(), dragStartPos, currentPos, firstMoveEvent, shiftDown, altDown, controlDown);
+            repr.dragAnchor(getAnchor(), dragStartPos, currentPos, firstMoveEvent, shiftDown, altDown, controlDown, context);
         }
     }
 

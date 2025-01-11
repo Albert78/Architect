@@ -23,6 +23,7 @@ import java.util.Optional;
 
 import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.coords.Position2D;
+import de.dh.cad.architect.model.objects.Anchor;
 import de.dh.cad.architect.model.objects.Dimensioning;
 import de.dh.cad.architect.ui.Constants;
 import de.dh.cad.architect.ui.Strings;
@@ -111,5 +112,10 @@ public class DimensioningConstructionRepresentation extends AbstractAnchoredObje
         super.updateToModel();
         updateShape();
         updateProperties();
+    }
+
+    @Override
+    public boolean isAnchorDragSupported(Anchor anchor) {
+        return true;
     }
 }

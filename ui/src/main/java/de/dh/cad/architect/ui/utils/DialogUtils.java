@@ -58,7 +58,7 @@ public class DialogUtils {
         FileChooser fc = new FileChooser();
         fc.setTitle(Strings.SELECT_OBJECT_3D_RESOURCE_DIALOG_TITLE);
         Optional<Path> oLast3DResourcePath = configuration.getLast3DResourcePath();
-        oLast3DResourcePath.ifPresent(path -> fc.setInitialDirectory(path.toFile()));
+        oLast3DResourcePath.ifPresent(path -> FxUtils.trySetInitialDirectory(fc, path));
         fc.getExtensionFilters().addAll(getImageExtensionFilters());
         File resource3DFile = fc.showOpenDialog(window);
         if (resource3DFile == null) {

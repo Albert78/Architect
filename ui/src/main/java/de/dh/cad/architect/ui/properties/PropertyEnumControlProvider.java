@@ -46,7 +46,7 @@ public class PropertyEnumControlProvider<T> implements IPropertyControlProvider<
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
-    public Node getEditor(TreeTableCell cell) {
+    public Node getEditor(TreeTableCell cell, String propertyDisplayName) {
         mComboBox.setItems(FXCollections.observableArrayList(mPossibleValues));
         mComboBox.setOnAction(event -> {
             T value = mComboBox.getValue();

@@ -125,18 +125,18 @@ public class ObjectReconcileOperation {
             IPosition position = changedAnchor.getPosition();
             for (Anchor dockedAnchor : changedAnchor.getAllDockedAnchors()) {
                 if (!dockedAnchor.equals(changedAnchor)) {
-                    dockedAnchor.setPosition(calculateTargetPositionForAnchor(dockedAnchor, position), changeTrace);
+                    dockedAnchor.setPosition(mapTargetPositionForAnchor(dockedAnchor, position), changeTrace);
                     tryAddHandleAnchorChange(dockedAnchor);
                 }
             }
         }
     }
 
-    public static IPosition calculateTargetPositionForAnchor(Anchor anchor, IPosition targetPosition) {
-        return calculateTargetPosition(anchor.getPosition(), targetPosition);
+    public static IPosition mapTargetPositionForAnchor(Anchor anchor, IPosition targetPosition) {
+        return mapTargetPosition(anchor.getPosition(), targetPosition);
     }
 
-    public static IPosition calculateTargetPosition(IPosition currentPosition, IPosition targetPosition) {
+    public static IPosition mapTargetPosition(IPosition currentPosition, IPosition targetPosition) {
         if (currentPosition instanceof Position2D) {
             return targetPosition.projectionXY();
         } else if (currentPosition instanceof Position3D cp3d) {

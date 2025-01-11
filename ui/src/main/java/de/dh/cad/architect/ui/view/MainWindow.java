@@ -598,14 +598,18 @@ public class MainWindow implements Initializable {
             Tooltip.install(l, tt);
             CustomMenuItem item = new CustomMenuItem(l);
             item.setOnAction(event -> {
-                if (mApplicationController.queryLoadPlanFile(getStage(), path)) {
-                    updateRecentFilesMenu();
-                }
+                mApplicationController.queryLoadPlanFile(getStage(), path);
             });
             items.add(item);
         }
-        items.add(new SeparatorMenuItem());
-        if (!planFilesHistory.isEmpty()) {
+        if (planFilesHistory.isEmpty()) {
+            MenuItem item = new MenuItem(Strings.PLAN_FILES_HISTORY_EMPTY_MENU_ITEM);
+            item.setOnAction(event -> {
+                mApplicationController.queryOpen(getStage());
+            });
+            items.add(item);
+        } else {
+            items.add(new SeparatorMenuItem());
             MenuItem item = new MenuItem(Strings.PLAN_FILES_HISTORY_CLEAR_HISTORY_MENU_ITEM);
             item.setOnAction(event -> {
                 config.clearPlanFilesHistory();

@@ -360,10 +360,10 @@ public class AssetLoader {
         resourceLocator.delete();
     }
 
-    public void importAssetResources(Collection<ImportResource> resources, AssetRefPath materialSetRefPath) throws IOException {
+    public void importAssetResources(Collection<ImportResource> resources, AssetRefPath materialSetRefPath, boolean cleanDirectory) throws IOException {
         AssetLocation resourceLocation = mAssetManager.resolveAssetLocation(materialSetRefPath).resolveResourcesDirectory();
         IDirectoryLocator resourceDirectory = resourceLocation.getDirectoryLocator();
-        if (resourceDirectory.exists()) {
+        if (cleanDirectory && resourceDirectory.exists()) {
             resourceDirectory.clean();
         }
         for (ImportResource resource : resources) {
@@ -541,7 +541,7 @@ public class AssetLoader {
 
     public void importRawMaterialSet(MaterialSetDescriptor descriptor, Collection<RawMaterialModel> materials, Collection<ImportResource> resources) throws IOException {
         AssetRefPath materialSetRefPath = descriptor.getSelfRef();
-        importAssetResources(resources, materialSetRefPath);
+        importAssetResources(resources, materialSetRefPath, true);
         descriptor.setModel(new MaterialsModel(materials));
         mAssetManager.saveMaterialSetDescriptor(descriptor);
     }

@@ -17,6 +17,8 @@
  *******************************************************************************/
 module de.dh.cad.architect.ui {
     exports de.dh.cad.architect.ui;
+    exports de.dh.cad.architect.ui.objects;
+    exports de.dh.cad.architect.ui.controller;
     exports de.dh.cad.architect.ui.view; // For ObjectReconcileOperation - could be moved to the core?
     exports de.dh.cad.architect.ui.utils;
     exports de.dh.cad.architect.ui.controls;

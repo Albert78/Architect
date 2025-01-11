@@ -38,6 +38,8 @@ public interface IWallAnchor extends Comparable<IWallAnchor> {
      */
     boolean isReferenceAnchor();
 
+    boolean isHandle();
+
     /**
      * Returns all anchors which are docked to this anchor inclusive this anchor itself.
      * The list is in the dock order of the anchors.

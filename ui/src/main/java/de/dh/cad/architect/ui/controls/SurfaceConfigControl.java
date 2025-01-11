@@ -20,6 +20,9 @@ package de.dh.cad.architect.ui.controls;
 import java.io.IOException;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.dh.cad.architect.model.assets.AssetRefPath;
 import de.dh.cad.architect.model.assets.MaterialSetDescriptor;
 import de.dh.cad.architect.model.assets.MaterialsModel;
@@ -38,7 +41,6 @@ import de.dh.cad.architect.ui.objects.BaseObjectUIRepresentation;
 import de.dh.cad.architect.ui.objects.SurfaceData;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.libraries.MaterialChooserDialog;
-import de.dh.utils.io.fx.MaterialData;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
@@ -49,10 +51,10 @@ import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.shape.Shape3D;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class SurfaceConfigControl extends BorderPane {
     private static final Logger log = LoggerFactory.getLogger(SurfaceConfigControl.class);
@@ -141,14 +143,21 @@ public class SurfaceConfigControl extends BorderPane {
 
         mObjectTF.setText(BaseObjectUIRepresentation.getObjName(ownerRepr.getModelObject()));
         mSurfaceTypeTF.setText(surfaceTypeId);
-        AssetRefPath materialRef = materialMapping.getMaterialRef();
+        AssetRefPath materialRef = materialMapping == null ? null : materialMapping.getMaterialRef();
         mChoseMaterialButton.setOnAction(event -> {
             AssetLoader assetLoader = mUiController.getAssetManager().buildAssetLoader();
-            MaterialChooserDialog dialog = MaterialChooserDialog.createWithProgressIndicator(assetLoader, Strings.THREE_D_SURFACE_CONFIG_BEHAVIOR_CHOOSE_MATERIAL_DIALOG_TITLE,
-                    mcd -> mcd.selectMaterial(materialRef));
+            MaterialChooserDialog dialog = materialRef == null
+                    ? MaterialChooserDialog.createWithProgressIndicator(assetLoader, Strings.THREE_D_SURFACE_CONFIG_BEHAVIOR_CHOOSE_MATERIAL_DIALOG_TITLE)
+                    : MaterialChooserDialog.createWithProgressIndicator(assetLoader, Strings.THREE_D_SURFACE_CONFIG_BEHAVIOR_CHOOSE_MATERIAL_DIALOG_TITLE, mcd -> mcd.selectMaterial(materialRef));
             Optional<AssetRefPath> oRes = dialog.showAndWait();
             oRes.ifPresent(this::setMaterial);
         });
+
+        Dimensions2D tileSize = materialMapping == null ? null : materialMapping.getTileSize();
+        Length surfaceSizeX = CoordinateUtils.coordsToLength(mSurfaceSize.getX(), null);
+        Length maxRangeX = Length.max(surfaceSizeX, tileSize == null ? Length.ofM(2) : tileSize.getX());
+        Length surfaceSizeY = CoordinateUtils.coordsToLength(mSurfaceSize.getY(), null);
+        Length maxRangeY = Length.max(surfaceSizeY, tileSize == null ? Length.ofM(2) : tileSize.getY());
 
         EventHandler<ActionEvent> updaterActionHandler = event -> updateMaterialMapping();
         ChangeListener<Object> updaterChangeListener = (observable, oldValue, newValue) -> updateMaterialMapping();
@@ -157,17 +166,17 @@ public class SurfaceConfigControl extends BorderPane {
         mSizeControlsParent.disableProperty().bind(mStretchRadioButton.selectedProperty());
 
         mXOffsetControl = new LengthEditControl(Constants.LOCALIZED_NUMBER_FORMAT);
-        mXOffsetControl.setMinValue(Length.ZERO);
-        mXOffsetControl.setMaxValue(CoordinateUtils.coordsToLength(mSurfaceSize.getX(), null));
+        mXOffsetControl.setMinValue(maxRangeX.negated());
+        mXOffsetControl.setMaxValue(maxRangeX);
         mXOffsetControl.getValueProperty().addListener(updaterChangeListener);
         mOffsetParent.getChildren().addFirst(mXOffsetControl);
         GridPane.setColumnIndex(mXOffsetControl, 1);
         GridPane.setRowIndex(mXOffsetControl, 0);
 
         mYOffsetControl = new LengthEditControl(Constants.LOCALIZED_NUMBER_FORMAT);
+        mYOffsetControl.setMinValue(maxRangeY.negated());
+        mYOffsetControl.setMaxValue(maxRangeY);
         mYOffsetControl.getValueProperty().addListener(updaterChangeListener);
-        mYOffsetControl.setMinValue(Length.ZERO);
-        mYOffsetControl.setMaxValue(CoordinateUtils.coordsToLength(mSurfaceSize.getY(), null));
         mOffsetParent.getChildren().addFirst(mYOffsetControl);
         GridPane.setColumnIndex(mYOffsetControl, 1);
         GridPane.setRowIndex(mYOffsetControl, 1);
@@ -175,10 +184,11 @@ public class SurfaceConfigControl extends BorderPane {
         BooleanBinding dontConfigureTileSize = mConfigureTileSizeCheckBox.selectedProperty().not();
         mTileSizeParent.disableProperty().bind(dontConfigureTileSize);
         mMaintainAspectRatioCheckBox.disableProperty().bind(dontConfigureTileSize);
+        mMaintainAspectRatioCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            updateMaterialMapping();
+        });
 
         mXTileSizeControl = new LengthEditControl(Constants.LOCALIZED_NUMBER_FORMAT);
-        mXTileSizeControl.setMinValue(Length.ofCM(1));
-        mXTileSizeControl.setMaxValue(CoordinateUtils.coordsToLength(mSurfaceSize.getX(), null));
         mXTileSizeControl.getValueProperty().addListener((observable, oldValue, newValue) -> {
             if (mBlockUpdates) {
                 return;
@@ -201,8 +211,6 @@ public class SurfaceConfigControl extends BorderPane {
         GridPane.setRowIndex(mXTileSizeControl, 0);
 
         mYTileSizeControl = new LengthEditControl(Constants.LOCALIZED_NUMBER_FORMAT);
-        mYTileSizeControl.setMinValue(Length.ofCM(1));
-        mYTileSizeControl.setMaxValue(CoordinateUtils.coordsToLength(mSurfaceSize.getY(), null));
         mYTileSizeControl.disableProperty().bind(mMaintainAspectRatioCheckBox.selectedProperty());
         mYTileSizeControl.getValueProperty().addListener(updaterChangeListener);
         mTileSizeParent.getChildren().addFirst(mYTileSizeControl);
@@ -215,7 +223,9 @@ public class SurfaceConfigControl extends BorderPane {
         GridPane.setRowIndex(mRotationEditControl, 2);
         mRotationEditControl.getAngleProperty().addListener(updaterChangeListener);
 
-        setValues(materialMapping);
+        if (materialMapping != null) {
+            setValues(materialMapping);
+        }
     }
 
     protected void initForMaterial(AssetRefPath materialRef) {

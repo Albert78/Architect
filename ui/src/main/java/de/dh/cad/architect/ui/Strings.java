@@ -129,6 +129,7 @@ public class Strings {
     public static final String FILE_TYPE_ROOT_PLAN_EXTENSION_NAME = "Architect Plan";
 
     public static final String PLAN_FILES_HISTORY_CLEAR_HISTORY_MENU_ITEM = "History löschen";
+    public static final String PLAN_FILES_HISTORY_EMPTY_MENU_ITEM = "Keine Pläne geöffnet - öffnen";
 
     public static final String MAIN_WINDOW_UNDO_MENU_ITEM_INVALID = "Rückgängig";
     public static final String MAIN_WINDOW_UNDO_MENU_ITEM_VALID = "Rückgängig: {0}";
@@ -248,6 +249,7 @@ public class Strings {
     public static final String WALL_SET_PROPERTY_CHANGE = "Wand-Eigenschaft ändern";
     public static final String WALL_DIVIDE_CHANGE = "Wand teilen";
     public static final String WALL_STRAIGHTEN_BENDPOINT_CHANGE = "Wandecke entfernen/begradigen";
+    public static final String WALL_MOVE_CHANGE = "Wand bewegen";
 
     public static final String SUPPORT_OBJECT_CONTROL_WIDTH_X_0 = "Breite (X): {0}";
     public static final String SUPPORT_OBJECT_CONTROL_DEPTH_Y_0 = "Tiefe (Y): {0}";
@@ -272,9 +274,9 @@ public class Strings {
     public static final String SUPPORT_OBJECT_CONTROL_ROT_Z_DOWN_BUTTON = "- 90°";
     public static final String SUPPORT_OBJECT_CONTROL_SHOW_VIRTUAL_FLOOR = "Boden anzeigen";
 
-    public static final String PROPERTIES_DIMENSIONS_DIALOG_TITLE = "Ausmaße bearbeiten";
-    public static final String PROPERTIES_LENGTH_DIALOG_TITLE = "Länge bearbeiten";
-    public static final String PROPERTIES_POSITION_DIALOG_TITLE = "Position bearbeiten";
+    public static final String PROPERTIES_DIMENSIONS_DIALOG_TITLE = "%1$s bearbeiten";
+    public static final String PROPERTIES_LENGTH_DIALOG_TITLE = "%1$s bearbeiten";
+    public static final String PROPERTIES_POSITION_DIALOG_TITLE = "%1$s bearbeiten";
 
     // Object tree
     public static final String OBJECT_TREE_VIEW_TITLE = "Objekte";
@@ -456,7 +458,7 @@ public class Strings {
     public static final String THREE_D_PAINTER_CONFIG_SURFACE_BEHAVIOR_SURFACE_USER_HINT = "Oberfläche ''{1}'' von {0}";
 
     public static final String THREE_D_PAINTER_BEHAVIOR_ACTION_TITLE = "Oberflächen anmalen";
-    public static final String THREE_D_PAINTER_BEHAVIOR_CANCEL_BEHAVIOR_ACTION_TITLE = "Abbrechen: Oberflächen anmalen";
+    public static final String THREE_D_PAINTER_BEHAVIOR_CANCEL_BEHAVIOR_ACTION_TITLE = "Fertig: Oberflächen anmalen";
 
     public static final String THREE_D_PAINTER_BEHAVIOR_TITLE = "Objektoberflächen anmalen";
     public static final String THREE_D_PAINTER_BEHAVIOR_USER_HINT = "Trage das gewählte Material durch Klicken auf eine Objektoberfläche auf. Halte <Strg> zum Kopieren des angeklickten Materials.";
@@ -469,7 +471,7 @@ public class Strings {
     public static final String THREE_D_SURFACE_CONFIG_BEHAVIOR_TITLE = "Oberfläche bearbeiten";
     public static final String THREE_D_SURFACE_CONFIG_BEHAVIOR_USER_HINT = "Richte das Material an der Oberfläche aus";
     public static final String THREE_D_SURFACE_CONFIG_BEHAVIOR_INTERACTIONS_TAB_TITLE = "Oberfläche";
-    public static final String THREE_D_SURFACE_CONFIG__BEHAVIOR_CANCEL_BEHAVIOR_ACTION_TITLE = "Abbrechen: Oberflächenbearbeitung";
+    public static final String THREE_D_SURFACE_CONFIG_BEHAVIOR_CANCEL_BEHAVIOR_ACTION_TITLE = "Fertig: Oberflächenbearbeitung";
     public static final String THREE_D_SURFACE_CONFIG_BEHAVIOR_CHOOSE_MATERIAL_DIALOG_TITLE = "Material auswählen";
 
     public static final String ACTION_THREE_D_RESET_SUPPORT_OBJECT_SURFACES = "Objektoberflächen zurücksetzen/reparieren";
@@ -521,6 +523,8 @@ public class Strings {
     public static final String LIBRARY_MANAGER_DELETE_MATERIAL_SET_1_TOOLTIP = "Material-Kollektion {0} löschen";
     public static final String LIBRARY_MANAGER_DELETE_MATERIAL_SETS_N_TOOLTIP = "{0} Material-Kollektionen löschen";
     public static final String LIBRARY_MANAGER_IMPORT_TEXTURE_FOR_MATERIAL_TITLE = "Textur importieren";
+    public static final String LIBRARY_MANAGER_EDIT_MATERIAL_SET_DELETE_MATERIAL_CONFIRMATION_TITLE = "Bestätigung";
+    public static final String LIBRARY_MANAGER_EDIT_MATERIAL_SET_DELETE_MATERIAL_CONFIRMATION_HEADER = "Material löschen";
     public static final String LIBRARY_MANAGER_EDIT_MATERIAL_SET_DELETE_MATERIAL_CONFIRMATION_TEXT = "Soll das Material {0} wirklich gelöscht werden?";
 
     public static final String LIBRARY_MANAGER_NEW_SUPPORT_OBJECT_TOOLTIP = "Neues Hilfsobjekt anlegen";

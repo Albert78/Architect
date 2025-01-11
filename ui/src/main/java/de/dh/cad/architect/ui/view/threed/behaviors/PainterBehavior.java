@@ -101,6 +101,7 @@ public class PainterBehavior extends AbstractPainterModeBehavior {
         @Override
         public void commit() {
             AbstractSolid3DRepresentation ownerRepr = mSurface.getOwnerRepr();
+            mSurface.resetOverlayMaterial();
             ownerRepr.setSurfaceMaterial(mSurface.getSurfaceTypeId(), MaterialMappingConfiguration.tile(mMaterialRef));
         }
 
@@ -245,7 +246,9 @@ public class PainterBehavior extends AbstractPainterModeBehavior {
 
     @Override
     protected void onMouseOverSurface(SurfaceData<? extends Shape3D> oldSurface, SurfaceData<? extends Shape3D> newSurface) {
-        setHighlightedSurface(newSurface);
+        if (!isMouseOverSurfaceBlocked()) {
+            setHighlightedSurface(newSurface);
+        }
     }
 
     @Override

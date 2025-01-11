@@ -64,7 +64,7 @@ public class SurfaceConfigBehavior extends BaseSurfaceConfigBehavior {
     protected void updateActionsList(List<BaseObject> selectedObjects, List<BaseObject> selectedRootObjects) {
         Collection<IContextAction> actions = new ArrayList<>();
 
-        actions.add(createCancelBehaviorAction(Strings.THREE_D_SURFACE_CONFIG__BEHAVIOR_CANCEL_BEHAVIOR_ACTION_TITLE));
+        actions.add(createCancelBehaviorAction(Strings.THREE_D_SURFACE_CONFIG_BEHAVIOR_CANCEL_BEHAVIOR_ACTION_TITLE));
 
         mActionsList.setAll(actions);
     }

@@ -82,6 +82,11 @@ public class Position3D implements IPosition {
     }
 
     @Override
+    public IPosition movedXY(Vector2D delta) {
+        return new Position3D(mX.plus(delta.getX()), mY.plus(delta.getY()), mZ);
+    }
+
+    @Override
     public Position3D withZ(Length z) {
         return new Position3D(mX, mY, z);
     }

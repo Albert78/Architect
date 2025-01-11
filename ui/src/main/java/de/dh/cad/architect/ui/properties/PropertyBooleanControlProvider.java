@@ -41,7 +41,7 @@ public class PropertyBooleanControlProvider implements IPropertyControlProvider<
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
-    public Node getEditor(TreeTableCell cell) {
+    public Node getEditor(TreeTableCell cell, String propertyDisplayName) {
         mComboBox.setOnAction(event -> {
             Boolean value = mComboBox.getValue();
             cell.commitEdit(value);

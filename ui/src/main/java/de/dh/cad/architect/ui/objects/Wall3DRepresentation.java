@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import de.dh.cad.architect.model.assets.AssetRefPath;
 import de.dh.cad.architect.model.coords.Dimensions2D;
 import de.dh.cad.architect.model.coords.Length;
 import de.dh.cad.architect.model.coords.Position2D;
@@ -40,7 +39,6 @@ import de.dh.cad.architect.ui.assets.AssetLoader;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.threed.Abstract3DView;
 import de.dh.cad.architect.ui.view.threed.ThreeDView;
-import de.dh.utils.MaterialMapping;
 import de.dh.utils.Vector2D;
 import de.dh.utils.csg.CSGSurfaceAwareAddon;
 import de.dh.utils.csg.CSGs;
@@ -49,7 +47,6 @@ import de.dh.utils.io.MeshData;
 import de.dh.utils.io.fx.FxMeshBuilder;
 import eu.mihosoft.jcsg.CSG;
 import eu.mihosoft.vvecmath.Vector3d;
-import javafx.beans.value.ChangeListener;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Mesh;
 import javafx.scene.shape.MeshView;
@@ -72,11 +69,6 @@ public class Wall3DRepresentation extends AbstractSolid3DRepresentation {
             add(meshView);
             registerSurface(sd);
         }
-
-        ChangeListener<Boolean> bPropertiesUpdaterListener = (observable, oldValue, newValue) -> updateProperties();
-        selectedProperty().addListener(bPropertiesUpdaterListener);
-        objectFocusedProperty().addListener(bPropertiesUpdaterListener);
-        objectEmphasizedProperty().addListener(bPropertiesUpdaterListener);
     }
 
     public Wall getWall() {

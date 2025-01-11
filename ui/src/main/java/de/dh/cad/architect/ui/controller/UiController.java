@@ -36,6 +36,7 @@ import de.dh.cad.architect.model.assets.SupportObjectDescriptor;
 import de.dh.cad.architect.model.changes.IModelChange;
 import de.dh.cad.architect.model.changes.MacroChange;
 import de.dh.cad.architect.model.changes.ObjectChange;
+import de.dh.cad.architect.model.coords.AnchorTarget;
 import de.dh.cad.architect.model.coords.Dimensions2D;
 import de.dh.cad.architect.model.coords.IPosition;
 import de.dh.cad.architect.model.coords.Length;
@@ -80,6 +81,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.scene.Node;
 import javafx.stage.Stage;
 
 public class UiController {
@@ -519,7 +521,7 @@ public class UiController {
 
     /**
      * Binds the position of the handle anchor and all its dependent anchors to the given target anchor.
-     * @param handle Source anchor to bind to {@code targetAnchor}. This anchor must not be {@link Anchor#isManaged() managed}.
+     * @param handle Source anchor to bind to {@code targetAnchor}. This anchor must be a {@link Anchor#isHandle() handle anchor}.
      * @param targetAnchor Anchor to which the handle anchor should be bound.
      * @param conflictStrategy Strategy to choose if the dock process is not possible.
      */
@@ -546,19 +548,18 @@ public class UiController {
 
     public Collection<BaseAnchoredObject> doDock_Internal(Anchor sourceHandleAnchor, Anchor targetAnchor, DockConflictStrategy conflictStrategy, List<IModelChange> changeTrace) {
         if (sourceHandleAnchor.getDockMaster()
-                        .map(dm -> Boolean.valueOf(dm.equals(targetAnchor))) // Already docked to target anchor
+                        .map(dm -> dm.equals(targetAnchor)) // Already docked to target anchor
                         .orElse(Boolean.FALSE)) {
             // Already docked to target anchor
             return Collections.emptyList();
         }
         Optional<Collection<DockConflictDescription>> oConflicts = checkDockConflicts(sourceHandleAnchor, targetAnchor);
         if (oConflicts.isPresent()) {
-            switch (conflictStrategy) {
-            case SkipDock:
-                return Collections.emptyList();
-            case Exception:
-                throw new RuntimeException("Cannot dock source anchor <" + sourceHandleAnchor + "> to anchor dock of target anchor <" + targetAnchor + ">");
-            }
+            return switch (conflictStrategy) {
+                case SkipDock -> Collections.emptyList();
+                case Exception ->
+                        throw new RuntimeException("Cannot dock source anchor <" + sourceHandleAnchor + "> to anchor dock of target anchor <" + targetAnchor + ">");
+            };
         }
 
         sourceHandleAnchor.undockFromDockMaster(changeTrace);
@@ -570,7 +571,7 @@ public class UiController {
 
     /**
      * Undocks the given anchor from its dock master, retaining all its dock slaves docked, if any.
-     * To remove an anchor completely from a dock, call {@link #doRemoveAnchorFromDock(Anchor, ChangeSet)}.
+     * To remove an anchor completely from a dock, call {@link #doRemoveAnchorFromDock(Anchor, List)}.
      */
     public void doUndockFromMaster(Anchor handleToUndock, List<IModelChange> changeTrace) {
         List<BaseAnchoredObject> formerDockOwners = handleToUndock.getAllDockOwners();
@@ -696,6 +697,25 @@ public class UiController {
         }
     }
 
+    public void setDockPositions(Collection<AnchorTarget> anchorTargets, String changeDescription) {
+        List<IModelChange> changeTrace = new ArrayList<>();
+        doSetDockPositions(anchorTargets, changeTrace, changeDescription);
+        notifyChange(changeTrace, changeDescription, false);
+    }
+
+    public void doSetDockPositions(Collection<AnchorTarget> anchorTargets, List<IModelChange> changeTrace, String changeDescription) {
+        Collection<BaseAnchoredObject> reconcileObjects = new ArrayList<>();
+
+        for (AnchorTarget anchorTarget : anchorTargets) {
+            Anchor anchor = anchorTarget.getAnchor();
+            IPosition targetPosition = anchorTarget.getTargetPosition();
+            reconcileObjects.addAll(doSetDockPosition_Internal(anchor, targetPosition, changeTrace));
+        }
+
+        ObjectReconcileOperation oro = new ObjectReconcileOperation("Set dock positions", reconcileObjects);
+        doReconcileObjects(oro, changeTrace);
+    }
+
     public void setDockPosition(Anchor anchor, IPosition position, boolean tryMergeChange) {
         List<IModelChange> changeTrace = new ArrayList<>();
         doSetDockPosition(anchor, position, changeTrace);
@@ -708,11 +728,14 @@ public class UiController {
 
     /**
      * Sets all positions of anchors docked to the same dock of the given anchor.
-     * @param generateMergableChange Will generate a mergeable change for repeated calls to this method. This is wanted for
+     * @param anchor Anchor which defines the dock to move.
+     * @param position Target position to move the dock to.
+     * @param changeTrace The change trance to use for undo.
+     * @param generateMergeableChange Will generate a mergeable change for repeated calls to this method. This is wanted for
      * operations where the undo operation should skip repeated dock positions change, for example in case of a drag operation.
      * ATTENTION: With parameter {@code generateMergeableChange} set to {@code true}, this method assumes that all docked
      * anchors already had the same (dock) position. For the initial docking operation, that parameter must be set to
-     * {@code false} to ensure that the undo of the given anchor will position it at it's former place (instead of leaving it at the dock's position).
+     * {@code false} to ensure that the undo of the given anchor will position it at its former place (instead of leaving it at the dock's position).
      */
     protected void doSetDockPosition_Internal(Anchor anchor, IPosition position, List<IModelChange> changeTrace, boolean generateMergeableChange) {
         IPosition oldPosition = anchor.getPosition();
@@ -735,7 +758,7 @@ public class UiController {
         Collection<BaseAnchoredObject> reconcileObjects = new ArrayList<>();
         for (Anchor changeAnchor : anchor.getAllDockedAnchors()) {
             BaseAnchoredObject owner = changeAnchor.getAnchorOwner();
-            changeAnchor.setPosition(ObjectReconcileOperation.calculateTargetPositionForAnchor(changeAnchor, position), changeTrace);
+            changeAnchor.setPosition(ObjectReconcileOperation.mapTargetPositionForAnchor(changeAnchor, position), changeTrace);
             reconcileObjects.add(owner);
         }
 
@@ -779,10 +802,9 @@ public class UiController {
         WallAnchorPositions.setWallBevelTypeOfAnchorDock(anchorDock, wallBevel, changeTrace);
         for (Anchor dockedAnchor : anchorDock.getAllDockedAnchors()) {
             BaseAnchoredObject owner = dockedAnchor.getAnchorOwner();
-            if (!(owner instanceof Wall)) {
+            if (!(owner instanceof Wall wall)) {
                 continue;
             }
-            Wall wall = (Wall) owner;
             wall.healObject(Collections.singleton(Wall.HEAL_OUTLINE), changeTrace);
         }
     }
@@ -798,13 +820,12 @@ public class UiController {
         Plan plan = getPlan();
         AssetLoader assetLoader = getAssetManager().buildAssetLoader();
         ThreeDObject obj = assetLoader.loadSupportObject3DResource(supportObjectDescriptor);
-        Set<String> meshIds = obj.getSurfaceMeshViews().stream().map(mv -> mv.getId()).collect(Collectors.toSet());
+        Set<String> meshIds = obj.getSurfaceMeshViews().stream().map(Node::getId).collect(Collectors.toSet());
         String name = BaseObjectUIRepresentation.generateSimpleName(getPlan().getSupportObjects().values(), supportObjectDescriptor.getName());
-        SupportObject result = SupportObject.create(
+        return SupportObject.create(
                 name, supportObjectDescriptor.getSelfRef(), pos,
             new Dimensions2D(supportObjectDescriptor.getWidth(), supportObjectDescriptor.getDepth()),
             supportObjectDescriptor.getHeight(), 0, supportObjectDescriptor.getElevation(), meshIds, plan, changeTrace);
-        return result;
     }
 
     public void notifyChange(List<IModelChange> combinedChange, String changeDescription) {

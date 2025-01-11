@@ -25,9 +25,13 @@ import de.dh.cad.architect.model.objects.Anchor;
 import de.dh.cad.architect.model.objects.BaseObject;
 import de.dh.cad.architect.ui.controller.UiController;
 import de.dh.cad.architect.ui.view.construction.Abstract2DView;
+import de.dh.cad.architect.ui.view.construction.DragControl2D;
+import de.dh.cad.architect.ui.view.construction.UiPlanPosition;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.scene.Cursor;
+import javafx.scene.input.MouseButton;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Shape;
 
@@ -59,6 +63,84 @@ public abstract class Abstract2DRepresentation extends Abstract2DUiObject implem
     @Override
     public void updateToModel() {
         // To be overridden
+    }
+
+    protected void installDragHandlers() {
+        var dragControl = new DragControl2D() {
+            boolean FirstMoveEvent = true;
+            Object context = null;
+        };
+
+        setOnMousePressed(mouseEvent -> {
+            if (mouseEvent.getButton() != MouseButton.PRIMARY) {
+                return;
+            }
+            if (!isDragSupported()) {
+                return;
+            }
+            UiPlanPosition pos = mParentView.getPlanPositionFromScene(mouseEvent.getSceneX(), mouseEvent.getSceneY());
+            dragControl.setPosition(pos);
+            dragControl.FirstMoveEvent = true;
+            getScene().setCursor(Cursor.MOVE);
+            dragControl.context = dragStart(pos.getModelPosition());
+        });
+        setOnMouseReleased(mouseEvent -> {
+            if (mouseEvent.getButton() != MouseButton.PRIMARY) {
+                return;
+            }
+            getScene().setCursor(Cursor.DEFAULT); // FIXME: We cannot know if we are still over the node or not
+            dragEnd(dragControl.context);
+        });
+        setOnMouseDragged(mouseEvent -> {
+            if (!mouseEvent.isPrimaryButtonDown()) {
+                return;
+            }
+            if (!isDragSupported()) {
+                return;
+            }
+            UiPlanPosition pos = mParentView.getPlanPositionFromScene(mouseEvent.getSceneX(), mouseEvent.getSceneY());
+            drag(dragControl.getPosition().getModelPosition(), pos.getModelPosition(), dragControl.FirstMoveEvent,
+                    mouseEvent.isShiftDown(), mouseEvent.isAltDown(), mouseEvent.isControlDown(), dragControl.context);
+            dragControl.FirstMoveEvent = false;
+        });
+        setOnMouseEntered(mouseEvent -> {
+            if (!isDragSupported()) {
+                return;
+            }
+            if (!mouseEvent.isPrimaryButtonDown()) {
+                getScene().setCursor(Cursor.HAND);
+            }
+        });
+        setOnMouseExited(mouseEvent -> {
+            if (!mouseEvent.isPrimaryButtonDown()) {
+                getScene().setCursor(Cursor.DEFAULT);
+            }
+        });
+    }
+
+    protected void uninstallDragHandlers() {
+        setOnMousePressed(null);
+        setOnMouseReleased(null);
+        setOnMouseDragged(null);
+        setOnMouseEntered(null);
+        setOnMouseExited(null);
+    }
+
+    protected boolean isDragSupported() {
+        return false;
+    }
+
+    protected Object dragStart(Position2D pos) {
+        // To be overridden if isDragSupported()
+        return null;
+    }
+
+    protected void drag(Position2D dragStartPos, Position2D currentPos, boolean firstMoveEvent, boolean shiftDown, boolean altDown, boolean controlDown, Object context) {
+        // To be overridden if isDragSupported()
+    }
+
+    protected void dragEnd(Object context) {
+        // To be overridden if isDragSupported()
     }
 
     public void enableMouseOverSpot() {
@@ -158,18 +240,23 @@ public abstract class Abstract2DRepresentation extends Abstract2DUiObject implem
     }
 
     /**
-     * Called if a drag operation starts on one of our anchors.
+     * Called when a drag operation starts on one of our anchors.
      * @param anchor Anchor to be dragged.
-     * @param startDragPoint Position where the drag operation started.
+     * @param startDragPos Position where the drag operation started.
+     * @return Context object which is passed back in {@link #dragAnchor(Anchor, Position2D, Position2D, boolean, boolean, boolean, boolean, Object)}
+     * and {@link #endAnchorDrag(Anchor, Object)}.
      */
-    public void startAnchorDrag(Anchor anchor, Position2D startDragPos) {
+    public Object startAnchorDrag(Anchor anchor, Position2D startDragPos) {
         // To be overridden, if D&D is supported for anchors
+        return null;
     }
 
     /**
      * Called if a drag operation ends on one of our anchors.
+     * @param anchor Anchor being dragged.
+     * @param context context object returned from {@link #startAnchorDrag(Anchor, Position2D)}.
      */
-    public void endAnchorDrag(Anchor anchor) {
+    public void endAnchorDrag(Anchor anchor, Object context) {
         // To be overridden, if D&D is supported for anchors
     }
 
@@ -181,16 +268,17 @@ public abstract class Abstract2DRepresentation extends Abstract2DUiObject implem
      * @param shiftDown True if the shift key is pressed.
      * @param altDown True if the alt key is pressed.
      * @param controlDown True if the control key is pressed.
+     * @param context context object returned from {@link #startAnchorDrag(Anchor, Position2D)}.
      */
     public void dragAnchor(Anchor anchor,
         Position2D startDragPos, Position2D currentDragPos, boolean firstMoveEvent,
-        boolean shiftDown, boolean altDown, boolean controlDown) {
+        boolean shiftDown, boolean altDown, boolean controlDown, Object context) {
         // Override if drag behavior should be different
-        dragAnchorDock(anchor, currentDragPos, firstMoveEvent, shiftDown, altDown, controlDown);
+        dragAnchorDock(anchor, currentDragPos, firstMoveEvent, shiftDown, altDown, controlDown, context);
     }
 
     public void dragAnchorDock(Anchor anchor, Position2D targetPosition, boolean firstMoveEvent,
-        boolean shiftDown, boolean altDown, boolean controlDown) {
+        boolean shiftDown, boolean altDown, boolean controlDown, Object context) {
         Anchor masterOfDock = anchor.getRootMasterOfAnchorDock();
         if (!masterOfDock.isHandle()) {
             return;

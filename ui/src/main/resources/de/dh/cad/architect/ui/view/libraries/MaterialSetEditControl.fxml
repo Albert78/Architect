@@ -67,6 +67,9 @@
                                        </image>
                                     </ImageView>
                                  </graphic>
+                                 <BorderPane.margin>
+                                    <Insets bottom="10.0" left="10.0" top="10.0" />
+                                 </BorderPane.margin>
                               </Button>
                            </right>
                         </BorderPane>
@@ -77,7 +80,7 @@
             <Label text="Enthaltene Materialien" wrapText="true" GridPane.rowIndex="8" />
             <HBox GridPane.columnIndex="1" GridPane.rowIndex="8" GridPane.vgrow="ALWAYS">
                <children>
-                  <TitledPane animated="false" collapsible="false" minWidth="500.0" text="Vorschau der Materialien">
+                  <TitledPane animated="false" collapsible="false" minWidth="500.0" text="Darstellung der Materials">
                      <content>
                         <BorderPane fx:id="mMaterialChoiceParent">
                            <right>
@@ -91,6 +94,9 @@
                                                </image>
                                           </ImageView>
                                          </graphic>
+                                       <VBox.margin>
+                                          <Insets bottom="10.0" left="10.0" top="10.0" />
+                                       </VBox.margin>
                                       </Button>
                                  </children>
                               </VBox>

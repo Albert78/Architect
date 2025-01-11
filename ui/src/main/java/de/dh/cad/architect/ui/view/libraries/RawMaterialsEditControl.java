@@ -191,25 +191,23 @@ public class RawMaterialsEditControl extends BorderPane implements Initializable
             addMaterial(newMaterial);
         });
         mRemoveMaterialButton.setOnAction(event -> {
-            RawMaterialModel selectedMaterial = getSelectedMaterial();
-            if (selectedMaterial == null) {
-                return;
-            }
-            Optional<ButtonType> res = new Alert(
-                    Alert.AlertType.CONFIRMATION,
-                    MessageFormat.format(Strings.LIBRARY_MANAGER_EDIT_MATERIAL_SET_DELETE_MATERIAL_CONFIRMATION_TEXT, selectedMaterial.getName()),
-                    ButtonType.YES, ButtonType.CANCEL).showAndWait();
-            if (res.orElse(null) == ButtonType.YES) {
-                removeMaterial(selectedMaterial);
-            }
+            getSelectedMaterial().ifPresent(selectedMaterial -> {
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION, MessageFormat.format(
+                        Strings.LIBRARY_MANAGER_EDIT_MATERIAL_SET_DELETE_MATERIAL_CONFIRMATION_TEXT, selectedMaterial.getName()),
+                        ButtonType.YES, ButtonType.CANCEL);
+                alert.setTitle(Strings.LIBRARY_MANAGER_EDIT_MATERIAL_SET_DELETE_MATERIAL_CONFIRMATION_TITLE);
+                alert.setHeaderText(Strings.LIBRARY_MANAGER_EDIT_MATERIAL_SET_DELETE_MATERIAL_CONFIRMATION_HEADER);
+                Optional<ButtonType> res = alert.showAndWait();
+                if (res.orElse(null) == ButtonType.YES) {
+                    removeMaterial(selectedMaterial);
+                }
+            });
         });
         mCopyMaterialButton.setOnAction(event -> {
-            RawMaterialModel selectedMaterial = getSelectedMaterial();
-            if (selectedMaterial == null) {
-                return;
-            }
-            RawMaterialModel copy = copyMaterial(selectedMaterial);
-            addMaterial(copy);
+            getSelectedMaterial().ifPresent(selectedMaterial -> {
+                RawMaterialModel copy = copyMaterial(selectedMaterial);
+                addMaterial(copy);
+            });
         });
         mImportTextureButton.setOnAction(event -> {
             importTexture();
@@ -223,13 +221,14 @@ public class RawMaterialsEditControl extends BorderPane implements Initializable
                 Collection<String> availableMaterialNames = getMaterialNames();
                 availableMaterialNames.remove(oldValue);
                 String name = validateMaterialName(newValue, availableMaterialNames);
-                RawMaterialModel selectedMaterial = getSelectedMaterial();
-                selectedMaterial.setName(name);
+                getSelectedMaterial().ifPresent(selectedMaterial -> {
+                    selectedMaterial.setName(name);
 
-                // Force material choice box update the displayed name
-                StringConverter<RawMaterialModel> converter = mMaterialChoiceBox.getConverter();
-                mMaterialChoiceBox.setConverter(null);
-                mMaterialChoiceBox.setConverter(converter);
+                    // Force material choice box update the displayed name
+                    StringConverter<RawMaterialModel> converter = mMaterialChoiceBox.getConverter();
+                    mMaterialChoiceBox.setConverter(null);
+                    mMaterialChoiceBox.setConverter(converter);
+                });
             } finally {
                 mBlockUpdates = false;
             }
@@ -238,9 +237,10 @@ public class RawMaterialsEditControl extends BorderPane implements Initializable
             if (mBlockUpdates) {
                 return;
             }
-            RawMaterialModel selectedMaterial = getSelectedMaterial();
-            saveMaterialValues(selectedMaterial);
-            updatePreview(selectedMaterial);
+            getSelectedMaterial().ifPresent(selectedMaterial -> {
+                saveMaterialValues(selectedMaterial);
+                updatePreview(selectedMaterial);
+            });
         };
         mFixedTileSizeCheckBox.selectedProperty().addListener(materialPropertyChangeListener);
         mTileSizeXControl = new LengthControl(Constants.LOCALIZED_NUMBER_FORMAT);
@@ -283,7 +283,7 @@ public class RawMaterialsEditControl extends BorderPane implements Initializable
 
     public static RawMaterialModel createNewMaterial() {
         return new RawMaterialModel(Strings.NEW_MATERIAL_NAME, Optional.of(new Vector2D(Length.ofCM(20), Length.ofCM(20))),
-                Arrays.asList("Kd 0.1 0.1 1"));
+                List.of("Kd 0.1 0.1 1"));
     }
 
     public void addMaterial(RawMaterialModel material) {
@@ -309,16 +309,19 @@ public class RawMaterialsEditControl extends BorderPane implements Initializable
         AssetRefPath materialSetRef = mDescriptor.getSelfRef();
         Path imagePath = DialogUtils.openImageDialog(Strings.LIBRARY_MANAGER_IMPORT_TEXTURE_FOR_MATERIAL_TITLE,
                 mAssetLoader.getAssetManager().getConfiguration(), getScene().getWindow());
+        if (imagePath == null) {
+            return;
+        }
         try {
             Collection<AssetLoader.ImportResource> resources = List.of(AssetLoader.ImportResource.fromResource(new PlainFileSystemResourceLocator(imagePath)));
-            mAssetLoader.importAssetResources(resources, materialSetRef);
+            mAssetLoader.importAssetResources(resources, materialSetRef, false);
         } catch (IOException e) {
             log.error("Error importing texture resource from " + imagePath + " to <" + materialSetRef + ">");
         }
         Path imageFileName = imagePath.getFileName();
         String materialName = FilenameUtils.getBaseName(imageFileName.toString());
         RawMaterialModel newMaterial = new RawMaterialModel(materialName, Optional.empty(),
-                Arrays.asList("map_Kd " + imageFileName));
+                List.of("map_Kd " + imageFileName));
         addMaterial(newMaterial);
     }
 
@@ -379,8 +382,7 @@ public class RawMaterialsEditControl extends BorderPane implements Initializable
     }
 
     protected void saveCurrentMaterialValues() {
-        RawMaterialModel selectedMaterial = getSelectedMaterial();
-        saveMaterialValues(selectedMaterial);
+        getSelectedMaterial().ifPresent(this::saveMaterialValues);
     }
 
     protected void saveMaterialValues(RawMaterialModel material) {
@@ -403,8 +405,8 @@ public class RawMaterialsEditControl extends BorderPane implements Initializable
         return Arrays.asList(mMtlEditor.getText().split("\n"));
     }
 
-    protected RawMaterialModel getSelectedMaterial() {
-        return mMaterialChoiceBox.getValue();
+    protected Optional<RawMaterialModel> getSelectedMaterial() {
+        return Optional.ofNullable(mMaterialChoiceBox.getValue());
     }
 
     /**
@@ -416,8 +418,8 @@ public class RawMaterialsEditControl extends BorderPane implements Initializable
         }
         mBlockUpdates = true;
         try {
-            RawMaterialModel material = getSelectedMaterial();
-            boolean materialIsEmpty = material == null;
+            Optional<RawMaterialModel> oSelectedMaterial = getSelectedMaterial();
+            boolean materialIsEmpty = oSelectedMaterial.isEmpty();
             mMaterialNameTF.setDisable(materialIsEmpty);
             mMaterialRefPathTF.setDisable(materialIsEmpty);
             mFixedTileSizeCheckBox.setDisable(materialIsEmpty);
@@ -430,7 +432,9 @@ public class RawMaterialsEditControl extends BorderPane implements Initializable
                 mTileSizeXControl.setLength(Length.ofCM(20));
                 mTileSizeYControl.setLength(Length.ofCM(20));
                 loadSourceCode(Collections.emptyList());
+                updatePreview(null);
             } else {
+                RawMaterialModel material = oSelectedMaterial.get();
                 String materialName = material.getName();
                 mMaterialNameTF.setText(materialName);
                 AssetRefPath materialRef = mDescriptor.getSelfRef().withMaterialName(materialName);
@@ -444,8 +448,8 @@ public class RawMaterialsEditControl extends BorderPane implements Initializable
                     mFixedTileSizeCheckBox.setSelected(false);
                 }
                 loadSourceCode(material.getCommands());
+                updatePreview(material);
             }
-            updatePreview(material);
         } finally {
             mBlockUpdates = false;
         }

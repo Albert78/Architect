@@ -79,6 +79,16 @@ public class Position2D implements IPosition {
         return xy;
     }
 
+    @Override
+    public Position3D withZ(Length height) {
+        return upscale(height);
+    }
+
+    @Override
+    public IPosition movedXY(Vector2D delta) {
+        return new Position2D(mX.plus(delta.getX()), mY.plus(delta.getY()));
+    }
+
     public Length distance(Position2D other) {
         return distance(this, other);
     }
@@ -147,11 +157,6 @@ public class Position2D implements IPosition {
     @Override
     public Position2D projectionXY() {
         return this;
-    }
-
-    @Override
-    public Position3D withZ(Length height) {
-        return upscale(height);
     }
 
     public Vector2D toVector2D() {

@@ -83,7 +83,9 @@ public class BaseSurfaceConfigBehavior extends AbstractPainterModeBehavior {
 
     @Override
     protected void onMouseOverSurface(SurfaceData<? extends Shape3D> oldSurface, SurfaceData<? extends Shape3D> newSurface) {
-        setHighlightedSurface(newSurface);
+        if (!isMouseOverSurfaceBlocked()) {
+            setHighlightedSurface(newSurface);
+        }
     }
 
     @Override

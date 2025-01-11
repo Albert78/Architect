@@ -44,12 +44,12 @@ public class PropertyDimensions2DControlProvider implements IPropertyControlProv
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
-    public Node getEditor(TreeTableCell cell) {
+    public Node getEditor(TreeTableCell cell, String propertyDisplayName) {
         Platform.runLater(new Runnable() {
             @Override
             public void run() {
                 Dimensions2D value = (Dimensions2D) cell.getItem();
-                Dimensions2DEditDialog dialog = new Dimensions2DEditDialog(Strings.PROPERTIES_DIMENSIONS_DIALOG_TITLE, mNumberFormat);
+                Dimensions2DEditDialog dialog = new Dimensions2DEditDialog(String.format(Strings.PROPERTIES_DIMENSIONS_DIALOG_TITLE, propertyDisplayName), mNumberFormat);
                 dialog.setWidthLabel(mWidthLabel);
                 dialog.setHeightLabel(mHeightLabel);
                 dialog.setDimensions(value);

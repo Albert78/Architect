@@ -44,11 +44,7 @@ import de.dh.cad.architect.ui.controller.UiController;
 import de.dh.cad.architect.ui.utils.CoordinateUtils;
 import de.dh.cad.architect.ui.view.threed.Abstract3DView;
 import de.dh.cad.architect.ui.view.threed.ThreeDView;
-import de.dh.utils.MaterialMapping;
 import de.dh.utils.Vector2D;
-import de.dh.utils.io.fx.FxMeshBuilder;
-import de.dh.utils.io.obj.RawMaterialData;
-import javafx.beans.value.ChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
@@ -76,11 +72,6 @@ public class SupportObject3DRepresentation extends AbstractSolid3DRepresentation
     public SupportObject3DRepresentation(SupportObject supportObject, Abstract3DView parentView) {
         super(supportObject, parentView);
         initializeNode();
-
-        ChangeListener<Boolean> bPropertiesUpdaterListener = (observable, oldValue, newValue) -> updateProperties();
-        selectedProperty().addListener(bPropertiesUpdaterListener);
-        objectFocusedProperty().addListener(bPropertiesUpdaterListener);
-        objectEmphasizedProperty().addListener(bPropertiesUpdaterListener);
     }
 
     public SupportObject getSupportObject() {
@@ -167,9 +158,10 @@ public class SupportObject3DRepresentation extends AbstractSolid3DRepresentation
 
     protected void updateProperties() {
         SupportObject supportObject = getSupportObject();
+        Map<String, SurfaceConfiguration> surfaceTypeIdsToSurfaceConfigurations = supportObject.getSurfaceTypeIdsToSurfaceConfigurations();
         for (SurfaceData<? extends Shape3D> surfaceData : mSurfacesByTypeId.values()) {
             String surfaceTypeId = surfaceData.getSurfaceTypeId();
-            SurfaceConfiguration surfaceConfiguration = supportObject.getSurfaceTypeIdsToSurfaceConfigurations().get(surfaceTypeId);
+            SurfaceConfiguration surfaceConfiguration = surfaceTypeIdsToSurfaceConfigurations.get(surfaceTypeId);
             de.dh.cad.architect.model.objects.MaterialMappingConfiguration mmc = surfaceConfiguration.getMaterialMappingConfiguration();
             if (mmc == null) {
                 surfaceData.setMaterial(mOrigModelMaterials.get(surfaceTypeId));

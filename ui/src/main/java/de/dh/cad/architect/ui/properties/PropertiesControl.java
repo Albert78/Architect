@@ -80,7 +80,7 @@ public class PropertiesControl extends BorderPane {
                 mCellGraphic = null;
             } else {
                 if (isEditing()) {
-                    mCellGraphic = provider.getEditor(this);
+                    mCellGraphic = provider.getEditor(this, property.getDisplayName());
                 } else {
                     mCellGraphic = provider.getView(this);
                 }
@@ -101,7 +101,7 @@ public class PropertiesControl extends BorderPane {
             super.startEdit();
 
             if (isEditing()) {
-                mCellGraphic = provider.getEditor(this);
+                mCellGraphic = provider.getEditor(this, property.getDisplayName());
                 setGraphic(mCellGraphic);
                 mCellGraphic.requestFocus();
             }

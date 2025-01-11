@@ -40,12 +40,12 @@ public class PropertyIPositionControlProvider implements IPropertyControlProvide
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
-    public Node getEditor(TreeTableCell cell) {
+    public Node getEditor(TreeTableCell cell, String propertyDisplayName) {
         Platform.runLater(new Runnable() {
             @Override
             public void run() {
                 IPosition value = (IPosition) cell.getItem();
-                PositionEditDialog dialog = new PositionEditDialog(value, Strings.PROPERTIES_POSITION_DIALOG_TITLE, mNumberFormat);
+                PositionEditDialog dialog = new PositionEditDialog(value, String.format(Strings.PROPERTIES_POSITION_DIALOG_TITLE, propertyDisplayName), mNumberFormat);
                 Optional<IPosition> result = dialog.showAndWait();
                 if (result.isPresent()) {
                     cell.commitEdit(result.get());

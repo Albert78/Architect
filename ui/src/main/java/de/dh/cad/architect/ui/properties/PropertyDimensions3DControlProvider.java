@@ -39,12 +39,12 @@ public class PropertyDimensions3DControlProvider implements IPropertyControlProv
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
-    public Node getEditor(TreeTableCell cell) {
+    public Node getEditor(TreeTableCell cell, String propertyDisplayName) {
         Platform.runLater(new Runnable() {
             @Override
             public void run() {
                 Dimensions3D value = (Dimensions3D) cell.getItem();
-                Dimensions3DEditDialog dialog = new Dimensions3DEditDialog(Strings.PROPERTIES_DIMENSIONS_DIALOG_TITLE, mNumberFormat);
+                Dimensions3DEditDialog dialog = new Dimensions3DEditDialog(String.format(Strings.PROPERTIES_DIMENSIONS_DIALOG_TITLE, propertyDisplayName), mNumberFormat);
                 dialog.setDimensions(value);
                 Optional<Dimensions3D> result = dialog.showAndWait();
                 if (result.isPresent()) {

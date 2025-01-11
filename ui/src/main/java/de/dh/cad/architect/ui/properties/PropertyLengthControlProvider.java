@@ -37,12 +37,12 @@ public class PropertyLengthControlProvider implements IPropertyControlProvider<L
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
-    public Node getEditor(TreeTableCell cell) {
+    public Node getEditor(TreeTableCell cell, String propertyDisplayName) {
         Platform.runLater(new Runnable() {
             @Override
             public void run() {
                 Length value = (Length) cell.getItem();
-                LengthEditDialog dialog = new LengthEditDialog(Strings.PROPERTIES_LENGTH_DIALOG_TITLE, mNumberFormat);
+                LengthEditDialog dialog = new LengthEditDialog(String.format(Strings.PROPERTIES_LENGTH_DIALOG_TITLE, propertyDisplayName), mNumberFormat);
                 dialog.setLength(value);
                 Optional<Length> result = dialog.showAndWait();
                 if (result.isPresent()) {

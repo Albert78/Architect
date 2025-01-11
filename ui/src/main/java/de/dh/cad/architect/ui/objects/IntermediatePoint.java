@@ -81,7 +81,7 @@ public class IntermediatePoint extends Abstract2DAncillaryObject {
         /**
          * The callee must give up responsibility for the passed {@link IntermediatePoint}. This means, the callee
          * must not change the state of the given point. This method is called before
-         * {@link #createAnchor(IntermediatePoint, Anchor, Anchor, Position2D)} is called.
+         * {@link #createHandleAnchor(IntermediatePoint, Anchor, Anchor, Position2D)} is called.
          */
         protected abstract void detachIntermediatePoint(IntermediatePoint source);
 
@@ -103,6 +103,7 @@ public class IntermediatePoint extends Abstract2DAncillaryObject {
         mCallback = callback;
         var dragOperation = new IntermediatePointDragOperation() {
             boolean FirstMoveEvent = true;
+            Object context;
         };
         mShape = new Circle(INTERMEDIATE_POINT_CIRCLE_RADIUS);
         mScaleCompensation = addUnscaled(mShape);
@@ -149,7 +150,7 @@ public class IntermediatePoint extends Abstract2DAncillaryObject {
                 // This IntermediatePoint is now consumed and cannot be reused. This is necessary because
                 // IntermediatePoint must take control of its shape by its own as soon as we created a new anchor.
                 dispose();
-                dragEnd(createdAnchor);
+                dragEnd(createdAnchor, dragOperation.context);
             }
         });
         mShape.setOnMouseDragged(mouseEvent -> {
@@ -174,10 +175,10 @@ public class IntermediatePoint extends Abstract2DAncillaryObject {
                 // Hopefully, the system created a UI representation for the new anchor...
                 dragOperation.setCreatedAnchor(createdAnchor);
                 mShape.setVisible(false);
-                dragStart(createdAnchor, position);
+                dragOperation.context = dragStart(createdAnchor, position);
             } else {
                 drag(createdAnchor, dragOperation.getPosition().getModelPosition(), position,
-                    dragOperation.FirstMoveEvent, mouseEvent.isShiftDown(), mouseEvent.isAltDown(), mouseEvent.isControlDown());
+                    dragOperation.FirstMoveEvent, mouseEvent.isShiftDown(), mouseEvent.isAltDown(), mouseEvent.isControlDown(), dragOperation.context);
                 dragOperation.FirstMoveEvent = false;
             }
         });
@@ -187,24 +188,26 @@ public class IntermediatePoint extends Abstract2DAncillaryObject {
         return mParentView.getRepresentationByModelId(anchor.getAnchorOwner().getId());
     }
 
-    protected void dragStart(Anchor anchor, Position2D startPosition) {
+    protected Object dragStart(Anchor anchor, Position2D startPosition) {
         Abstract2DRepresentation repr = getAnchorOwnerRepresentation(anchor);
         if (repr != null) {
-            repr.startAnchorDrag(anchor, startPosition);
+            return repr.startAnchorDrag(anchor, startPosition);
+        }
+        return null;
+    }
+
+    protected void dragEnd(Anchor anchor, Object context) {
+        Abstract2DRepresentation repr = getAnchorOwnerRepresentation(anchor);
+        if (repr != null) {
+            repr.endAnchorDrag(anchor, context);
         }
     }
 
-    protected void dragEnd(Anchor anchor) {
+    protected void drag(Anchor anchor, Position2D dragStartPos, Position2D currentPos, boolean firstMoveEvent,
+            boolean shiftDown, boolean altDown, boolean controlDown, Object context) {
         Abstract2DRepresentation repr = getAnchorOwnerRepresentation(anchor);
         if (repr != null) {
-            repr.endAnchorDrag(anchor);
-        }
-    }
-
-    protected void drag(Anchor anchor, Position2D dragStartPos, Position2D currentPos, boolean firstMoveEvent, boolean shiftDown, boolean altDown, boolean controlDown) {
-        Abstract2DRepresentation repr = getAnchorOwnerRepresentation(anchor);
-        if (repr != null) {
-            repr.dragAnchor(anchor, dragStartPos, currentPos, firstMoveEvent, shiftDown, altDown, controlDown);
+            repr.dragAnchor(anchor, dragStartPos, currentPos, firstMoveEvent, shiftDown, altDown, controlDown, context);
         }
     }
 
@@ -228,9 +231,9 @@ public class IntermediatePoint extends Abstract2DAncillaryObject {
         mScaleCompensation.setPivotY(y);
     }
 
-    public void update(Anchor anchorBefore, Anchor AnchorAfter) {
+    public void update(Anchor anchorBefore, Anchor anchorAfter) {
         mAnchorBefore = anchorBefore;
-        mAnchorAfter = AnchorAfter;
+        mAnchorAfter = anchorAfter;
         updateShape();
     }
 

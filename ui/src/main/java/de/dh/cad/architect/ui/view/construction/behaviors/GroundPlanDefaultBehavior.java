@@ -52,7 +52,7 @@ public class GroundPlanDefaultBehavior extends AbstractConstructionBehavior {
             actions.add(createAddCeilingAction());
         } else if (selectedObjects.size() == 1) {
             // One object selected
-            BaseObject selectedObject = selectedObjects.get(0);
+            BaseObject selectedObject = selectedObjects.getFirst();
 
             if (selectedObject instanceof Anchor) {
                 //Anchor anchor = (Anchor) selectedObject;

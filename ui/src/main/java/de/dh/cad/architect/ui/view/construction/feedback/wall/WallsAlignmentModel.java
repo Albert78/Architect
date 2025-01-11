@@ -237,7 +237,7 @@ public class WallsAlignmentModel {
                 // dockedAnchor = connected wall's anchor
 
                 IWall otherWall = dockedAnchor.getOwner();
-                if (!otherWall.representsRealWall()) {
+                if (!otherWall.representsRealWall() || !dockedAnchor.isHandle()) {
                     continue;
                 }
                 Vector2D vReference = getVWall(dockedAnchor);
@@ -298,8 +298,8 @@ public class WallsAlignmentModel {
         return mReferenceWalls;
     }
 
-    public static Vector2D getVWall(IWallAnchor startWallAnchor) {
-        return startWallAnchor.getOwner().getAnchorWallHandle(
-            startWallAnchor.getHandleAnchorDockEnd().get().opposite()).getPosition().minus(startWallAnchor.getPosition());
+    public static Vector2D getVWall(IWallAnchor startWallHandleAnchor) {
+        return startWallHandleAnchor.getOwner().getAnchorWallHandle(
+            startWallHandleAnchor.getHandleAnchorDockEnd().get().opposite()).getPosition().minus(startWallHandleAnchor.getPosition());
     }
 }

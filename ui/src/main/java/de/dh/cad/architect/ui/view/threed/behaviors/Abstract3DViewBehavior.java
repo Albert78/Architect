@@ -50,13 +50,40 @@ import javafx.scene.robot.Robot;
 
 public abstract class Abstract3DViewBehavior extends AbstractViewBehavior<Abstract3DRepresentation, Abstract3DAncillaryObject> {
     protected EventHandler<ScrollEvent> mZoomEventHandler = null;
+    protected int mMouseOverSurfaceBlocked = 0; // 0 means not blocked, bigger than 0 means blocked
 
     protected Abstract3DViewBehavior(AbstractUiMode<Abstract3DRepresentation, Abstract3DAncillaryObject> parentMode) {
         super(parentMode);
     }
 
+    public void setMouseOverSurfaceBlocked(boolean value) {
+        if (value) {
+            mMouseOverSurfaceBlocked++;
+        } else {
+            mMouseOverSurfaceBlocked--;
+        }
+    }
+
+    public boolean isMouseOverSurfaceBlocked() {
+        return mMouseOverSurfaceBlocked > 0;
+    }
+
     protected void enablePlanMouseGestures() {
-        DragController3D dragController = new DragController3D();
+        var dragController = new DragController3D() {
+            boolean mouseOverSurfaceBlockSet = false;
+
+            void blockMouseOverSurface() {
+                mouseOverSurfaceBlockSet = true;
+                setMouseOverSurfaceBlocked(true);
+            }
+
+            void releaseMouseOverSurfaceBlock() {
+                if (mouseOverSurfaceBlockSet) {
+                    setMouseOverSurfaceBlocked(false);
+                    mouseOverSurfaceBlockSet = false;
+                }
+            }
+        };
 
         ThreeDView view = getView();
         Group rootGroup = view.getRootGroup();
@@ -68,12 +95,14 @@ public abstract class Abstract3DViewBehavior extends AbstractViewBehavior<Abstra
                 mView.setCursor(Cursor.DEFAULT);
             } else {
                 mView.setCursor(Cursor.MOVE);
+                dragController.blockMouseOverSurface();
             }
         });
 
         mView.setOnMouseReleased(event -> {
             dragController.mouseReleased(event);
             mView.setCursor(Cursor.DEFAULT);
+            dragController.releaseMouseOverSurfaceBlock();
         });
 
         mView.setOnMouseDragged(event -> {
@@ -87,7 +116,7 @@ public abstract class Abstract3DViewBehavior extends AbstractViewBehavior<Abstra
 
         if (mZoomEventHandler == null) {
             mZoomEventHandler = event -> {
-                // DeltaX is produced by scrolling Y and pressing shift
+                // DeltaX is produced by scrolling Y (scroll wheel) and pressing shift
                 view.moveNearClip(-event.getDeltaX());
 
                 // Normal scroll wheel

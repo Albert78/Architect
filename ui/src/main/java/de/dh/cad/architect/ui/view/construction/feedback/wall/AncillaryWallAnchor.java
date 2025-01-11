@@ -71,6 +71,11 @@ public class AncillaryWallAnchor implements IWallAnchor {
         return mReferenceAnchor;
     }
 
+    @Override
+    public boolean isHandle() {
+        return true;
+    }
+
     public void setReferenceAnchor(boolean value) {
         mReferenceAnchor = value;
     }

@@ -331,7 +331,7 @@ public class AssetManager {
         }
 
         /**
-         * To be called on a support object's base directory.
+         * To be called on a material set's base directory.
          * @return Local material sets directory.
          */
         public AssetLocation resolveLocalMaterialSetsDirectory() {
@@ -339,7 +339,7 @@ public class AssetManager {
         }
 
         /**
-         * To be called on a support object's base directory.
+         * To be called on a material set's base directory.
          * @return Local material set directory of the given material set.
          */
         public AssetLocation resolveLocalMaterialSetDirectory(String materialSetId) {
@@ -494,7 +494,7 @@ public class AssetManager {
 
     /**
      * Package name with {@code '.'} replaced by {@code '/'} with a trailing {@code '/'}, to be used as prefix
-     * when loading resources via the classloader.
+     * when loading internal resources via the classloader.
      */
     public static final String LOCAL_RESOURCE_BASE = '/' + AssetLoader.class.getPackageName().replace('.', '/');
 
@@ -614,7 +614,7 @@ public class AssetManager {
 
     public AssetCollection resolveAssetCollection(IAssetPathAnchor anchor) throws IOException {
         if (anchor instanceof PlanAssetPathAnchor) {
-            return mOPlanContext.map(pc -> pc.getAssetCollection()).orElseThrow(() -> planAnchorPathNotAvailableException());
+            return mOPlanContext.map(PlanContext::getAssetCollection).orElseThrow(this::planAnchorPathNotAvailableException);
         } else if (anchor instanceof LibraryAssetPathAnchor libraryPathAnchor) {
             String libraryId = libraryPathAnchor.getLibraryId();
             LibraryData libraryData = mAssetLibraries.get(libraryId);
@@ -633,7 +633,7 @@ public class AssetManager {
 
     /**
      * Gets the base location of the asset for the given asset reference path.
-     * @throws IOException
+     * @throws IOException If the given path doesn't point to a valid asset location.
      */
     public AssetLocation resolveAssetLocation(AssetRefPath ref) throws IOException {
         return resolveAssetLocation(ref.getAnchor(), ref.getAssetBasePath());
@@ -690,7 +690,7 @@ public class AssetManager {
         for (LibraryData libraryData : mAssetLibraries.values()) {
             IDirectoryLocator rootDirectory = libraryData.getRootDirectory();
             if (!(rootDirectory instanceof PlainFileSystemDirectoryLocator)) {
-                // Actually, this restriction is not necessary, the only reason is because the configuration API doesn't support the VFS API yet
+                // Actually, this restriction is not necessary, the only reason is that the configuration API doesn't support the VFS API yet
                 log.warn("Currently, we can only save asset libraries which are accessed via the plain file system VFS API");
                 continue;
             }
@@ -861,16 +861,16 @@ public class AssetManager {
 
     public Collection<SupportObjectDescriptor> loadAllLibrarySupportObjectDescriptors() throws IOException {
         Collection<SupportObjectDescriptor> result = new ArrayList<>();
-        for (String libraryId : mAssetLibraries.keySet()) {
-            result.addAll(loadSupportObjectDescriptors(new LibraryAssetPathAnchor(libraryId)));
+        for (LibraryData libraryData : mAssetLibraries.values()) {
+            result.addAll(libraryData.getAssetCollection().resolveSOBaseDirectory().loadSupportObjectDescriptors());
         }
         return result;
     }
 
     public Collection<MaterialSetDescriptor> loadAllLibraryRootMaterialSetDescriptors() throws IOException {
         Collection<MaterialSetDescriptor> result = new ArrayList<>();
-        for (String libraryId : mAssetLibraries.keySet()) {
-            result.addAll(loadMaterialSetDescriptors(new LibraryAssetPathAnchor(libraryId), false));
+        for (LibraryData libraryData : mAssetLibraries.values()) {
+            result.addAll(libraryData.getAssetCollection().resolveMSBaseDirectory().loadMaterialSetDescriptors());
         }
         return result;
     }

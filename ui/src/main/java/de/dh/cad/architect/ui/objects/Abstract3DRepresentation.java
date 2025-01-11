@@ -22,6 +22,7 @@ import java.util.Objects;
 import de.dh.cad.architect.model.objects.BaseObject;
 import de.dh.cad.architect.ui.assets.AssetLoader;
 import de.dh.cad.architect.ui.view.threed.Abstract3DView;
+import de.dh.cad.architect.ui.view.threed.behaviors.Abstract3DViewBehavior;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.event.EventHandler;
@@ -35,6 +36,7 @@ import javafx.scene.paint.Color;
  */
 // Will be subclassed for each model class (Wall, Floor, ...) visible in 3D view
 public abstract class Abstract3DRepresentation extends Group implements IModelBasedObject {
+    public static final Color DEFAULT_SPOTTED_COLOR = Color.BLUE.interpolate(Color.DEEPSKYBLUE, 0.5);
     public static final Color SELECTED_OBJECTS_COLOR = Color.LIGHTBLUE;
 
     protected final BooleanProperty mObjectSpottedProperty = new SimpleBooleanProperty(this, "isSpotted", false);
@@ -65,13 +67,17 @@ public abstract class Abstract3DRepresentation extends Group implements IModelBa
         addEventHandler(MouseEvent.MOUSE_EXITED, MOUSE_OVER_MOUSE_EXITED_LISTENER);
     }
 
+    protected Abstract3DViewBehavior getBehavior() {
+        return (Abstract3DViewBehavior) mParentView.getBehavior();
+    }
+
     protected Color calculateSurfaceColor(boolean surfaceSpotted) {
         Color result = null;
         if (isSelected()) {
             result = SELECTED_OBJECTS_COLOR;
         }
-        if (surfaceSpotted) {
-            result = Color.BLUE.interpolate(Color.DEEPSKYBLUE, 0.5);
+        if (surfaceSpotted && !getBehavior().isMouseOverSurfaceBlocked()) {
+            result = DEFAULT_SPOTTED_COLOR;
         }
         return result;
     }

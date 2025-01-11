@@ -39,7 +39,7 @@ public class PropertyTextControlProvider<T> implements IPropertyControlProvider<
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
-    public Node getEditor(TreeTableCell cell) {
+    public Node getEditor(TreeTableCell cell, String propertyDisplayName) {
         mTextField.setOnAction(event -> {
             T value = mStringConverter.fromString(mTextField.getText());
             cell.commitEdit(value);

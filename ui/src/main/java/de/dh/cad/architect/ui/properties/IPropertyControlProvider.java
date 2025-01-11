@@ -22,7 +22,7 @@ import javafx.scene.control.TreeTableCell;
 
 public interface IPropertyControlProvider<T> {
     @SuppressWarnings("rawtypes")
-    public Node getEditor(TreeTableCell cell);
+    public Node getEditor(TreeTableCell cell, String propertyDisplayName);
     @SuppressWarnings("rawtypes")
     public Node getView(TreeTableCell cell);
 }

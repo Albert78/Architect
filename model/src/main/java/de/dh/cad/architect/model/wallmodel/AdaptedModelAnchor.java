@@ -61,6 +61,11 @@ public class AdaptedModelAnchor implements IWallAnchor {
         return true;
     }
 
+    @Override
+    public boolean isHandle() {
+        return mAnchor.isHandle();
+    }
+
     public Optional<Map<String, AnchorTarget>> getOverriddenAnchorPositions() {
         return mOverriddenAnchorPositions;
     }
